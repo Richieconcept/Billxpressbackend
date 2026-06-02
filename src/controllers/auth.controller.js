@@ -1,0 +1,392 @@
+import bcrypt from "bcryptjs";
+import User from "../models/user.model.js";
+import {
+  canResendEmailVerificationOtp,
+  createEmailVerificationOtp,
+  hashEmailVerificationOtp,
+} from "../utils/emailVerification.js";
+import { emailVerificationTemplate } from "../utils/emailTemplates.js";
+import { generateToken } from "../utils/generateToken.js";
+import { sanitizeUser } from "../utils/sanitizeUser.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { getOrCreateWallet } from "../services/wallet.service.js";
+import {
+  getOrCreateVirtualAccountForUser,
+  serializeVirtualAccount,
+} from "../services/virtualAccount.service.js";
+
+const sendServerError = (res, publicMessage, error) => {
+  console.error(publicMessage, error);
+
+  return res.status(500).json({
+    message: publicMessage,
+    error: process.env.NODE_ENV === "production" ? undefined : error.message,
+  });
+};
+
+// 🔑 Generate Referral Code
+const generateReferralCode = (username) => {
+  const random = Math.floor(1000 + Math.random() * 9000);
+  return username.slice(0, 3).toUpperCase() + random;
+};
+
+// ==========================
+// REGISTER USER
+// ==========================
+export const registerUser = async (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      username,
+      email,
+      phone,
+      password,
+      confirmPassword,
+      transactionPin,
+      referredBy,
+    } = req.body;
+
+    const normalizedFirstName = firstName?.trim();
+    const normalizedLastName = lastName?.trim();
+    const normalizedUsername = username?.trim().toLowerCase();
+    const normalizedEmail = email?.trim().toLowerCase();
+    const normalizedPhone = phone?.trim();
+
+    // 1. Validate fields
+    if (
+      !normalizedFirstName ||
+      !normalizedLastName ||
+      !normalizedUsername ||
+      !normalizedEmail ||
+      !normalizedPhone ||
+      !password ||
+      !confirmPassword ||
+      !transactionPin
+    ) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({
+        message: "Please provide a valid email address",
+      });
+    }
+
+    if (!/^0\d{10}$/.test(normalizedPhone)) {
+      return res.status(400).json({
+        message: "Phone number must be 11 digits and start with 0",
+      });
+    }
+
+    if (password.length < 5) {
+      return res.status(400).json({
+        message: "Password must be at least 5 characters",
+      });
+    }
+
+    // 2. Password match
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        message: "Passwords do not match",
+      });
+    }
+
+    // 3. PIN validation
+    if (!/^\d{4}$/.test(transactionPin)) {
+      return res.status(400).json({
+        message: "Transaction PIN must be 4 digits",
+      });
+    }
+
+    // 4. Check existing user
+    const existingUser = await User.findOne({
+      $or: [
+        { email: normalizedEmail },
+        { phone: normalizedPhone },
+        { username: normalizedUsername },
+      ],
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User already exists",
+      });
+    }
+
+    // 5. Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 6. Hash PIN
+    const hashedPin = await bcrypt.hash(transactionPin, 10);
+
+    // 7. Generate referral code
+    const referralCode = generateReferralCode(normalizedUsername);
+
+    // 8. Create user
+    const user = await User.create({
+      firstName: normalizedFirstName,
+      lastName: normalizedLastName,
+      username: normalizedUsername,
+      email: normalizedEmail,
+      phone: normalizedPhone,
+      password: hashedPassword,
+      transactionPin: hashedPin,
+      referralCode,
+      referredBy: referredBy || null,
+      emailVerified: false,
+      authTier: "tier_1",
+      kycLevel: 0,
+    });
+
+    await getOrCreateWallet(user._id);
+    let virtualAccount = null;
+    let virtualAccountCreated = false;
+    let virtualAccountError = null;
+    let virtualAccountErrors = [];
+
+    try {
+      const virtualAccountResult = await getOrCreateVirtualAccountForUser(user);
+      virtualAccount = serializeVirtualAccount(
+        virtualAccountResult.virtualAccount
+      );
+      virtualAccountCreated = virtualAccountResult.created;
+      virtualAccountErrors = virtualAccountResult.providerErrors || [];
+    } catch (error) {
+      virtualAccountError = error.message;
+      virtualAccountErrors = error.providerErrors || [];
+      console.error("Virtual account creation failed", error);
+    }
+
+    res.status(201).json({
+      message: "Account created successfully",
+      requiresVerification: false,
+      user: sanitizeUser(user),
+      virtualAccount,
+      virtualAccounts: virtualAccount?.accounts || [],
+      virtualAccountCreated,
+      virtualAccountError,
+      virtualAccountErrors,
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0] || "field";
+
+      return res.status(400).json({
+        message: `${field} already exists`,
+      });
+    }
+
+    return sendServerError(res, "Registration failed", error);
+  }
+};
+
+// ==========================
+// LOGIN USER
+// ==========================
+export const loginUser = async (req, res) => {
+  try {
+    const { identifier, password } = req.body;
+    const rawIdentifier =
+      typeof identifier === "string" ? identifier.trim() : "";
+    const normalizedIdentifier = rawIdentifier.toLowerCase();
+
+    // 1. Validate input
+    if (!normalizedIdentifier || !password) {
+      return res.status(400).json({
+        message: "Identifier and password are required",
+      });
+    }
+
+    // 2. Find user (username OR email OR phone)
+    const user = await User.findOne({
+      $or: [
+        { email: normalizedIdentifier },
+        { username: normalizedIdentifier },
+        { phone: rawIdentifier },
+      ],
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid credentials",
+      });
+    }
+
+    // 3. Check password
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Invalid credentials",
+      });
+    }
+
+    // 4. Generate JWT
+    const token = generateToken(user);
+
+    // 5. Return response
+    res.json({
+      message: "Login successful",
+      token,
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    return sendServerError(res, "Login failed", error);
+  }
+};
+
+export const verifyEmailOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!normalizedEmail || !otp) {
+      return res.status(400).json({
+        message: "Email and OTP are required",
+      });
+    }
+
+    if (!/^\d{5}$/.test(String(otp))) {
+      return res.status(400).json({
+        message: "OTP must be 5 digits",
+      });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+emailVerificationOtp +emailVerificationOtpExpires"
+    );
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid verification details",
+      });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({
+        message: "Email is already verified",
+      });
+    }
+
+    if (
+      !user.emailVerificationOtp ||
+      !user.emailVerificationOtpExpires ||
+      user.emailVerificationOtpExpires < Date.now()
+    ) {
+      return res.status(400).json({
+        message: "OTP is invalid or has expired",
+      });
+    }
+
+    const hashedOtp = hashEmailVerificationOtp(otp);
+
+    if (hashedOtp !== user.emailVerificationOtp) {
+      return res.status(400).json({
+        message: "OTP is invalid or has expired",
+      });
+    }
+
+    user.emailVerified = true;
+    user.kycLevel = Math.max(user.kycLevel || 0, 1);
+    user.emailVerificationOtp = null;
+    user.emailVerificationOtpExpires = null;
+    user.emailVerificationOtpLastSentAt = null;
+    await user.save();
+
+    res.json({
+      message: "Email verified successfully",
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    return sendServerError(res, "Email verification failed", error);
+  }
+};
+
+export const resendEmailOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      return res.status(400).json({
+        message: "Email is required",
+      });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+emailVerificationOtp +emailVerificationOtpExpires +emailVerificationOtpLastSentAt"
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({
+        message: "Email is already verified",
+      });
+    }
+
+    const resendStatus = canResendEmailVerificationOtp(user.emailVerificationOtpLastSentAt);
+
+    if (!resendStatus.allowed) {
+      return res.status(429).json({
+        message: "Please wait before requesting another code",
+        retryAfterSeconds: resendStatus.retryAfterSeconds,
+      });
+    }
+
+    const previousOtp = user.emailVerificationOtp;
+    const previousOtpExpires = user.emailVerificationOtpExpires;
+    const previousOtpLastSentAt = user.emailVerificationOtpLastSentAt;
+    const verification = createEmailVerificationOtp();
+    user.emailVerificationOtp = verification.hashedOtp;
+    user.emailVerificationOtpExpires = verification.expires;
+    user.emailVerificationOtpLastSentAt = new Date();
+
+    try {
+      await user.save();
+    } catch (error) {
+      user.emailVerificationOtp = previousOtp;
+      user.emailVerificationOtpExpires = previousOtpExpires;
+      user.emailVerificationOtpLastSentAt = previousOtpLastSentAt;
+      throw error;
+    }
+
+    const template = emailVerificationTemplate({
+      username: user.username,
+      otp: verification.otp,
+    });
+
+    try {
+      await sendEmail({
+        to: user.email,
+        name: user.username,
+        ...template,
+      });
+    } catch (error) {
+      user.emailVerificationOtp = previousOtp;
+      user.emailVerificationOtpExpires = previousOtpExpires;
+      user.emailVerificationOtpLastSentAt = previousOtpLastSentAt;
+      await user.save();
+      throw error;
+    }
+
+    res.json({
+      message: "Verification code sent successfully",
+    });
+  } catch (error) {
+    return sendServerError(res, "Could not resend verification code", error);
+  }
+};
+
+export const getMe = async (req, res) => {
+  res.json({
+    user: sanitizeUser(req.user),
+  });
+};

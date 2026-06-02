@@ -1,0 +1,64 @@
+meta {
+  name: 8. Admin Make Admin
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/make-admin/{{userId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Make Admin
+  
+  Upgrades an existing active user into an admin.
+  
+  ## Endpoint
+  
+  `PATCH /api/v1/admin/make-admin/:userId`
+  
+  ## Authentication Required
+  
+  Admin JWT only:
+  
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+  
+  ## What Backend Does
+  
+  - sets `role` to `admin`
+  - removes vendor API access if the user was previously vendor-related
+  - sets `isVendorActive` to `false`
+  - resets `discountRate` to `0`
+  
+  ## Expected Success Response
+  
+  Status: `200 OK`
+  
+  ```json
+  {
+    "message": "User upgraded to admin successfully",
+    "user": {
+      "id": "...",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser",
+      "email": "testuser@example.com",
+      "role": "admin",
+      "authTier": "tier_1",
+      "isActive": true
+    }
+  }
+  ```
+}

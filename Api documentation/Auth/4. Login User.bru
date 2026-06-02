@@ -1,0 +1,100 @@
+meta {
+  name: 4. Login User
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "identifier": "testuser@example.com",
+    "password": "Password123"
+  }
+}
+
+script:post-response {
+  if (res.body && res.body.token) {
+    if (typeof bru.setEnvVar === "function") {
+      bru.setEnvVar("authToken", res.body.token);
+    } else {
+      bru.setVar("authToken", res.body.token);
+    }
+  }
+}
+
+docs {
+  # Login User
+
+  Logs in a user and returns a JWT token.
+
+  ## Endpoint
+
+  `POST /api/v1/auth/login`
+
+  ## Body Fields
+
+  `identifier`  
+  This can be the user's email, username, or phone number.
+
+  `password`  
+  The user's password.
+
+  ## Expected Success Response
+
+  Status: `200 OK`
+
+  ```json
+  {
+    "message": "Login successful",
+    "token": "jwt-token-here",
+    "user": {
+      "id": "...",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser",
+      "email": "testuser@example.com",
+      "phone": "08012345678",
+      "role": "user",
+      "isActive": true,
+      "emailVerified": false,
+      "authTier": "tier_1",
+      "kycLevel": 0
+    }
+  }
+  ```
+
+  ## Auto Save Token
+
+  This Bruno request automatically saves the returned token into the `authToken` variable.
+
+  After login succeeds, you can run protected requests like `Get Current User`.
+
+  ## Current Tier 1 Behavior
+
+  Login is allowed without email verification.
+
+  A newly registered user object includes:
+
+  ```json
+  {
+    "emailVerified": false,
+    "authTier": "tier_1",
+    "kycLevel": 0
+  }
+  ```
+
+  Later features like dollar card, betting, BVN-gated flows, wallet limits, or other KYC-sensitive actions can require a higher `authTier`.
+
+  ## Rate Limit
+
+  Maximum 10 login attempts per 15 minutes per IP/identifier.
+}

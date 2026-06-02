@@ -1,0 +1,31 @@
+meta {
+  name: Health Check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/
+  body: none
+  auth: none
+}
+
+docs {
+  # Health Check
+
+  Use this request to confirm the Billxpress backend server is running.
+
+  ## Expected Success Response
+
+  Status: `200 OK`
+
+  Body:
+
+  ```txt
+  BillXpress API running...
+  ```
+
+  ## Common Issues
+
+  If this fails, check that the backend is running on the same port as `baseUrl`.
+}

@@ -1,0 +1,65 @@
+meta {
+  name: 9. Admin Remove Admin
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/remove-admin/{{userId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Remove Admin
+  
+  Removes the admin role from another admin and changes them back to a normal user.
+  
+  ## Endpoint
+  
+  `PATCH /api/v1/admin/remove-admin/:userId`
+  
+  ## Authentication Required
+  
+  Admin JWT only:
+  
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+  
+  ## Safety Rules
+  
+  The backend will not allow:
+  
+  - removing your own admin role
+  - removing the last active admin
+  - removing admin from a user who is not currently an admin
+  
+  ## Expected Success Response
+  
+  Status: `200 OK`
+  
+  ```json
+  {
+    "message": "Admin role removed successfully",
+    "user": {
+      "id": "...",
+      "firstName": "Test",
+      "lastName": "Admin",
+      "username": "testadmin",
+      "email": "admin@example.com",
+      "role": "user",
+      "authTier": "tier_1",
+      "isActive": true
+    }
+  }
+  ```
+}

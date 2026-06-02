@@ -1,0 +1,68 @@
+meta {
+  name: 1. Get Wallet
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/wallet
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Get Wallet
+
+  Use this endpoint to show the user's wallet balances.
+
+  ## Endpoint
+
+  `GET /api/v1/wallet`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## When Frontend Should Call This
+
+  - after login
+  - when the wallet screen opens
+  - after the user funds their account
+  - after redeeming referral balance
+  - after paying for any service
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "wallet": {
+      "id": "...",
+      "currency": "NGN",
+      "mainBalance": 5000,
+      "referralBalance": 1000,
+      "balances": {
+        "main": 5000,
+        "referral": 1000
+      }
+    }
+  }
+  ```
+
+  ## Frontend Notes
+
+  Show `mainBalance` as the user's spendable balance.
+
+  Show `referralBalance` separately as rewards/cashback balance.
+}

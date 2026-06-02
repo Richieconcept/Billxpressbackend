@@ -1,0 +1,94 @@
+meta {
+  name: 11. Vendor API Key Auth
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/api/v1/auth/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}
+
+docs {
+  # Vendor API Key Auth
+  
+  Tests vendor authentication using an API key instead of a JWT token.
+  
+  ## Endpoint
+  
+  `GET /api/v1/auth/me`
+  
+  For the vendor-only test endpoint, use:
+  
+  ```txt
+  GET /api/v1/test/vendor
+  ```
+  
+  ## Authentication
+  
+  Send the vendor API key directly in the `Authorization` header:
+  
+  ```txt
+  Authorization: {{vendorApiKey}}
+  ```
+  
+  Do not prefix vendor API keys with `Bearer`.
+  
+  Create the vendor API key through `Admin Make Vendor`; users cannot create vendor accounts during registration.
+  
+  `Bearer` is reserved for JWT auth:
+  
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+  
+  ## Required Vendor State
+  
+  API-key auth succeeds only when the matching user has:
+  
+  ```json
+  {
+    "role": "vendor",
+    "isVendorActive": true
+  }
+  ```
+  
+  ## Expected Success Response
+  
+  Status: `200 OK`
+  
+  ```json
+  {
+    "user": {
+      "id": "...",
+      "firstName": "Test",
+      "lastName": "Vendor",
+      "username": "testvendor",
+      "email": "vendor@example.com",
+      "phone": "08087654321",
+      "role": "vendor",
+      "isActive": true,
+      "emailVerified": false,
+      "authTier": "tier_1",
+      "kycLevel": 0
+    }
+  }
+  ```
+  
+  ## Common Errors
+  
+  Missing or invalid API key:
+  
+  ```json
+  {
+    "message": "Invalid vendor API key"
+  }
+  ```
+  
+  If the API key belongs to a non-vendor user or an inactive vendor, the request also returns `401`.
+}

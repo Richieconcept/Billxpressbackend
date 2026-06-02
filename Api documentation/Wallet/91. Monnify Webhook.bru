@@ -1,0 +1,36 @@
+meta {
+  name: Internal - Monnify Webhook
+  type: http
+  seq: 91
+}
+
+post {
+  url: {{baseUrl}}/api/v1/webhooks/monnify
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  monnify-signature: {{monnifySignature}}
+}
+
+body:json {
+  {
+    "eventType": "SUCCESSFUL_TRANSACTION",
+    "eventData": {
+      "paymentReference": "MNFUND_...",
+      "transactionReference": "MNF...",
+      "amountPaid": 2000,
+      "paymentStatus": "PAID"
+    }
+  }
+}
+
+docs {
+  # Internal - Monnify Webhook
+
+  Monnify calls this endpoint when a one-time funding transfer is paid.
+
+  This is internal backend/provider traffic. The frontend should not call this endpoint.
+}

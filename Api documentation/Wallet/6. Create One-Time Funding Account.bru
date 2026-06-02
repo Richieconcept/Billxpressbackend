@@ -1,0 +1,98 @@
+meta {
+  name: 6. Create One-Time Funding Account
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/wallet/funding-intents
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "amount": 2000
+  }
+}
+
+docs {
+  # Create One-Time Funding Account
+
+  Use this when the user enters an amount and wants a temporary transfer account like a checkout screen.
+
+  ## Endpoint
+
+  `POST /api/v1/wallet/funding-intents`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Body Fields
+
+  `amount`  
+  Required. Amount the user wants to transfer, in naira.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "message": "Funding account created successfully",
+    "fundingIntent": {
+      "id": "...",
+      "provider": "monnify",
+      "providerReference": "MNF...",
+      "paymentReference": "MNFUND_...",
+      "accountNumber": "6023240261",
+      "accountName": "Billxpress Checkout",
+      "bankName": "SafeHaven MFB",
+      "amount": 2000,
+      "fee": 20,
+      "amountToReceive": 1980,
+      "feePolicy": {
+        "paidBy": "user",
+        "percent": 1,
+        "flat": 0,
+        "message": "Funding fee is 1% and is paid by the user. The wallet is credited with the amount after fee."
+      },
+      "expiresAt": "...",
+      "status": "pending",
+      "createdAt": "..."
+    }
+  }
+  ```
+
+  ## Frontend Notes
+
+  Show this like a checkout screen:
+
+  - countdown from `expiresAt`
+  - account number
+  - bank name
+  - account name
+  - amount
+  - fee
+  - amount to receive
+
+  If the user enters `N2,000` and the fee is `1%`, show:
+
+  - Amount entered: `N2,000`
+  - Fee: `N20`
+  - Amount to receive: `N1,980`
+
+  The frontend should not credit the wallet itself. Monnify sends a webhook after payment, and the backend credits the wallet.
+}

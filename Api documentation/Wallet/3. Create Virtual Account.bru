@@ -1,0 +1,127 @@
+meta {
+  name: 3. Create Virtual Account
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/wallet/virtual-account
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {}
+}
+
+docs {
+  # Create Virtual Account
+
+  Use this endpoint when a logged-in user does not yet have a wallet funding account.
+
+  This creates a permanent bank account number the user can transfer money into to fund their Billxpress wallet.
+
+  ## Endpoint
+
+  `POST /api/v1/wallet/virtual-account`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Body Fields
+
+  No body fields are required.
+
+  The backend creates supported PocketFi funding accounts. Current order is `paga`, then `kuda`.
+
+  ## Important
+
+  The frontend does not need to send the user's name, phone, or email. The backend already gets those from the logged-in user's profile.
+
+  The user's saved phone number must be 11 digits and start with `0`, for example `08012345678`.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "message": "Virtual account created successfully",
+    "virtualAccount": {
+      "id": "...",
+      "provider": "pocketfi",
+      "bankName": "paga",
+      "accountNumber": "0742053373",
+      "accountName": "Test User (Billxpress)",
+      "accounts": [
+        {
+          "provider": "pocketfi",
+          "bankName": "paga",
+          "accountNumber": "0742053373",
+          "accountName": "Test User (Billxpress)"
+        },
+        {
+          "provider": "pocketfi",
+          "bankName": "kuda",
+          "accountNumber": "1234567890",
+          "accountName": "Test User (Billxpress)"
+        }
+      ],
+      "feePolicy": {
+        "paidBy": "user",
+        "percent": 1,
+        "flat": 0,
+        "message": "Funding fee is 1% and is paid by the user. The wallet is credited with the amount after fee."
+      },
+      "status": "active"
+    }
+  }
+  ```
+
+  If the user already has a virtual account:
+
+  ```json
+  {
+      "message": "Virtual account already exists",
+      "virtualAccount": {
+      "bankName": "paga",
+      "accountNumber": "0742053373",
+      "accountName": "Test User (Billxpress)",
+      "accounts": [
+        {
+          "provider": "pocketfi",
+          "bankName": "paga",
+          "accountNumber": "0742053373",
+          "accountName": "Test User (Billxpress)"
+        }
+      ],
+      "feePolicy": {
+        "paidBy": "user",
+        "percent": 1,
+        "flat": 0,
+        "message": "Funding fee is 1% and is paid by the user. The wallet is credited with the amount after fee."
+      }
+    }
+  }
+  ```
+
+  ## Frontend Notes
+
+  After success, show every item in `virtualAccount.accounts` on the funding screen. If `accounts` is empty for an older user, show the top-level `bankName`, `accountNumber`, and `accountName`.
+
+  `accountName` is the PocketFi account name formatted with `(Billxpress)` for display, so it matches what users see when transferring.
+
+  `feePolicy` tells the frontend what to show before the user transfers. If the user transfers `N2,000` and the fee is `1%`, the fee is `N20` and the wallet receives `N1,980`.
+}

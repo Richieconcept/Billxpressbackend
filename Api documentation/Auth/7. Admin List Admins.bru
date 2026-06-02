@@ -1,0 +1,59 @@
+meta {
+  name: 7. Admin List Admins
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/admins
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin List Admins
+  
+  Returns all users with the `admin` role.
+  
+  ## Endpoint
+  
+  `GET /api/v1/admin/admins`
+  
+  ## Authentication Required
+  
+  Admin JWT only:
+  
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+  
+  ## Expected Success Response
+  
+  Status: `200 OK`
+  
+  ```json
+  {
+    "admins": [
+      {
+        "id": "...",
+        "firstName": "Test",
+        "lastName": "Admin",
+        "username": "testadmin",
+        "email": "admin@example.com",
+        "phone": "08012345678",
+        "role": "admin",
+        "authTier": "tier_1",
+        "isActive": true
+      }
+    ]
+  }
+  ```
+}

@@ -1,0 +1,67 @@
+meta {
+  name: Billxpress Backend API
+  type: collection
+  version: 1
+}
+
+docs {
+  # Billxpress Backend API
+
+  This Bruno collection documents the current Billxpress backend endpoints.
+
+  ## How to use this collection
+
+  1. Start the backend server with `npm run dev` or `npm start`.
+  2. In Bruno, select the `Local` environment.
+  3. Run `Health Check` first to confirm the server is online.
+  4. Run `Register User`.
+  5. New users are created as `authTier: "tier_1"` and do not need email verification for first registration.
+  6. Run `Login User`. This request saves the login token into `authToken`.
+  7. Run `Get Current User`.
+  8. Run `Wallet / Get Wallet`.
+  9. Run `Wallet / Get Virtual Account`.
+  10. If there is no virtual account, run `Wallet / Create Virtual Account`.
+
+  ## Current Base URL
+
+  `{{baseUrl}}`
+
+  ## Important Auth Rule
+
+  Billxpress does not block login when email is unverified. New users start at `authTier: "tier_1"`. Later dollar card, betting, BVN/KYC, wallet limits, and other sensitive service actions can require a higher `authTier`.
+
+  ## Frontend Registration Rule
+
+  Registration now collects:
+
+  - `firstName`
+  - `lastName`
+  - `username`
+  - `email`
+  - `phone`
+  - `password`
+  - `confirmPassword`
+  - `transactionPin`
+
+  Email OTP verification remains available as an optional/future flow, but it is not required for tier 1 registration.
+
+  ## Wallet Frontend Rule
+
+  The frontend should use only Billxpress API endpoints.
+
+  For wallet funding, show the virtual account returned by:
+
+  ```txt
+  GET /api/v1/wallet/virtual-account
+  ```
+
+  If it does not exist, create it with:
+
+  ```txt
+  POST /api/v1/wallet/virtual-account
+  ```
+
+  The frontend should not call payment provider APIs or webhook endpoints directly.
+
+  Referral earnings are redeemed into the user's main wallet, not withdrawn to bank.
+}

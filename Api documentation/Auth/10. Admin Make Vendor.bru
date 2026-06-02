@@ -1,0 +1,87 @@
+meta {
+  name: 10. Admin Make Vendor
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/make-vendor/{{userId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Make Vendor
+  
+  Upgrades an existing normal user into a vendor.
+  
+  ## Endpoint
+  
+  `PATCH /api/v1/admin/make-vendor/:userId`
+  
+  ## Authentication Required
+  
+  Admin JWT only:
+  
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+  
+  The authenticated user must have:
+  
+  ```json
+  {
+    "role": "admin"
+  }
+  ```
+  
+  ## Important
+  
+  Users cannot self-register as vendors. Every user registers normally first, then an admin approves the vendor upgrade.
+  
+  When approved, the backend sets:
+  
+  ```json
+  {
+    "role": "vendor",
+    "discountRate": 0.2,
+    "isVendorActive": true,
+    "vendorApprovedAt": "current-date"
+  }
+  ```
+  
+  The backend also generates and returns a unique `apiKey`.
+  
+  ## Expected Success Response
+  
+  Status: `200 OK`
+  
+  ```json
+  {
+    "message": "User upgraded to vendor successfully",
+    "user": {
+      "id": "...",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser",
+      "email": "testuser@example.com",
+      "role": "vendor",
+      "authTier": "tier_1",
+      "discountRate": 0.2,
+      "isVendorActive": true,
+      "vendorApprovedAt": "..."
+    },
+    "apiKey": "generated-api-key"
+  }
+  ```
+  
+  Copy the returned `apiKey` into the Bruno `vendorApiKey` environment variable to test vendor API-key auth.
+}

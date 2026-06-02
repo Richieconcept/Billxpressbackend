@@ -1,0 +1,111 @@
+meta {
+  name: 5. Redeem Referral Balance
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/wallet/referral/redeem
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "amount": "{{walletAmount}}",
+    "transactionPin": "1234"
+  }
+}
+
+docs {
+  # Redeem Referral Balance
+
+  Use this endpoint when the user wants to move referral rewards into their main wallet.
+
+  This is not a bank withdrawal. It is like cashback becoming spendable balance inside the app.
+
+  ## Endpoint
+
+  `POST /api/v1/wallet/referral/redeem`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Body Fields
+
+  `amount`  
+  Required. Amount to move from referral wallet to main wallet.
+
+  `transactionPin`  
+  Required. User's 4-digit transaction PIN.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "message": "Referral earnings redeemed successfully",
+    "wallet": {
+      "mainBalance": 6000,
+      "referralBalance": 0
+    },
+    "transactions": [
+      {
+        "type": "referral_redeem",
+        "walletType": "referral",
+        "direction": "debit",
+        "amount": 1000
+      },
+      {
+        "type": "referral_redeem",
+        "walletType": "main",
+        "direction": "credit",
+        "amount": 1000
+      }
+    ]
+  }
+  ```
+
+  ## Common Errors
+
+  Referral balance is below the minimum:
+
+  ```json
+  {
+    "message": "Minimum referral redeem amount is 1000"
+  }
+  ```
+
+  Wrong transaction PIN:
+
+  ```json
+  {
+    "message": "Invalid transaction PIN"
+  }
+  ```
+
+  Not enough referral balance:
+
+  ```json
+  {
+    "message": "Insufficient wallet balance"
+  }
+  ```
+
+  ## Frontend Notes
+
+  Only show the redeem button when `referralBalance` is at least the minimum redeem amount.
+}

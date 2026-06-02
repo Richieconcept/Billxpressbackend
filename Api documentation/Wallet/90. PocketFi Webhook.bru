@@ -1,0 +1,32 @@
+meta {
+  name: Internal - PocketFi Webhook
+  type: http
+  seq: 90
+}
+
+post {
+  url: {{baseUrl}}/api/v1/webhooks/pocketfi
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  HTTP_POCKETFI_SIGNATURE: {{pocketfiSignature}}
+}
+
+body:json {
+  {
+    "reference": "provider-reference",
+    "amount": 1000,
+    "accountNumber": "0742053373"
+  }
+}
+
+docs {
+  # Internal - PocketFi Webhook
+
+  PocketFi calls this endpoint after a user transfers money into their virtual account.
+
+  This is internal backend/provider traffic. The frontend should not call this endpoint.
+}

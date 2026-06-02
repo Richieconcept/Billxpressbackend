@@ -1,0 +1,108 @@
+meta {
+  name: 2. Verify Email OTP
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/verify-email-otp
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{registeredEmail}}",
+    "otp": "{{emailOtp}}"
+  }
+}
+
+docs {
+  # Verify Email OTP
+
+  Verifies a user's email address using a 5-digit OTP.
+
+  Tier 1 registration does not send an OTP automatically. Use `Resend Email OTP` first if you want to run this optional email-verification flow.
+
+  ## Endpoint
+
+  `POST /api/v1/auth/verify-email-otp`
+
+  ## Body Fields
+
+  `email`  
+  The email address used during registration. Prefer the logged-in user's email from `/me`.
+
+  `otp`  
+  The 5-digit code sent to the user's email.
+
+  ## Frontend Email Handling
+
+  If the user is logged in, use the current user's email:
+
+  ```js
+  const email = currentUser.email;
+
+  await api.post("/api/v1/auth/verify-email-otp", {
+    email,
+    otp,
+  });
+  ```
+
+  The user should only type the OTP. They should not be asked to type their email again.
+
+  ## Expected Success Response
+
+  Status: `200 OK`
+
+  ```json
+  {
+    "message": "Email verified successfully",
+    "user": {
+      "id": "...",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser",
+      "email": "testuser@example.com",
+      "phone": "08012345678",
+      "role": "user",
+      "isActive": true,
+      "emailVerified": true,
+      "authTier": "tier_1",
+      "kycLevel": 1
+    }
+  }
+  ```
+
+  ## What Backend Does
+
+  If the OTP is correct and not expired:
+
+  - sets `emailVerified` to `true`
+  - sets `kycLevel` to `1`
+  - clears the OTP from the account
+
+  ## Common Errors
+
+  Wrong or expired OTP:
+
+  ```json
+  {
+    "message": "OTP is invalid or has expired"
+  }
+  ```
+
+  Already verified:
+
+  ```json
+  {
+    "message": "Email is already verified"
+  }
+  ```
+
+  OTP codes expire after 10 minutes.
+}

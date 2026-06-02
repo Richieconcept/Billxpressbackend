@@ -1,0 +1,98 @@
+meta {
+  name: 5. Get Current User
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/auth/me
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Get Current User
+  
+  Returns the profile of the currently logged-in user.
+  
+  ## Endpoint
+  
+  `GET /api/v1/auth/me`
+  
+  ## Authentication Required
+  
+  Yes.
+  
+  For normal app auth, this request needs a Bearer token:
+  
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  For vendor API-key auth, send the API key directly:
+
+  ```txt
+  Authorization: {{vendorApiKey}}
+  ```
+
+  Do not prefix vendor API keys with `Bearer`.
+  
+  Run `Login User` first for JWT auth. The login request saves the token automatically.
+
+  For vendor API-key auth, approve a vendor with `Admin Make Vendor`, copy the returned `apiKey` into `vendorApiKey`, then run `Vendor API Key Auth`.
+
+  The frontend can call this after app refresh to restore the current user and check:
+
+  ```json
+  {
+    "emailVerified": false,
+    "authTier": "tier_1",
+    "kycLevel": 0
+  }
+  ```
+
+  `authTier` is the product access tier. New users start at `tier_1`.
+  
+  ## Expected Success Response
+  
+  Status: `200 OK`
+  
+  ```json
+  {
+    "user": {
+      "id": "...",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser",
+      "email": "testuser@example.com",
+      "phone": "08012345678",
+      "role": "user",
+      "referralCode": "TES1234",
+      "referredBy": null,
+      "isActive": true,
+      "emailVerified": false,
+      "authTier": "tier_1",
+      "kycLevel": 0,
+      "createdAt": "..."
+    }
+  }
+  ```
+  
+  ## Common Error
+  
+  If token is missing, invalid, or expired:
+  
+  ```json
+  {
+    "message": "Invalid or expired token"
+  }
+  ```
+}

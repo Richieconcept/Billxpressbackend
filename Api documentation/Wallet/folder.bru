@@ -1,0 +1,74 @@
+meta {
+  name: Wallet
+  seq: 2
+}
+
+docs {
+  # Wallet Endpoints For Frontend
+
+  These are the wallet endpoints the app should use for a logged-in user.
+
+  ## What The User Sees
+
+  The user has two balances:
+
+  - `mainBalance`: money the user can spend on airtime, data, bills, cards, betting, and other services.
+  - `referralBalance`: referral rewards. This is not spendable directly.
+
+  To spend referral rewards, the user redeems them into `mainBalance`.
+
+  ## Suggested Frontend Flow
+
+  1. Call `Get Wallet` after login and on app refresh.
+  2. Call `Get Virtual Account`.
+  3. If there is no virtual account, show a `Create Account` button and call `Create Virtual Account`.
+  4. Show the virtual account details on the wallet funding screen.
+  5. As an alternative, let the user enter an amount and call `Create One-Time Funding Account`.
+  6. Tell the user to transfer money to the account shown.
+  7. After payment, refresh `Get Wallet` and `Get Transactions`.
+  8. If the user has enough referral balance, call `Redeem Referral Balance`.
+
+  The frontend should not call payment provider APIs directly.
+
+  ## Funding Fees
+
+  Funding charges are paid by the user.
+
+  The backend returns a `feePolicy` object so the frontend can show the fee clearly.
+
+  Example with `1%` fee:
+
+  - User transfers: `N2,000`
+  - Fee: `N20`
+  - Wallet receives: `N1,980`
+
+  For PocketFi permanent accounts, show the fee message before the user transfers.
+
+  For Monnify one-time accounts, show the exact `fee` and `amountToReceive` returned by the API.
+
+  ## Supported Funding Account Banks
+
+  The backend uses PocketFi as the wallet funding gateway.
+
+  The backend tries to create these funding accounts in this order:
+
+  1. `paga`
+  2. `kuda`
+
+  The app should display the accounts returned in `virtualAccount.accounts` or `virtualAccounts`.
+  If only one account is returned, show that one and let the user continue.
+
+  Each account includes `provider: "pocketfi"`.
+
+  ## Backend Setup Note
+
+  The backend uses PocketFi keys for provider API calls and webhook signature checks. The frontend should never receive any provider key.
+
+  ## One-Time Funding Account
+
+  The one-time funding account is powered by Monnify.
+
+  This is useful when the PocketFi account is unavailable or the user wants to fund a specific amount from a checkout-style screen.
+
+  It returns an `expiresAt` time. The frontend should use that value for the countdown.
+}

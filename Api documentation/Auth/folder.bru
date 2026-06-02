@@ -1,0 +1,178 @@
+meta {
+  name: Auth
+  seq: 1
+}
+
+docs {
+  # Auth Endpoints
+
+  These endpoints handle tier 1 registration, admin role management, admin vendor approval, optional email OTP verification, login, API-key auth, and fetching the logged-in user's profile.
+
+  ## Current Auth Flow
+
+  1. Frontend shows registration as 3 UI steps.
+  2. Frontend sends one final `Register User` request when the user taps `Create Account`.
+  3. Backend creates the account as `authTier: "tier_1"`.
+  4. Registration does not send an email OTP and does not require email verification.
+  5. User can login after registration.
+  6. Frontend stores the returned login token.
+  7. Frontend sends the token as `Bearer {{authToken}}` for protected endpoints.
+
+  ## Admin Role Management
+
+  Admin-only routes use:
+
+  ```js
+  protect, authorizeRoles("admin")
+  ```
+
+  Available admin role actions:
+
+  ```txt
+  PATCH /api/v1/admin/bootstrap-admin/:userId
+  GET /api/v1/admin/admins
+  PATCH /api/v1/admin/make-admin/:userId
+  PATCH /api/v1/admin/remove-admin/:userId
+  ```
+
+  `bootstrap-admin` creates the first admin from an existing active user. It requires `X-Admin-Setup-Secret`, only works when `ADMIN_SETUP_SECRET` is configured, and stops working after an active admin exists.
+
+  `make-admin` upgrades an active existing user to `role: "admin"`.
+
+  `remove-admin` changes another admin back to `role: "user"`. The backend prevents an admin from removing their own admin role and prevents removing the last active admin.
+
+  ## Vendor Approval
+
+  Users cannot self-register as vendors. Every user registers normally first.
+
+  An admin upgrades a user with:
+
+  ```txt
+  PATCH /api/v1/admin/make-vendor/:userId
+  ```
+
+  This route requires:
+
+  ```js
+  protect, authorizeRoles("admin")
+  ```
+
+  When approved, the backend sets:
+
+  ```json
+  {
+    "role": "vendor",
+    "discountRate": 0.2,
+    "isVendorActive": true,
+    "vendorApprovedAt": "current-date"
+  }
+  ```
+
+  The backend also generates and returns an `apiKey` using the existing `generateApiKey` utility.
+
+  Use `Admin Make Vendor` in this Bruno folder to test vendor approval.
+
+  ## Vendor API Key Auth
+
+  Normal protected routes use JWT auth:
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  Vendor API-key requests send the key directly:
+
+  ```txt
+  Authorization: {{vendorApiKey}}
+  ```
+
+  Do not prefix vendor API keys with `Bearer`.
+
+  API-key auth succeeds only for users where:
+
+  ```json
+  {
+    "role": "vendor",
+    "isVendorActive": true
+  }
+  ```
+
+  Use `Vendor API Key Auth` to test the API-key path against `/api/v1/auth/me`.
+
+  ## Registration UI Steps
+
+  Step 1:
+
+  - first name
+  - last name
+  - username
+  - phone
+  - email
+  - referral code
+
+  Step 2:
+
+  - password
+  - confirm password
+
+  Step 3:
+
+  - transaction PIN
+
+  The frontend handles these 3 screens locally. The backend receives only one final registration request.
+
+  ## Auth Tier
+
+  New users start at:
+
+  ```json
+  {
+    "authTier": "tier_1",
+    "emailVerified": false,
+    "kycLevel": 0
+  }
+  ```
+
+  Future BVN/KYC upgrades can move the user to `tier_2` or `tier_3`.
+
+  ## Login Identifier
+
+  The login field is called `identifier`. It can be any one of:
+
+  - email
+  - username
+  - phone number
+
+  ## Tier Rule
+
+  Do not block login because email is not verified. Later dollar card, betting, wallet limits, bill payment, transfer, and vendor actions can require a higher product tier.
+
+  Backend middleware is available for those future routes:
+
+  ```js
+  protect, requireAuthTier("tier_2")
+  ```
+
+  `requireVerifiedEmail` is still available for routes that specifically need a verified email address.
+
+  Vendor-only routes can use:
+
+  ```js
+  protect, requireVendor
+  ```
+
+  Admin-only routes can also use:
+
+  ```js
+  protect, requireAuthTier("tier_2"), authorizeRoles("admin")
+  ```
+
+  ## Auth Rate Limits
+
+  The auth routes currently apply these API-level limits:
+
+  - Register: 5 attempts per 15 minutes per IP/user details
+  - Login: 10 attempts per 15 minutes per IP/identifier
+  - Verify OTP: 5 attempts per 10 minutes per IP/email
+  - Resend OTP: 3 attempts per 10 minutes per IP/email
+}

@@ -1,0 +1,83 @@
+meta {
+  name: 2. Get Transactions
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/wallet/transactions
+  body: none
+  auth: bearer
+}
+
+params:query {
+  limit: 50
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Get Transactions
+
+  Use this endpoint to show the user's wallet history.
+
+  ## Endpoint
+
+  `GET /api/v1/wallet/transactions`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Query Parameters
+
+  `limit`  
+  Optional. Number of transactions to return. Default is `50`, maximum is `100`.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "transactions": [
+      {
+        "id": "...",
+        "type": "funding",
+        "walletType": "main",
+        "direction": "credit",
+        "amount": 1980,
+        "balanceBefore": 0,
+        "balanceAfter": 1980,
+        "currency": "NGN",
+        "reference": "PFI_...",
+        "provider": "pocketfi",
+        "status": "successful",
+        "narration": "Wallet funding via PocketFi virtual account",
+        "createdAt": "..."
+      }
+    ]
+  }
+  ```
+
+  ## Frontend Notes
+
+  Use `direction` to decide the display style:
+
+  - `credit`: money came in
+  - `debit`: money went out
+
+  Use `walletType` to show whether it affected the main wallet or referral wallet.
+
+  For funding transactions, `amount` is the actual amount credited to the wallet after user-paid fees.
+
+  The app can ignore `provider`, `providerReference`, `metadata`, and raw IDs unless a screen specifically needs them.
+}

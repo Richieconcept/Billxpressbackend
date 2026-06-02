@@ -1,0 +1,93 @@
+meta {
+  name: 3. Resend Email OTP
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/resend-email-otp
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{registeredEmail}}"
+  }
+}
+
+docs {
+  # Resend Email OTP
+
+  Sends a fresh 5-digit email verification code to a user who has not verified their email yet.
+
+  Tier 1 registration does not send this automatically. Call this only when the app intentionally starts the optional/future email verification flow.
+
+  ## Endpoint
+
+  `POST /api/v1/auth/resend-email-otp`
+
+  ## When To Use This
+
+  Use this if:
+
+  - the app starts an optional email verification flow
+  - the previous OTP expired
+  - the user requests another verification code
+
+  ## Body Fields
+
+  `email`  
+  The email address used during registration. Prefer the logged-in user's email from `/me`.
+
+  ## Expected Success Response
+
+  Status: `200 OK`
+
+  ```json
+  {
+    "message": "Verification code sent successfully"
+  }
+  ```
+
+  ## Frontend Email Handling
+
+  Do not ask the user to type their email again if the user is logged in.
+
+  Use:
+
+  ```js
+  const email = currentUser.email;
+  ```
+
+  Then call:
+
+  ```js
+  await api.post("/api/v1/auth/resend-email-otp", { email });
+  ```
+
+  ## Rate Limits
+
+  The user can request a new code once every 60 seconds.
+
+  The route also has API-level rate limiting:
+
+  - maximum 3 resend requests per 10 minutes per IP/email
+
+  If they request too early:
+
+  ```json
+  {
+    "message": "Please wait before requesting another code",
+    "retryAfterSeconds": 43
+  }
+  ```
+
+  ## Notes For Frontend
+
+  If the response says the email is already verified, send the user to the normal app/dashboard flow.
+}

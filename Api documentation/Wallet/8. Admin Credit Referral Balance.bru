@@ -1,0 +1,38 @@
+meta {
+  name: Admin - Credit Referral Balance
+  type: http
+  seq: 92
+}
+
+post {
+  url: {{baseUrl}}/api/v1/wallet/admin/referral-credit
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "userId": "{{userId}}",
+    "amount": "{{walletAmount}}",
+    "narration": "Referral earning test credit"
+  }
+}
+
+docs {
+  # Admin - Credit Referral Balance
+
+  This request is for admin/backend testing only.
+
+  This gives us a way to test `Redeem Referral Balance` before the full referral trigger is implemented.
+
+  The frontend user app should not call this endpoint.
+}

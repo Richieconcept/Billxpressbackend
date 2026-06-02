@@ -1,0 +1,178 @@
+meta {
+  name: 1. Register User
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "firstName": "imo",
+    "lastName": "ben",
+    "username": "imoben",
+    "email": "{{registeredEmail}}",
+    "phone": "08125128766",
+    "password": "Password123",
+    "confirmPassword": "Password123",
+    "transactionPin": "1234",
+    "referredBy": ""
+  }
+}
+
+vars:pre-request {
+  registeredEmail: imo@gmail.com
+}
+
+docs {
+  # Register User
+  
+  Creates a new Billxpress user account at `tier_1`.
+  
+  Tier 1 registration does not require email verification and does not send an email OTP.
+  
+  ## Endpoint
+  
+  `POST /api/v1/auth/register`
+  
+  ## Body Fields
+  
+  `firstName`  
+  Required. The user's first name. Some downstream services require this.
+  
+  `lastName`  
+  Required. The user's last name. Some downstream services require this.
+  
+  `username`  
+  The user's unique username. It is saved in lowercase.
+  
+  `email`  
+  The user's email address. This must be real if you want to receive the verification email.
+  In the frontend, keep this email in registration state/client storage after the request succeeds.
+  
+  `phone`  
+  The user's phone number. It must be unique, 11 digits, and start with `0`.
+  
+  `password`  
+  Minimum 5 characters.
+  
+  `confirmPassword`  
+  Must match `password`.
+  
+  `transactionPin`  
+  Exactly 4 digits. This will be used later for wallet and bill payment actions.
+  
+  `referredBy`  
+  Optional. Use another user's referral code if available. Leave empty if there is no referral.
+  
+  ## Frontend 3-Step UI
+  
+  The frontend should collect registration details in 3 screens, but send only one final request to this endpoint.
+  
+  Step 1:
+  
+  - first name
+  - last name
+  - username
+  - phone
+  - email
+  - referral code
+  
+  Step 2:
+  
+  - password
+  - confirm password
+  
+  Step 3:
+  
+  - transaction PIN
+  
+  ## Expected Success Response
+  
+  Status: `201 Created`
+  
+  ```json
+  {
+    "message": "Account created successfully",
+    "requiresVerification": false,
+    "virtualAccount": {
+      "id": "...",
+      "provider": "pocketfi",
+      "bankName": "paga",
+      "accountNumber": "0742053373",
+      "accountName": "Test User (Billxpress)",
+      "status": "active",
+      "createdAt": "...",
+      "accounts": [
+        {
+          "provider": "pocketfi",
+          "bankName": "paga",
+          "accountNumber": "0742053373",
+          "accountName": "Test User (Billxpress)"
+        },
+        {
+          "provider": "pocketfi",
+          "bankName": "kuda",
+          "accountNumber": "1234567890",
+          "accountName": "Test User (Billxpress)"
+        }
+      ],
+      "feePolicy": {
+        "paidBy": "user",
+        "percent": 1,
+        "flat": 0,
+        "message": "Funding fee is 1% and is paid by the user. The wallet is credited with the amount after fee."
+      }
+    },
+    "virtualAccounts": [
+      {
+        "provider": "pocketfi",
+        "bankName": "paga",
+        "accountNumber": "0742053373",
+        "accountName": "Test User (Billxpress)"
+      },
+      {
+        "provider": "pocketfi",
+        "bankName": "kuda",
+        "accountNumber": "1234567890",
+        "accountName": "Test User (Billxpress)"
+      }
+    ],
+    "virtualAccountCreated": true,
+    "virtualAccountError": null,
+    "virtualAccountErrors": [],
+    "user": {
+      "id": "...",
+      "firstName": "Test",
+      "lastName": "User",
+      "username": "testuser",
+      "email": "testuser@example.com",
+      "phone": "08012345678",
+      "role": "user",
+      "referralCode": "TES1234",
+      "referredBy": null,
+      "isActive": true,
+      "emailVerified": false,
+      "authTier": "tier_1",
+      "kycLevel": 0,
+      "createdAt": "..."
+    }
+  }
+  ```
+  
+  Users always register as normal users. Vendors must be approved later by an admin using `PATCH /api/v1/admin/make-vendor/:userId`.
+  
+  After registration succeeds, the user can continue to login. The backend also attempts to create the user's Paga and Kuda funding accounts immediately.
+
+  If `virtualAccount` is `null`, registration still worked. The frontend can later call `Create Virtual Account` from the wallet screen.
+
+  If only one account is returned, show that account and continue.
+}
