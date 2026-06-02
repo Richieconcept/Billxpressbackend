@@ -1,0 +1,114 @@
+meta {
+  name: 7. Confirm One-Time Funding Payment
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/wallet/funding-intents/{{fundingIntentId}}/confirm
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Confirm One-Time Funding Payment
+
+  Use this endpoint for the **I have transferred the money** button.
+
+  ## Endpoint
+
+  `POST /api/v1/wallet/funding-intents/:fundingIntentId/confirm`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## URL Params
+
+  `fundingIntentId`  
+  Required. Use the `fundingIntent.id` returned by `POST /api/v1/wallet/funding-intents`.
+
+  ## Body
+
+  No body is required.
+
+  ## What This Does
+
+  The backend checks the payment status from Monnify. If Monnify confirms the transfer, the backend credits the user's wallet and creates the transaction history.
+
+  The frontend must not credit the wallet by itself.
+
+  ## If Payment Is Still Pending
+
+  ```json
+  {
+    "message": "We have not received this transfer yet. Please wait a moment and try again.",
+    "status": "pending",
+    "alreadyProcessed": false,
+    "fundingIntent": {
+      "id": "...",
+      "status": "pending"
+    }
+  }
+  ```
+
+  Show a friendly waiting state and let the user try again after a few seconds.
+
+  ## If Payment Is Successful
+
+  ```json
+  {
+    "message": "Payment confirmed and wallet credited",
+    "status": "paid",
+    "alreadyProcessed": false,
+    "fundingIntent": {
+      "id": "...",
+      "status": "paid",
+      "amount": 2000,
+      "fee": 20,
+      "amountToReceive": 1980
+    },
+    "wallet": {
+      "mainBalance": 1980,
+      "referralBalance": 0
+    },
+    "transaction": {
+      "type": "funding",
+      "direction": "credit",
+      "amount": 1980,
+      "provider": "monnify",
+      "status": "successful"
+    }
+  }
+  ```
+
+  Show success, update the wallet balance, and display the transaction.
+
+  ## If The Account Expired
+
+  ```json
+  {
+    "message": "This funding account has expired. Please create a new funding account.",
+    "status": "expired",
+    "alreadyProcessed": false,
+    "fundingIntent": {
+      "id": "...",
+      "status": "expired"
+    }
+  }
+  ```
+
+  Ask the user to create a fresh funding account.
+}

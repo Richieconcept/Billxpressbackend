@@ -1,10 +1,16 @@
 import FundingIntent from "../models/fundingIntent.model.js";
+import Transaction from "../models/transaction.model.js";
 import {
+  creditWallet,
   fromMinorUnit,
   generateTransactionReference,
+  getOrCreateWallet,
   toMinorUnit,
 } from "./wallet.service.js";
-import { createMonnifyTransferIntent } from "./monnify.service.js";
+import {
+  createMonnifyTransferIntent,
+  getMonnifyTransactionStatus,
+} from "./monnify.service.js";
 import {
   calculateFundingFee,
   serializeFundingFee,
@@ -80,4 +86,154 @@ export const createMonnifyFundingIntent = async (user, amount) => {
   });
 
   return intent;
+};
+
+const pickFirst = (...values) =>
+  values.find((value) => value !== undefined && value !== null && value !== "");
+
+const toMinorUnitOrZero = (amount) => {
+  const numericAmount = Number(amount);
+
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    return 0;
+  }
+
+  return Math.round(numericAmount * 100);
+};
+
+const normalizeMonnifyStatus = (providerStatus) => {
+  const status = String(providerStatus || "").toUpperCase();
+
+  if (["PAID", "SUCCESS", "SUCCESSFUL", "OVERPAID"].includes(status)) {
+    return "paid";
+  }
+
+  if (["FAILED", "CANCELLED", "CANCELED", "EXPIRED"].includes(status)) {
+    return status === "EXPIRED" ? "expired" : "failed";
+  }
+
+  return "pending";
+};
+
+export const confirmMonnifyFundingIntent = async (user, fundingIntentId) => {
+  if (!fundingIntentId) {
+    const error = new Error("Funding intent ID is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const intent = await FundingIntent.findOne({
+    _id: fundingIntentId,
+    user: user._id,
+    provider: "monnify",
+  });
+
+  if (!intent) {
+    const error = new Error("Funding account not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const existingTransaction = await Transaction.findOne({
+    provider: "monnify",
+    providerReference: intent.providerReference,
+  });
+
+  if (existingTransaction || intent.status === "paid") {
+    const wallet = await getOrCreateWallet(intent.user);
+
+    return {
+      status: "paid",
+      intent,
+      wallet,
+      transaction: existingTransaction,
+      alreadyProcessed: true,
+    };
+  }
+
+  if (intent.expiresAt < new Date()) {
+    intent.status = "expired";
+    await intent.save();
+
+    return {
+      status: "expired",
+      intent,
+      providerTransaction: null,
+    };
+  }
+
+  const providerTransaction = await getMonnifyTransactionStatus(
+    intent.providerReference
+  );
+  const providerStatus = pickFirst(
+    providerTransaction.paymentStatus,
+    providerTransaction.status,
+    providerTransaction.transactionStatus
+  );
+  const status = normalizeMonnifyStatus(providerStatus);
+
+  if (status !== "paid") {
+    if (status === "failed" || status === "expired") {
+      intent.status = status;
+      intent.providerResponse = {
+        ...intent.providerResponse,
+        statusCheck: providerTransaction,
+      };
+      await intent.save();
+    }
+
+    return {
+      status,
+      intent,
+      providerTransaction,
+    };
+  }
+
+  const amountPaid = pickFirst(
+    providerTransaction.amountPaid,
+    providerTransaction.paidAmount,
+    providerTransaction.amount
+  );
+  const amountPaidInMinorUnit = toMinorUnitOrZero(amountPaid);
+
+  if (amountPaidInMinorUnit < intent.amount) {
+    const error = new Error("Payment amount is less than expected funding amount");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const creditResult = await creditWallet({
+    userId: intent.user,
+    amountInMinorUnit: intent.amountToReceive,
+    walletType: "main",
+    type: "funding",
+    reference: generateTransactionReference("MNF"),
+    provider: "monnify",
+    providerReference: intent.providerReference,
+    narration: "Wallet funding via Monnify one-time transfer",
+    metadata: {
+      providerTransaction,
+      fee: intent.fee,
+      grossAmount: intent.amount,
+      amountCredited: intent.amountToReceive,
+      feePaidBy: "user",
+      confirmedBy: "user_status_check",
+    },
+  });
+
+  intent.status = "paid";
+  intent.paidAt = new Date();
+  intent.providerResponse = {
+    ...intent.providerResponse,
+    statusCheck: providerTransaction,
+  };
+  await intent.save();
+
+  return {
+    status: "paid",
+    intent,
+    wallet: creditResult.wallet,
+    transaction: creditResult.transaction,
+    alreadyProcessed: false,
+  };
 };

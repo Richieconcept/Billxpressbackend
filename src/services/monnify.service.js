@@ -169,3 +169,21 @@ export const createMonnifyTransferIntent = async ({
     },
   };
 };
+
+export const getMonnifyTransactionStatus = async (transactionReference) => {
+  if (!transactionReference) {
+    const error = new Error("Monnify transaction reference is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const token = await authenticateMonnify();
+  const response = await requestMonnify(
+    `/api/v2/transactions/${encodeURIComponent(transactionReference)}`,
+    {
+      token,
+    }
+  );
+
+  return getResponseBody(response);
+};

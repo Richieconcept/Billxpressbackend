@@ -94,5 +94,11 @@ docs {
   - Fee: `N20`
   - Amount to receive: `N1,980`
 
-  The frontend should not credit the wallet itself. Monnify sends a webhook after payment, and the backend credits the wallet.
+  When the user taps **I have transferred the money**, call:
+
+  `POST /api/v1/wallet/funding-intents/:fundingIntentId/confirm`
+
+  Use the `fundingIntent.id` from this response as `:fundingIntentId`.
+
+  The frontend should not credit the wallet itself. The backend credits the wallet after Monnify confirms the payment through the webhook or the confirmation endpoint.
 }

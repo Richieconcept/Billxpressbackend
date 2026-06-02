@@ -2,6 +2,7 @@ import Transaction from "../models/transaction.model.js";
 import User from "../models/user.model.js";
 import VirtualAccount from "../models/virtualAccount.model.js";
 import {
+  confirmMonnifyFundingIntent,
   createMonnifyFundingIntent,
   serializeFundingIntent,
 } from "../services/fundingIntent.service.js";
@@ -106,6 +107,51 @@ export const createFundingIntent = async (req, res) => {
     });
   } catch (error) {
     sendWalletError(res, "Could not create funding account", error);
+  }
+};
+
+export const confirmFundingIntent = async (req, res) => {
+  try {
+    const result = await confirmMonnifyFundingIntent(
+      req.user,
+      req.params.fundingIntentId
+    );
+    const response = {
+      message:
+        result.status === "paid"
+          ? "Payment confirmed and wallet credited"
+          : "Payment has not been confirmed yet",
+      status: result.status,
+      alreadyProcessed: Boolean(result.alreadyProcessed),
+      fundingIntent: serializeFundingIntent(result.intent),
+    };
+
+    if (result.status === "pending") {
+      response.message =
+        "We have not received this transfer yet. Please wait a moment and try again.";
+    }
+
+    if (result.status === "expired") {
+      response.message =
+        "This funding account has expired. Please create a new funding account.";
+    }
+
+    if (result.status === "failed") {
+      response.message =
+        "Monnify marked this payment as failed. Please create a new funding account.";
+    }
+
+    if (result.wallet) {
+      response.wallet = serializeWallet(result.wallet);
+    }
+
+    if (result.transaction) {
+      response.transaction = serializeTransaction(result.transaction);
+    }
+
+    res.json(response);
+  } catch (error) {
+    sendWalletError(res, "Could not confirm funding payment", error);
   }
 };
 
