@@ -1,7 +1,7 @@
 meta {
-  name: 13. Admin List Notifications
+  name: 10. Admin List Notifications
   type: http
-  seq: 13
+  seq: 10
 }
 
 get {
@@ -27,7 +27,21 @@ docs {
 
   `GET /api/v1/admin/notifications`
 
+  ## Authentication
+
+  Admin JWT required.
+
   ## Query Params
 
-  `page`, `limit`, `type`, `userId`
+  `page`
+  Optional.
+
+  `limit`
+  Optional.
+
+  `type`
+  Optional. Filter by notification type.
+
+  `userId`
+  Optional. Filter notifications for one user.
 }

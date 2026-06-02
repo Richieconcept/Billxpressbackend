@@ -8,6 +8,13 @@ docs {
 
   These endpoints let the app show in-app notifications, popup notifications after login, unread badges, and mobile push notifications.
 
+  This folder also includes admin notification endpoints because they belong to the notification system:
+
+  ```txt
+  POST /api/v1/admin/notifications
+  GET /api/v1/admin/notifications
+  ```
+
   ## How Push Notifications Work
 
   The React Native app must first get a push token from its push provider, then register it with the backend:
