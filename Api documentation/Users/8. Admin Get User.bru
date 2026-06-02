@@ -1,0 +1,29 @@
+meta {
+  name: 8. Admin Get User
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/users/{{userId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Get User
+
+  Admin views one user with wallet summary and transaction count.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/users/:userId`
+}

@@ -1,0 +1,29 @@
+meta {
+  name: 1. Get My Profile
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/users/me
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Get My Profile
+
+  Gets the logged-in user's profile.
+
+  ## Endpoint
+
+  `GET /api/v1/users/me`
+}

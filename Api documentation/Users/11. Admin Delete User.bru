@@ -1,0 +1,29 @@
+meta {
+  name: 11. Admin Delete User
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/admin/users/{{userId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Delete User
+
+  Soft-deletes a user by setting `isActive` to `false`.
+
+  ## Endpoint
+
+  `DELETE /api/v1/admin/users/:userId`
+}

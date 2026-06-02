@@ -1,0 +1,45 @@
+meta {
+  name: 2. Update My Profile
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/users/me
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "firstName": "Imo",
+    "lastName": "Ben",
+    "username": "imoben",
+    "phone": "08125128766"
+  }
+}
+
+docs {
+  # Update My Profile
+
+  Lets a user update their own basic profile.
+
+  ## Endpoint
+
+  `PATCH /api/v1/users/me`
+
+  ## Editable Fields
+
+  `firstName`, `lastName`, `username`, `phone`
+
+  Email is not editable here for now because email changes should have a verification flow later.
+}

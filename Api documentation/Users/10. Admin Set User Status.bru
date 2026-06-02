@@ -1,0 +1,36 @@
+meta {
+  name: 10. Admin Set User Status
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/users/{{userId}}/status
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "isActive": false
+  }
+}
+
+docs {
+  # Admin Set User Status
+
+  Admin suspends or activates a user.
+
+  ## Endpoint
+
+  `PATCH /api/v1/admin/users/:userId/status`
+}

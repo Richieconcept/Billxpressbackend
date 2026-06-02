@@ -1,0 +1,32 @@
+meta {
+  name: 5. Deactivate My Account
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/users/me
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "password": "Password123"
+  }
+}
+
+docs {
+  # Deactivate My Account
+
+  User deactivates their own account after confirming password.
+}

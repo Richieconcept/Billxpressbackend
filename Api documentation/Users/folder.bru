@@ -1,0 +1,59 @@
+meta {
+  name: Users
+  seq: 4
+}
+
+docs {
+  # User Management APIs
+
+  This folder contains user-side profile management and admin-side user management.
+
+  ## User-Side Endpoints
+
+  These endpoints use the logged-in user's token:
+
+  ```txt
+  GET    /api/v1/users/me
+  PATCH  /api/v1/users/me
+  PATCH  /api/v1/users/me/password
+  PATCH  /api/v1/users/me/transaction-pin
+  DELETE /api/v1/users/me
+  ```
+
+  Users can update their own basic profile, change password, change transaction PIN, and deactivate their account.
+
+  ## Admin-Side Endpoints
+
+  Admin endpoints use:
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  The authenticated user must have:
+
+  ```json
+  {
+    "role": "admin"
+  }
+  ```
+
+  Admin user management endpoints:
+
+  ```txt
+  GET    /api/v1/admin/users
+  POST   /api/v1/admin/users
+  GET    /api/v1/admin/users/:userId
+  PATCH  /api/v1/admin/users/:userId
+  PATCH  /api/v1/admin/users/:userId/status
+  DELETE /api/v1/admin/users/:userId
+  ```
+
+  Role changes are intentionally separate:
+
+  ```txt
+  PATCH /api/v1/admin/make-admin/:userId
+  PATCH /api/v1/admin/remove-admin/:userId
+  PATCH /api/v1/admin/make-vendor/:userId
+  ```
+}

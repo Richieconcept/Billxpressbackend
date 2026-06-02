@@ -1,0 +1,48 @@
+meta {
+  name: 7. Admin Create User
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/admin/users
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "firstName": "Test",
+    "lastName": "User",
+    "username": "testuseradmin",
+    "email": "testuseradmin@example.com",
+    "phone": "08012345678",
+    "password": "Password123",
+    "transactionPin": "1234",
+    "authTier": "tier_1",
+    "kycLevel": 0,
+    "emailVerified": false,
+    "isActive": true
+  }
+}
+
+docs {
+  # Admin Create User
+
+  Admin creates a normal user account.
+
+  ## Endpoint
+
+  `POST /api/v1/admin/users`
+
+  This creates `role: "user"`. To make the user admin or vendor, use the role-specific admin endpoints.
+}

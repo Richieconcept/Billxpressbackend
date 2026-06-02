@@ -1,0 +1,47 @@
+meta {
+  name: 9. Admin Update User
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/users/{{userId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "firstName": "Updated",
+    "lastName": "User",
+    "authTier": "tier_1",
+    "kycLevel": 0,
+    "emailVerified": false,
+    "isActive": true
+  }
+}
+
+docs {
+  # Admin Update User
+
+  Admin updates safe user fields.
+
+  ## Endpoint
+
+  `PATCH /api/v1/admin/users/:userId`
+
+  ## Editable Fields
+
+  `firstName`, `lastName`, `username`, `email`, `phone`, `isActive`, `emailVerified`, `authTier`, `kycLevel`
+
+  Role changes are intentionally not handled here.
+}

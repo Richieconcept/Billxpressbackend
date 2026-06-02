@@ -1,0 +1,46 @@
+meta {
+  name: 6. Admin List Users
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/users?limit=20&page=1
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin List Users
+
+  Admin lists and searches users.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/users`
+
+  ## Query Params
+
+  `search`
+  Search first name, last name, username, email, or phone.
+
+  `role`
+  Optional: `user`, `vendor`, `admin`.
+
+  `status`
+  Optional: `active` or `inactive`.
+
+  `authTier`
+  Optional: `tier_1`, `tier_2`, or `tier_3`.
+
+  `page`, `limit`
+  Pagination.
+}

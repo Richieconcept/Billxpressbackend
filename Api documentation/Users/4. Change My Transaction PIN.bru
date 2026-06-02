@@ -1,0 +1,36 @@
+meta {
+  name: 4. Change My Transaction PIN
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/users/me/transaction-pin
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "currentTransactionPin": "1234",
+    "newTransactionPin": "5678",
+    "confirmTransactionPin": "5678"
+  }
+}
+
+docs {
+  # Change My Transaction PIN
+
+  User changes their 4-digit transaction PIN.
+
+  This PIN is for sensitive wallet/service actions, not backend login.
+}
