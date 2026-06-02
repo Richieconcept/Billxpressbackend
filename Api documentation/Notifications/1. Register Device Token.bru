@@ -1,0 +1,68 @@
+meta {
+  name: 1. Register Device Token
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/notifications/devices
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "token": "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]",
+    "provider": "expo",
+    "platform": "android",
+    "deviceName": "Samsung A15"
+  }
+}
+
+docs {
+  # Register Device Token
+
+  The mobile app calls this after login when it gets a push notification token.
+
+  ## Endpoint
+
+  `POST /api/v1/notifications/devices`
+
+  ## Body Fields
+
+  `token`
+  Required. Push token from the mobile app.
+
+  `provider`
+  Use `expo` for Expo push tokens. Future options are `fcm` and `apns`.
+
+  `platform`
+  `android`, `ios`, `web`, or `unknown`.
+
+  `deviceName`
+  Optional. Friendly device name.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "message": "Device token registered successfully",
+    "device": {
+      "id": "...",
+      "provider": "expo",
+      "platform": "android",
+      "deviceName": "Samsung A15",
+      "isActive": true
+    }
+  }
+  ```
+}

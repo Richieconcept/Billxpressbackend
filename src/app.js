@@ -1,6 +1,7 @@
 import express from "express";
 import adminRoutes from "./routes/admin.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 import testRoutes from "./routes/test.routes.js";
 import walletRoutes from "./routes/wallet.routes.js";
 import webhookRoutes from "./routes/webhook.routes.js";
@@ -44,6 +45,7 @@ app.use(express.json());
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/wallet", walletRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/test", testRoutes);
 
 const getHealthResponse = () => ({

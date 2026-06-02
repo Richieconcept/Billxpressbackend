@@ -1,4 +1,9 @@
 import User from "../models/user.model.js";
+import Notification from "../models/notification.model.js";
+import {
+  createNotificationsForUsers,
+  serializeNotification,
+} from "../services/notification.service.js";
 import { generateApiKey } from "../utils/generateApiKey.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
 
@@ -220,5 +225,123 @@ export const makeVendor = async (req, res) => {
     });
   } catch (error) {
     sendAdminError(res, "Could not upgrade user to vendor", error);
+  }
+};
+
+export const createAdminNotification = async (req, res) => {
+  try {
+    const {
+      target = "user",
+      userId,
+      title,
+      message,
+      type = "admin_announcement",
+      channel = "in_app",
+      priority = "normal",
+      data = {},
+      expiresAt,
+    } = req.body;
+
+    if (!title || !message) {
+      return res.status(400).json({
+        message: "Title and message are required",
+      });
+    }
+
+    let userIds = [];
+
+    if (target === "user") {
+      if (!userId) {
+        return res.status(400).json({
+          message: "userId is required when target is user",
+        });
+      }
+
+      const user = await User.findById(userId);
+
+      if (!user || !user.isActive) {
+        return res.status(404).json({
+          message: "Target user not found or inactive",
+        });
+      }
+
+      userIds = [user._id];
+    } else if (target === "all") {
+      const users = await User.find({ isActive: true }).select("_id");
+      userIds = users.map((user) => user._id);
+    } else {
+      return res.status(400).json({
+        message: "target must be user or all",
+      });
+    }
+
+    const results = await createNotificationsForUsers({
+      userIds,
+      title,
+      message,
+      type,
+      channel,
+      priority,
+      data,
+      createdBy: req.user._id,
+      expiresAt: expiresAt ? new Date(expiresAt) : null,
+    });
+    const successful = results.filter((result) => !result.error);
+    const failed = results.filter((result) => result.error);
+
+    res.status(201).json({
+      message: "Notification created successfully",
+      target,
+      requestedCount: userIds.length,
+      createdCount: successful.length,
+      failedCount: failed.length,
+      notifications: successful.slice(0, 20).map((notification) =>
+        serializeNotification(notification)
+      ),
+      errors: failed,
+    });
+  } catch (error) {
+    sendAdminError(res, "Could not create notification", error);
+  }
+};
+
+export const listAdminNotifications = async (req, res) => {
+  try {
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
+    const skip = (page - 1) * limit;
+    const query = {};
+
+    if (req.query.type) {
+      query.type = req.query.type;
+    }
+
+    if (req.query.userId) {
+      query.user = req.query.userId;
+    }
+
+    const [notifications, total] = await Promise.all([
+      Notification.find(query)
+        .populate("user", "firstName lastName username email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Notification.countDocuments(query),
+    ]);
+
+    res.json({
+      notifications: notifications.map((notification) => ({
+        ...serializeNotification(notification),
+        user: notification.user,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    sendAdminError(res, "Could not fetch notifications", error);
   }
 };

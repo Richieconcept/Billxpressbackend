@@ -13,6 +13,7 @@ import {
 import {
   creditWallet,
   debitWallet,
+  fromMinorUnit,
   generateTransactionReference,
   getOrCreateWallet,
   serializeTransaction,
@@ -20,6 +21,7 @@ import {
   toMinorUnit,
   verifyTransactionPin,
 } from "../services/wallet.service.js";
+import { createNotificationBestEffort } from "../services/notification.service.js";
 
 const sendWalletError = (res, publicMessage, error) => {
   res.status(error.statusCode || 500).json({
@@ -190,6 +192,22 @@ export const redeemReferralBalance = async (req, res) => {
       narration: "Referral earnings credited to main wallet",
     });
 
+    await createNotificationBestEffort({
+      userId: user._id,
+      title: "Referral earnings redeemed",
+      message: `NGN ${fromMinorUnit(
+        amount
+      )} has been moved from referral balance to your main wallet.`,
+      type: "referral_redeem_success",
+      channel: "in_app",
+      priority: "normal",
+      data: {
+        amount: fromMinorUnit(amount),
+        debitReference: debitResult.transaction.reference,
+        creditReference: creditResult.transaction.reference,
+      },
+    });
+
     res.json({
       message: "Referral earnings redeemed successfully",
       wallet: serializeWallet(creditResult.wallet),
@@ -223,6 +241,20 @@ export const adminCreditReferralBalance = async (req, res) => {
       metadata: {
         creditedBy: req.user._id,
       },
+    });
+
+    await createNotificationBestEffort({
+      userId,
+      title: "Referral reward received",
+      message: `You received NGN ${amount} referral reward.`,
+      type: "referral_reward",
+      channel: "both",
+      priority: "normal",
+      data: {
+        amount: Number(amount),
+        reference: result.transaction.reference,
+      },
+      createdBy: req.user._id,
     });
 
     res.status(201).json({

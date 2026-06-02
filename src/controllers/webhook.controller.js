@@ -5,10 +5,12 @@ import VirtualAccount from "../models/virtualAccount.model.js";
 import WebhookEvent from "../models/webhookEvent.model.js";
 import {
   creditWallet,
+  fromMinorUnit,
   generateTransactionReference,
   toMinorUnit,
 } from "../services/wallet.service.js";
 import { calculateFundingFee } from "../services/fundingFee.service.js";
+import { createNotificationBestEffort } from "../services/notification.service.js";
 
 const getRawPayload = (req) => {
   if (Buffer.isBuffer(req.body)) {
@@ -221,7 +223,7 @@ export const handlePocketFiWebhook = async (req, res) => {
       throw new Error("Funding amount after fee must be greater than zero");
     }
 
-    await creditWallet({
+    const creditResult = await creditWallet({
       userId: virtualAccount.user,
       amountInMinorUnit: feeResult.amountToReceive,
       walletType: "main",
@@ -236,6 +238,25 @@ export const handlePocketFiWebhook = async (req, res) => {
         grossAmount: grossAmountInMinorUnit,
         amountCredited: feeResult.amountToReceive,
         feePaidBy: "user",
+      },
+    });
+
+    await createNotificationBestEffort({
+      userId: virtualAccount.user,
+      title: "Wallet funded successfully",
+      message: `Your wallet has been credited with NGN ${fromMinorUnit(
+        feeResult.amountToReceive
+      )}.`,
+      type: "wallet_funding_success",
+      channel: "both",
+      priority: "normal",
+      data: {
+        provider: "pocketfi",
+        amount: fromMinorUnit(feeResult.amountToReceive),
+        grossAmount: fromMinorUnit(grossAmountInMinorUnit),
+        fee: fromMinorUnit(feeResult.fee),
+        reference: creditResult.transaction.reference,
+        providerReference,
       },
     });
 
@@ -334,7 +355,7 @@ export const handleMonnifyWebhook = async (req, res) => {
       throw new Error("Paid amount is less than expected funding amount");
     }
 
-    await creditWallet({
+    const creditResult = await creditWallet({
       userId: intent.user,
       amountInMinorUnit: intent.amountToReceive,
       walletType: "main",
@@ -344,6 +365,26 @@ export const handleMonnifyWebhook = async (req, res) => {
       providerReference,
       narration: "Wallet funding via Monnify one-time transfer",
       metadata: payload,
+    });
+
+    await createNotificationBestEffort({
+      userId: intent.user,
+      title: "Wallet funded successfully",
+      message: `Your wallet has been credited with NGN ${fromMinorUnit(
+        intent.amountToReceive
+      )}.`,
+      type: "wallet_funding_success",
+      channel: "both",
+      priority: "normal",
+      data: {
+        provider: "monnify",
+        amount: fromMinorUnit(intent.amountToReceive),
+        grossAmount: fromMinorUnit(intent.amount),
+        fee: fromMinorUnit(intent.fee),
+        reference: creditResult.transaction.reference,
+        providerReference,
+        paymentReference,
+      },
     });
 
     intent.status = "paid";

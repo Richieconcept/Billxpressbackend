@@ -1,0 +1,31 @@
+meta {
+  name: 6. Mark Notification Seen
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/notifications/{{notificationId}}/seen
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Mark Notification Seen
+
+  Use this after frontend displays a popup notification.
+
+  ## Endpoint
+
+  `PATCH /api/v1/notifications/:notificationId/seen`
+
+  This prevents the same popup from showing again after login.
+}

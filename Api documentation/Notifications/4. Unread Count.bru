@@ -1,0 +1,37 @@
+meta {
+  name: 4. Unread Count
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/notifications/unread-count
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Unread Count
+
+  Use this for notification badges.
+
+  ## Endpoint
+
+  `GET /api/v1/notifications/unread-count`
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "unreadCount": 3
+  }
+  ```
+}

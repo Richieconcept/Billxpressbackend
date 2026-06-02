@@ -1,0 +1,29 @@
+meta {
+  name: 7. Mark All Notifications Read
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/notifications/read-all
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Mark All Notifications Read
+
+  Use this for a notification center "mark all as read" action.
+
+  ## Endpoint
+
+  `PATCH /api/v1/notifications/read-all`
+}

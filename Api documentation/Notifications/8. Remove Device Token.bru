@@ -1,0 +1,36 @@
+meta {
+  name: 8. Remove Device Token
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/notifications/devices
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "token": "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]"
+  }
+}
+
+docs {
+  # Remove Device Token
+
+  Use this on logout or when the app disables push notifications.
+
+  ## Endpoint
+
+  `DELETE /api/v1/notifications/devices`
+}

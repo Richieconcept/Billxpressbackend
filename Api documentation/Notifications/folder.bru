@@ -1,0 +1,57 @@
+meta {
+  name: Notifications
+  seq: 3
+}
+
+docs {
+  # Notification APIs
+
+  These endpoints let the app show in-app notifications, popup notifications after login, unread badges, and mobile push notifications.
+
+  ## How Push Notifications Work
+
+  The React Native app must first get a push token from its push provider, then register it with the backend:
+
+  ```txt
+  POST /api/v1/notifications/devices
+  ```
+
+  After that, the backend can send push notifications when:
+
+  - admin creates an announcement
+  - wallet funding succeeds
+  - referral reward is credited
+  - future service purchase succeeds or fails
+
+  For v1, backend supports Expo push tokens with:
+
+  ```json
+  {
+    "provider": "expo"
+  }
+  ```
+
+  If the app uses bare React Native Firebase later, we can add FCM server delivery while keeping the same device-token endpoint.
+
+  ## Popup Notifications After Login
+
+  After login or app unlock, frontend can call:
+
+  ```txt
+  GET /api/v1/notifications/popup
+  ```
+
+  Show returned notifications as popup cards/modals. After displaying a popup, call:
+
+  ```txt
+  PATCH /api/v1/notifications/:notificationId/seen
+  ```
+
+  This prevents the same popup from showing repeatedly.
+
+  ## Read vs Seen
+
+  `seenAt` means the frontend has displayed the notification popup.
+
+  `readAt` means the user opened/read the notification in the notification center.
+}

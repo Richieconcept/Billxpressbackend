@@ -1,0 +1,69 @@
+meta {
+  name: 2. List Notifications
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/notifications?limit=20&page=1
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # List Notifications
+
+  Use this for the notification center screen.
+
+  ## Endpoint
+
+  `GET /api/v1/notifications`
+
+  ## Query Params
+
+  `page`
+  Optional. Defaults to `1`.
+
+  `limit`
+  Optional. Defaults to `20`. Maximum is `100`.
+
+  `status`
+  Optional. Use `unread` or `read`.
+
+  `type`
+  Optional. Filter by notification type.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "notifications": [
+      {
+        "id": "...",
+        "title": "Wallet funded successfully",
+        "message": "Your wallet has been credited with NGN 990.",
+        "type": "wallet_funding_success",
+        "priority": "normal",
+        "readAt": null,
+        "seenAt": null,
+        "createdAt": "..."
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1,
+      "pages": 1
+    },
+    "unreadCount": 1
+  }
+  ```
+}

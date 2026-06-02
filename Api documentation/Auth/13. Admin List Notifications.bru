@@ -1,0 +1,33 @@
+meta {
+  name: 13. Admin List Notifications
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/notifications?limit=20&page=1
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin List Notifications
+
+  Admin audit endpoint for notifications created or sent by the backend.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/notifications`
+
+  ## Query Params
+
+  `page`, `limit`, `type`, `userId`
+}

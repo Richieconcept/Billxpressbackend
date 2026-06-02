@@ -15,6 +15,7 @@ import {
   calculateFundingFee,
   serializeFundingFee,
 } from "./fundingFee.service.js";
+import { createNotificationBestEffort } from "./notification.service.js";
 
 const getFundingExpiryDate = () => {
   const minutes = Number(process.env.MONNIFY_FUNDING_EXPIRES_MINUTES || 15);
@@ -228,6 +229,27 @@ export const confirmMonnifyFundingIntent = async (user, fundingIntentId) => {
     statusCheck: providerTransaction,
   };
   await intent.save();
+
+  await createNotificationBestEffort({
+    userId: intent.user,
+    title: "Wallet funded successfully",
+    message: `Your wallet has been credited with NGN ${fromMinorUnit(
+      intent.amountToReceive
+    )}.`,
+    type: "wallet_funding_success",
+    channel: "both",
+    priority: "normal",
+    data: {
+      provider: "monnify",
+      amount: fromMinorUnit(intent.amountToReceive),
+      grossAmount: fromMinorUnit(intent.amount),
+      fee: fromMinorUnit(intent.fee),
+      reference: creditResult.transaction.reference,
+      providerReference: intent.providerReference,
+      paymentReference: intent.paymentReference,
+      confirmedBy: "user_status_check",
+    },
+  });
 
   return {
     status: "paid",

@@ -1,0 +1,77 @@
+meta {
+  name: 12. Admin Create Notification
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/v1/admin/notifications
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "target": "user",
+    "userId": "{{userId}}",
+    "title": "Welcome to Billxpress",
+    "message": "Your account is ready. You can now fund your wallet and start using services.",
+    "type": "admin_announcement",
+    "channel": "both",
+    "priority": "normal",
+    "data": {
+      "screen": "wallet"
+    }
+  }
+}
+
+docs {
+  # Admin Create Notification
+
+  Admin creates an in-app notification and optional push/email notification.
+
+  ## Endpoint
+
+  `POST /api/v1/admin/notifications`
+
+  ## Authentication
+
+  Admin JWT required.
+
+  ## Body Fields
+
+  `target`
+  Use `user` for one user or `all` for all active users.
+
+  `userId`
+  Required when `target` is `user`.
+
+  `title`
+  Required.
+
+  `message`
+  Required.
+
+  `channel`
+  Use `in_app`, `push`, `email`, `both`, or `all`.
+
+  `priority`
+  Use `low`, `normal`, or `high`.
+
+  ## Push Notification Note
+
+  Push works only after the mobile app registers a device token with:
+
+  `POST /api/v1/notifications/devices`
+
+  For v1, Expo push tokens are supported.
+}

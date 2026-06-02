@@ -1,0 +1,29 @@
+meta {
+  name: 5. Mark Notification Read
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/notifications/{{notificationId}}/read
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Mark Notification Read
+
+  Use this when the user opens a notification.
+
+  ## Endpoint
+
+  `PATCH /api/v1/notifications/:notificationId/read`
+}

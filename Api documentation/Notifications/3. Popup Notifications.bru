@@ -1,0 +1,52 @@
+meta {
+  name: 3. Popup Notifications
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/notifications/popup
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Popup Notifications
+
+  Call this after login or app unlock.
+
+  ## Endpoint
+
+  `GET /api/v1/notifications/popup`
+
+  ## Frontend Behavior
+
+  If this returns notifications, show them as popup messages.
+
+  After displaying each popup, call `Mark Notification Seen`.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "notifications": [
+      {
+        "id": "...",
+        "title": "Scheduled maintenance",
+        "message": "Billxpress will be unavailable from 12am to 1am.",
+        "type": "admin_announcement",
+        "priority": "high",
+        "seenAt": null
+      }
+    ]
+  }
+  ```
+}
