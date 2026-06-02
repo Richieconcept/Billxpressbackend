@@ -6,7 +6,7 @@ meta {
 docs {
   # Auth Endpoints
 
-  These endpoints handle tier 1 registration, password login, mobile refresh sessions, PIN verification, admin role management, admin vendor approval, optional email OTP verification, API-key auth, and fetching the logged-in user's profile.
+  These endpoints handle tier 1 registration, password login, JWT access tokens, refresh sessions, admin role management, admin vendor approval, optional email OTP verification, API-key auth, and fetching the logged-in user's profile.
 
   ## Current Auth Flow
 
@@ -20,16 +20,16 @@ docs {
   8. Mobile PIN/biometric unlock happens locally on the phone.
   9. After local unlock, frontend calls `Refresh Mobile Session` to get a fresh access token.
 
-  ## Mobile PIN And Biometric Login
+  ## Mobile And Web Session Standard
 
-  The backend does not receive fingerprint or Face ID data.
+  The backend does not receive fingerprint, Face ID, or local app-unlock PIN data.
 
-  Standard mobile flow:
+  Standard flow for mobile, iOS, and web:
 
   1. User logs in once with password using `Login User`.
   2. Backend returns `accessToken` and `refreshToken`.
-  3. Mobile app stores the refresh token securely.
-  4. Next time the app opens, the app asks for PIN or biometric locally.
+  3. App stores the refresh token securely.
+  4. Mobile/iOS can ask for PIN or biometric locally before unlocking the saved session.
   5. If local unlock succeeds, the app calls:
 
   ```txt
@@ -42,17 +42,9 @@ docs {
 
   If refresh fails with `401`, send the user back to password login.
 
-  ## PIN Verification
+  There is no backend PIN-login endpoint. PIN and biometric unlock are frontend/device security. The backend only accepts JWT access tokens and refresh tokens.
 
-  To confirm the user's 4-digit PIN, call:
-
-  ```txt
-  POST /api/v1/auth/verify-pin
-  ```
-
-  This is useful when enabling local PIN/biometric unlock or before sensitive actions.
-
-  Do not use the 4-digit PIN as a password replacement for public backend login.
+  `transactionPin` is still used for sensitive wallet actions, such as redeeming referral balance or future payments/transfers.
 
   ## Admin Role Management
 

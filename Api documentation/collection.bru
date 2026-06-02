@@ -43,20 +43,24 @@ docs {
   Authorization: Bearer {{authToken}}
   ```
 
-  ## Mobile PIN / Biometric Login
+  ## Mobile PIN / Biometric Unlock
 
   Password login returns two tokens:
 
   - `accessToken`: used as `Bearer {{authToken}}` for API calls.
   - `refreshToken`: stored securely by the mobile app.
 
-  PIN and biometric checks happen on the phone. After local PIN/biometric unlock, call:
+  PIN and biometric checks happen on the phone. The backend does not receive fingerprint, Face ID, or local app PIN data.
+
+  After local PIN/biometric unlock, call:
 
   ```txt
   POST /api/v1/auth/refresh-session
   ```
 
   The backend returns a fresh `accessToken` and a rotated `refreshToken`.
+
+  There is no backend PIN-login endpoint. The backend standard is JWT access token + refresh token.
 
   ## Important Auth Rule
 

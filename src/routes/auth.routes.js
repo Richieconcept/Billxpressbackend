@@ -4,7 +4,6 @@ import {
   loginUser,
   refreshSession,
   logoutUser,
-  verifyLoginPin,
   verifyEmailOtp,
   resendEmailOtp,
   getMe,
@@ -46,7 +45,6 @@ router.post("/register", registerLimiter, registerUser);
 router.post("/login", loginLimiter, loginUser);
 router.post("/refresh-session", refreshSession);
 router.post("/logout", logoutUser);
-router.post("/verify-pin", protect, verifyLoginPin);
 router.post("/verify-email-otp", verifyEmailOtpLimiter, verifyEmailOtp);
 router.post("/resend-email-otp", resendEmailOtpLimiter, resendEmailOtp);
 router.get("/me", protect, getMe);

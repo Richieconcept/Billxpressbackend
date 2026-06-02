@@ -96,19 +96,21 @@ docs {
 
   After login succeeds, you can run protected requests like `Get Current User`.
 
-  ## Mobile PIN / Biometric Flow
+  ## Mobile PIN / Biometric Unlock Flow
 
-  The backend does not receive fingerprint or Face ID.
+  The backend does not receive fingerprint, Face ID, or local app PIN data.
 
   Mobile app flow:
 
   1. User logs in with password once.
   2. App stores `refreshToken` securely on the phone.
-  3. On next app open, app asks for PIN or biometric locally.
+  3. On next app open, app asks for PIN or biometric locally on the device.
   4. If local unlock succeeds, app calls `Refresh Mobile Session`.
   5. Backend returns a fresh `accessToken`.
 
   The access token can expire. The refresh token is what keeps mobile login smooth.
+
+  There is no backend PIN-login endpoint. PIN and biometric unlock are handled by the frontend/device.
 
   ## Current Tier 1 Behavior
 

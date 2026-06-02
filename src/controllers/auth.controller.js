@@ -312,34 +312,6 @@ export const logoutUser = async (req, res) => {
   }
 };
 
-export const verifyLoginPin = async (req, res) => {
-  try {
-    const { transactionPin } = req.body;
-    const user = await User.findById(req.user._id).select("+transactionPin");
-
-    if (!transactionPin) {
-      return res.status(400).json({
-        message: "Transaction PIN is required",
-      });
-    }
-
-    const isMatch = await bcrypt.compare(transactionPin, user.transactionPin);
-
-    if (!isMatch) {
-      return res.status(400).json({
-        message: "Invalid transaction PIN",
-      });
-    }
-
-    res.json({
-      message: "PIN verified successfully",
-      pinVerified: true,
-    });
-  } catch (error) {
-    return sendServerError(res, "PIN verification failed", error);
-  }
-};
-
 export const verifyEmailOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
