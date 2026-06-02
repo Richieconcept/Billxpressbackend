@@ -1,0 +1,81 @@
+meta {
+  name: 6. Refresh Mobile Session
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/refresh-session
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "refreshToken": "{{refreshToken}}"
+  }
+}
+
+script:post-response {
+  if (res.body && (res.body.accessToken || res.body.token)) {
+    const accessToken = res.body.accessToken || res.body.token;
+    if (typeof bru.setEnvVar === "function") {
+      bru.setEnvVar("authToken", accessToken);
+    } else {
+      bru.setVar("authToken", accessToken);
+    }
+  }
+  if (res.body && res.body.refreshToken) {
+    if (typeof bru.setEnvVar === "function") {
+      bru.setEnvVar("refreshToken", res.body.refreshToken);
+    } else {
+      bru.setVar("refreshToken", res.body.refreshToken);
+    }
+  }
+}
+
+docs {
+  # Refresh Mobile Session
+
+  Use this after mobile PIN or biometric unlock.
+
+  ## Endpoint
+
+  `POST /api/v1/auth/refresh-session`
+
+  ## Body Fields
+
+  `refreshToken`
+  Required. This is returned by `Login User` and should be stored securely by the mobile app.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "message": "Session refreshed successfully",
+    "token": "new-access-token",
+    "accessToken": "new-access-token",
+    "refreshToken": "new-refresh-token",
+    "session": {
+      "id": "...",
+      "expiresAt": "..."
+    },
+    "user": {
+      "id": "...",
+      "email": "user@example.com"
+    }
+  }
+  ```
+
+  ## Frontend Notes
+
+  The mobile app should verify PIN or biometric locally first. If local unlock succeeds, call this endpoint to get a fresh access token.
+
+  Store the new `refreshToken` returned by this endpoint. The backend rotates refresh tokens for better security.
+
+  If this endpoint returns `401`, send the user back to password login.
+}

@@ -43,6 +43,21 @@ docs {
   Authorization: Bearer {{authToken}}
   ```
 
+  ## Mobile PIN / Biometric Login
+
+  Password login returns two tokens:
+
+  - `accessToken`: used as `Bearer {{authToken}}` for API calls.
+  - `refreshToken`: stored securely by the mobile app.
+
+  PIN and biometric checks happen on the phone. After local PIN/biometric unlock, call:
+
+  ```txt
+  POST /api/v1/auth/refresh-session
+  ```
+
+  The backend returns a fresh `accessToken` and a rotated `refreshToken`.
+
   ## Important Auth Rule
 
   Billxpress does not block login when email is unverified. New users start at `authTier: "tier_1"`. Later dollar card, betting, BVN/KYC, wallet limits, and other sensitive service actions can require a higher `authTier`.

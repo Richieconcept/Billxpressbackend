@@ -1,0 +1,53 @@
+meta {
+  name: 6c. Logout Mobile Session
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/logout
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "refreshToken": "{{refreshToken}}"
+  }
+}
+
+docs {
+  # Logout Mobile Session
+
+  Logs out the current mobile session by revoking the refresh token.
+
+  ## Endpoint
+
+  `POST /api/v1/auth/logout`
+
+  ## Body Fields
+
+  `refreshToken`
+  Required. The refresh token returned by login or refresh session.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "message": "Logged out successfully"
+  }
+  ```
+
+  ## Frontend Notes
+
+  After logout succeeds, delete both tokens from secure storage:
+
+  - access token
+  - refresh token
+
+  The user must login with password again after logout.
+}

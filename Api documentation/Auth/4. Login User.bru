@@ -22,11 +22,19 @@ body:json {
 }
 
 script:post-response {
-  if (res.body && res.body.token) {
+  if (res.body && (res.body.accessToken || res.body.token)) {
+    const accessToken = res.body.accessToken || res.body.token;
     if (typeof bru.setEnvVar === "function") {
-      bru.setEnvVar("authToken", res.body.token);
+      bru.setEnvVar("authToken", accessToken);
     } else {
-      bru.setVar("authToken", res.body.token);
+      bru.setVar("authToken", accessToken);
+    }
+  }
+  if (res.body && res.body.refreshToken) {
+    if (typeof bru.setEnvVar === "function") {
+      bru.setEnvVar("refreshToken", res.body.refreshToken);
+    } else {
+      bru.setVar("refreshToken", res.body.refreshToken);
     }
   }
 }
@@ -34,7 +42,7 @@ script:post-response {
 docs {
   # Login User
 
-  Logs in a user and returns a JWT token.
+  Logs in a user with password and returns an access token plus a mobile refresh token.
 
   ## Endpoint
 
@@ -55,7 +63,14 @@ docs {
   ```json
   {
     "message": "Login successful",
-    "token": "jwt-token-here",
+    "token": "access-token-here",
+    "accessToken": "access-token-here",
+    "refreshToken": "long-mobile-refresh-token-here",
+    "session": {
+      "id": "...",
+      "deviceName": "Android phone",
+      "expiresAt": "..."
+    },
     "user": {
       "id": "...",
       "firstName": "Test",
@@ -72,11 +87,28 @@ docs {
   }
   ```
 
-  ## Auto Save Token
+  ## Auto Save Tokens
 
-  This Bruno request automatically saves the returned token into the `authToken` variable.
+  This Bruno request automatically saves:
+
+  - `accessToken` into `authToken`
+  - `refreshToken` into `refreshToken`
 
   After login succeeds, you can run protected requests like `Get Current User`.
+
+  ## Mobile PIN / Biometric Flow
+
+  The backend does not receive fingerprint or Face ID.
+
+  Mobile app flow:
+
+  1. User logs in with password once.
+  2. App stores `refreshToken` securely on the phone.
+  3. On next app open, app asks for PIN or biometric locally.
+  4. If local unlock succeeds, app calls `Refresh Mobile Session`.
+  5. Backend returns a fresh `accessToken`.
+
+  The access token can expire. The refresh token is what keeps mobile login smooth.
 
   ## Current Tier 1 Behavior
 

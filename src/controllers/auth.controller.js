@@ -9,6 +9,12 @@ import { emailVerificationTemplate } from "../utils/emailTemplates.js";
 import { generateToken } from "../utils/generateToken.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import {
+  createAuthSession,
+  revokeAuthSession,
+  rotateAuthSession,
+  serializeAuthSession,
+} from "../services/authSession.service.js";
 import { getOrCreateWallet } from "../services/wallet.service.js";
 import {
   getOrCreateVirtualAccountForUser,
@@ -29,6 +35,27 @@ const generateReferralCode = (username) => {
   const random = Math.floor(1000 + Math.random() * 9000);
   return username.slice(0, 3).toUpperCase() + random;
 };
+
+const getRefreshTokenFromRequest = (req) =>
+  req.body?.refreshToken || req.headers["x-refresh-token"];
+
+const getDeviceNameFromRequest = (req) =>
+  req.body?.deviceName || req.headers["x-device-name"];
+
+const buildAuthResponse = ({ message, user, token, refreshToken, session }) => ({
+  message,
+  token,
+  accessToken: token,
+  refreshToken,
+  session: serializeAuthSession(session),
+  user: sanitizeUser(user),
+  mobileAuth: {
+    pinUnlockSupported: true,
+    biometricUnlockSupported: true,
+    note:
+      "PIN and biometric are verified on the mobile device. After local unlock, use refreshToken to get a fresh accessToken.",
+  },
+});
 
 // ==========================
 // REGISTER USER
@@ -224,17 +251,92 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // 4. Generate JWT
+    // 4. Generate JWT and mobile refresh session
     const token = generateToken(user);
+    const sessionResult = await createAuthSession({
+      user,
+      deviceName: getDeviceNameFromRequest(req),
+      userAgent: req.headers["user-agent"],
+      ipAddress: req.ip,
+    });
 
     // 5. Return response
-    res.json({
-      message: "Login successful",
-      token,
-      user: sanitizeUser(user),
-    });
+    res.json(
+      buildAuthResponse({
+        message: "Login successful",
+        user,
+        token,
+        refreshToken: sessionResult.refreshToken,
+        session: sessionResult.session,
+      })
+    );
   } catch (error) {
     return sendServerError(res, "Login failed", error);
+  }
+};
+
+export const refreshSession = async (req, res) => {
+  try {
+    const sessionResult = await rotateAuthSession(getRefreshTokenFromRequest(req));
+    const token = generateToken(sessionResult.user);
+
+    res.json(
+      buildAuthResponse({
+        message: "Session refreshed successfully",
+        user: sessionResult.user,
+        token,
+        refreshToken: sessionResult.refreshToken,
+        session: sessionResult.session,
+      })
+    );
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      message: error.statusCode ? error.message : "Could not refresh session",
+      error: process.env.NODE_ENV === "production" ? undefined : error.message,
+    });
+  }
+};
+
+export const logoutUser = async (req, res) => {
+  try {
+    await revokeAuthSession(getRefreshTokenFromRequest(req));
+
+    res.json({
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      message: error.statusCode ? error.message : "Logout failed",
+      error: process.env.NODE_ENV === "production" ? undefined : error.message,
+    });
+  }
+};
+
+export const verifyLoginPin = async (req, res) => {
+  try {
+    const { transactionPin } = req.body;
+    const user = await User.findById(req.user._id).select("+transactionPin");
+
+    if (!transactionPin) {
+      return res.status(400).json({
+        message: "Transaction PIN is required",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(transactionPin, user.transactionPin);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Invalid transaction PIN",
+      });
+    }
+
+    res.json({
+      message: "PIN verified successfully",
+      pinVerified: true,
+    });
+  } catch (error) {
+    return sendServerError(res, "PIN verification failed", error);
   }
 };
 

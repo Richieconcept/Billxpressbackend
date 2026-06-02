@@ -6,7 +6,7 @@ meta {
 docs {
   # Auth Endpoints
 
-  These endpoints handle tier 1 registration, admin role management, admin vendor approval, optional email OTP verification, login, API-key auth, and fetching the logged-in user's profile.
+  These endpoints handle tier 1 registration, password login, mobile refresh sessions, PIN verification, admin role management, admin vendor approval, optional email OTP verification, API-key auth, and fetching the logged-in user's profile.
 
   ## Current Auth Flow
 
@@ -15,8 +15,44 @@ docs {
   3. Backend creates the account as `authTier: "tier_1"`.
   4. Registration does not send an email OTP and does not require email verification.
   5. User can login after registration.
-  6. Frontend stores the returned login token.
-  7. Frontend sends the token as `Bearer {{authToken}}` for protected endpoints.
+  6. Frontend stores the returned `accessToken` and `refreshToken`.
+  7. Frontend sends the access token as `Bearer {{authToken}}` for protected endpoints.
+  8. Mobile PIN/biometric unlock happens locally on the phone.
+  9. After local unlock, frontend calls `Refresh Mobile Session` to get a fresh access token.
+
+  ## Mobile PIN And Biometric Login
+
+  The backend does not receive fingerprint or Face ID data.
+
+  Standard mobile flow:
+
+  1. User logs in once with password using `Login User`.
+  2. Backend returns `accessToken` and `refreshToken`.
+  3. Mobile app stores the refresh token securely.
+  4. Next time the app opens, the app asks for PIN or biometric locally.
+  5. If local unlock succeeds, the app calls:
+
+  ```txt
+  POST /api/v1/auth/refresh-session
+  ```
+
+  6. Backend returns a new `accessToken` and a rotated `refreshToken`.
+
+  The frontend should save the new refresh token every time it calls refresh session.
+
+  If refresh fails with `401`, send the user back to password login.
+
+  ## PIN Verification
+
+  To confirm the user's 4-digit PIN, call:
+
+  ```txt
+  POST /api/v1/auth/verify-pin
+  ```
+
+  This is useful when enabling local PIN/biometric unlock or before sensitive actions.
+
+  Do not use the 4-digit PIN as a password replacement for public backend login.
 
   ## Admin Role Management
 
