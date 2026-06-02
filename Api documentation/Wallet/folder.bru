@@ -25,8 +25,11 @@ docs {
   4. Show the virtual account details on the wallet funding screen.
   5. As an alternative, let the user enter an amount and call `Create One-Time Funding Account`.
   6. Tell the user to transfer money to the account shown.
-  7. After payment, refresh `Get Wallet` and `Get Transactions`.
-  8. If the user has enough referral balance, call `Redeem Referral Balance`.
+  7. When the user taps **I have transferred the money**, call `Confirm One-Time Funding Payment`.
+  8. If the response status is `paid`, update the wallet and transaction UI from the response.
+  9. If the response status is `pending`, show a waiting message and let the user try again after a few seconds.
+  10. After payment, refresh `Get Wallet` and `Get Transactions`.
+  11. If the user has enough referral balance, call `Redeem Referral Balance`.
 
   The frontend should not call payment provider APIs directly.
 

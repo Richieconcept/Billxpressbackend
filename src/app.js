@@ -46,9 +46,21 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/wallet", walletRoutes);
 app.use("/api/v1/test", testRoutes);
 
-// test route
+const getHealthResponse = () => ({
+  status: "ok",
+  message: "Billxpress API is running",
+  service: "billxpress-backend",
+  environment: process.env.NODE_ENV || "development",
+  timestamp: new Date().toISOString(),
+});
+
+// health routes
 app.get("/", (req, res) => {
-  res.send("BillXpress API running...");
+  res.json(getHealthResponse());
+});
+
+app.get("/api/v1/health", (req, res) => {
+  res.json(getHealthResponse());
 });
 
 export default app;

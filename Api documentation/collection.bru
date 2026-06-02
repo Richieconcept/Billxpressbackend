@@ -7,24 +7,41 @@ meta {
 docs {
   # Billxpress Backend API
 
-  This Bruno collection documents the current Billxpress backend endpoints.
+  This Bruno collection documents the Billxpress backend endpoints for frontend developers and testers.
+
+  ## Base URLs
+
+  Production:
+
+  ```txt
+  https://billxpressbackend-production.up.railway.app
+  ```
+
+  Local development:
+
+  ```txt
+  http://localhost:5000
+  ```
+
+  In Bruno, choose the right environment before testing:
+
+  - `Production` for the deployed Railway API.
+  - `Local` when the backend is running on your computer.
 
   ## How to use this collection
 
-  1. Start the backend server with `npm run dev` or `npm start`.
-  2. In Bruno, select the `Local` environment.
-  3. Run `Health Check` first to confirm the server is online.
-  4. Run `Register User`.
-  5. New users are created as `authTier: "tier_1"` and do not need email verification for first registration.
-  6. Run `Login User`. This request saves the login token into `authToken`.
-  7. Run `Get Current User`.
-  8. Run `Wallet / Get Wallet`.
-  9. Run `Wallet / Get Virtual Account`.
-  10. If there is no virtual account, run `Wallet / Create Virtual Account`.
+  1. Select `Production` or `Local`.
+  2. Run `Health Check` first.
+  3. Run `Register User` if you need a new account.
+  4. Run `Login User`. This saves the JWT into `authToken`.
+  5. Run `Get Current User` to confirm the token works.
+  6. Run wallet requests such as `Get Wallet`, `Get Virtual Account`, or `Create One-Time Funding Account`.
 
-  ## Current Base URL
+  Every protected endpoint needs:
 
-  `{{baseUrl}}`
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
 
   ## Important Auth Rule
 
@@ -45,23 +62,29 @@ docs {
 
   Email OTP verification remains available as an optional/future flow, but it is not required for tier 1 registration.
 
-  ## Wallet Frontend Rule
+  ## Wallet Funding Rule
 
-  The frontend should use only Billxpress API endpoints.
+  The frontend should use only Billxpress API endpoints. Do not call PocketFi or Monnify directly from the app.
 
-  For wallet funding, show the virtual account returned by:
+  Permanent funding account:
 
   ```txt
   GET /api/v1/wallet/virtual-account
   ```
 
-  If it does not exist, create it with:
+  One-time Monnify funding account:
 
   ```txt
-  POST /api/v1/wallet/virtual-account
+  POST /api/v1/wallet/funding-intents
   ```
 
-  The frontend should not call payment provider APIs or webhook endpoints directly.
+  When the user taps **I have transferred the money**:
+
+  ```txt
+  POST /api/v1/wallet/funding-intents/:fundingIntentId/confirm
+  ```
+
+  The frontend should never credit the wallet itself. The backend credits the wallet after webhook confirmation or Monnify status confirmation.
 
   Referral earnings are redeemed into the user's main wallet, not withdrawn to bank.
 }

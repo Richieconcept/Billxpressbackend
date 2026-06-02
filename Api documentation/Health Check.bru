@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/
+  url: {{baseUrl}}/api/v1/health
   body: none
   auth: none
 }
@@ -13,7 +13,29 @@ get {
 docs {
   # Health Check
 
-  Use this request to confirm the Billxpress backend server is running.
+  Use this request first. It confirms the Billxpress backend is online before you test auth, wallet, or funding endpoints.
+
+  ## Base URL Used By This Request
+
+  ```txt
+  {{baseUrl}}
+  ```
+
+  Production base URL:
+
+  ```txt
+  https://billxpressbackend-production.up.railway.app
+  ```
+
+  Full production health URL:
+
+  ```txt
+  https://billxpressbackend-production.up.railway.app/api/v1/health
+  ```
+
+  ## Endpoint
+
+  `GET /api/v1/health`
 
   ## Expected Success Response
 
@@ -21,11 +43,29 @@ docs {
 
   Body:
 
-  ```txt
-  BillXpress API running...
+  ```json
+  {
+    "status": "ok",
+    "message": "Billxpress API is running",
+    "service": "billxpress-backend",
+    "environment": "production",
+    "timestamp": "2026-06-02T12:00:00.000Z"
+  }
   ```
 
   ## Common Issues
 
-  If this fails, check that the backend is running on the same port as `baseUrl`.
+  If this fails on production, check Railway deployment logs and required environment variables.
+
+  If this fails locally, start the backend:
+
+  ```txt
+  npm run dev
+  ```
+
+  Then make sure the `Local` environment uses:
+
+  ```txt
+  http://localhost:5000
+  ```
 }
