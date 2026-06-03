@@ -1,8 +1,9 @@
 const BRAND = {
-  name: "Billxpress",
+  name: "BillXpress",
   orange: "#f97316",
   orangeDark: "#c2410c",
   orangeSoft: "#fff7ed",
+  orangeLight: "#ffedd5",
   border: "#fed7aa",
   text: "#111827",
   muted: "#6b7280",
@@ -19,19 +20,29 @@ const escapeHtml = (value = "") =>
 const getSocialLinks = () => [
   {
     label: "X",
-    url: process.env.BILLXPRESS_X_URL,
+    url: process.env.BILLXPRESS_X_URL || "https://x.com/billxpress",
+    icon: "https://cdn.simpleicons.org/x/ffffff",
   },
   {
-    label: "IG",
-    url: process.env.BILLXPRESS_INSTAGRAM_URL,
+    label: "Instagram",
+    url:
+      process.env.BILLXPRESS_INSTAGRAM_URL ||
+      "https://instagram.com/billxpress",
+    icon: "https://cdn.simpleicons.org/instagram/ffffff",
   },
   {
-    label: "FB",
-    url: process.env.BILLXPRESS_FACEBOOK_URL,
+    label: "Facebook",
+    url:
+      process.env.BILLXPRESS_FACEBOOK_URL ||
+      "https://facebook.com/billxpress",
+    icon: "https://cdn.simpleicons.org/facebook/ffffff",
   },
   {
-    label: "IN",
-    url: process.env.BILLXPRESS_LINKEDIN_URL,
+    label: "LinkedIn",
+    url:
+      process.env.BILLXPRESS_LINKEDIN_URL ||
+      "https://linkedin.com/company/billxpress",
+    icon: "https://cdn.simpleicons.org/linkedin/ffffff",
   },
 ];
 
@@ -49,7 +60,7 @@ const renderSocialLinks = () => {
           .map(
             (link) => `
               <a href="${escapeHtml(link.url)}" style="display:inline-block;margin:0 4px;width:32px;height:32px;line-height:32px;border-radius:999px;background:${BRAND.orange};color:#ffffff;font-size:11px;font-weight:700;text-align:center;text-decoration:none;">
-                ${escapeHtml(link.label)}
+                <img src="${escapeHtml(link.icon)}" alt="${escapeHtml(link.label)}" width="15" height="15" style="border:0;display:inline-block;margin-top:8px;vertical-align:top;">
               </a>
             `
           )
@@ -76,7 +87,7 @@ export const billxpressEmailLayout = ({
       <tr>
         <td style="padding:4px 0 24px;">
           <a href="${escapeHtml(action.url)}" style="display:inline-block;background:${BRAND.orange};color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:13px 18px;border-radius:6px;">
-            ${escapeHtml(action.label || "Open Billxpress")}
+            ${escapeHtml(action.label || `Open ${BRAND.name}`)}
           </a>
         </td>
       </tr>
@@ -95,21 +106,25 @@ export const billxpressEmailLayout = ({
         <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
           ${safePreheader}
         </div>
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${BRAND.orangeSoft};margin:0;padding:0;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${BRAND.orangeSoft};background-image:linear-gradient(180deg,${BRAND.orangeLight} 0,#fff7ed 260px);margin:0;padding:0;">
           <tr>
             <td align="center" style="padding:32px 16px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid ${BRAND.border};border-radius:10px;overflow:hidden;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid ${BRAND.border};border-radius:12px;overflow:hidden;box-shadow:0 12px 30px rgba(194,65,12,.12);">
                 <tr>
-                  <td style="background:${BRAND.orange};padding:22px 28px;">
+                  <td style="background:${BRAND.orange};background-image:linear-gradient(135deg,#fb923c 0%,#f97316 45%,#c2410c 100%);padding:24px 28px 18px;">
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                       <tr>
                         <td style="vertical-align:middle;">
-                          <div style="display:inline-block;width:42px;height:42px;line-height:42px;border-radius:10px;background:#ffffff;color:${BRAND.orangeDark};font-weight:800;font-size:22px;text-align:center;">B</div>
-                          <span style="display:inline-block;margin-left:10px;color:#ffffff;font-weight:800;font-size:21px;vertical-align:middle;">${BRAND.name}</span>
+                          <div style="display:inline-block;width:44px;height:44px;line-height:44px;border-radius:12px;background:#ffffff;color:${BRAND.orangeDark};font-weight:800;font-size:23px;text-align:center;">B</div>
+                          <span style="display:inline-block;margin-left:11px;color:#ffffff;font-weight:800;font-size:22px;vertical-align:middle;">${BRAND.name}</span>
+                          <div style="margin-top:14px;color:#ffedd5;font-size:13px;line-height:1.5;font-weight:600;">Fast wallet funding, bill payments, and digital services.</div>
                         </td>
                       </tr>
                     </table>
                   </td>
+                </tr>
+                <tr>
+                  <td style="height:6px;background:#fed7aa;background-image:linear-gradient(90deg,#fed7aa 0%,#fb923c 45%,#f97316 100%);font-size:0;line-height:0;">&nbsp;</td>
                 </tr>
                 <tr>
                   <td style="padding:30px 28px 8px;">
