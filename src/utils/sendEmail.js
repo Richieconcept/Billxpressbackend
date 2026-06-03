@@ -1,6 +1,13 @@
 const BREVO_EMAIL_URL = "https://api.brevo.com/v3/smtp/email";
 
-export const sendEmail = async ({ to, name, subject, htmlContent, textContent }) => {
+export const sendEmail = async ({
+  to,
+  name,
+  subject,
+  htmlContent,
+  textContent,
+  tags = ["notification"],
+}) => {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL;
   const senderName = process.env.BREVO_SENDER_NAME || "Billxpress";
@@ -35,7 +42,7 @@ export const sendEmail = async ({ to, name, subject, htmlContent, textContent })
         subject,
         htmlContent,
         textContent,
-        tags: ["auth", "email-verification"],
+        tags,
       }),
     });
 

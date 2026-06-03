@@ -18,6 +18,8 @@ export const serializeNotification = (notification) => ({
   readAt: notification.readAt,
   seenAt: notification.seenAt,
   deliveredAt: notification.deliveredAt,
+  pushDelivery: notification.pushDelivery,
+  emailDelivery: notification.emailDelivery,
   expiresAt: notification.expiresAt,
   createdBy: notification.createdBy,
   createdAt: notification.createdAt,
@@ -37,7 +39,7 @@ export const serializeDeviceToken = (deviceToken) => ({
 const shouldSendEmail = (channel) => EMAIL_CHANNELS.has(channel);
 const shouldSendPush = (channel) => PUSH_CHANNELS.has(channel);
 
-const sendNotificationEmail = async ({ user, title, message }) => {
+const sendNotificationEmail = async ({ user, title, message, type }) => {
   try {
     await sendEmail({
       to: user.email,
@@ -45,6 +47,7 @@ const sendNotificationEmail = async ({ user, title, message }) => {
       subject: title,
       textContent: message,
       htmlContent: `<p>${message}</p>`,
+      tags: ["notification", type],
     });
 
     return {
@@ -131,6 +134,7 @@ export const createNotification = async ({
       user,
       title,
       message,
+      type,
     });
 
     notification.emailDelivery = emailDelivery;

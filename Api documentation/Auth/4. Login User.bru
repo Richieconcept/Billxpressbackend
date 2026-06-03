@@ -155,6 +155,26 @@ docs {
 
   after login.
 
+  To check whether login email was sent, call:
+
+  ```txt
+  GET /api/v1/notifications?type=security
+  ```
+
+  Then inspect:
+
+  ```json
+  {
+    "emailDelivery": {
+      "attempted": true,
+      "successful": true,
+      "error": null
+    }
+  }
+  ```
+
+  If `successful` is `false`, the `error` field explains why.
+
   ## Rate Limit
 
   Maximum 10 login attempts per 15 minutes per IP/identifier.

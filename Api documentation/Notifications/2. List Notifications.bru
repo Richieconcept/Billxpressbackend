@@ -54,6 +54,16 @@ docs {
         "priority": "normal",
         "readAt": null,
         "seenAt": null,
+        "emailDelivery": {
+          "attempted": true,
+          "successful": false,
+          "error": "Brevo email credentials are not configured"
+        },
+        "pushDelivery": {
+          "attempted": false,
+          "successful": false,
+          "error": "No active device tokens"
+        },
         "createdAt": "..."
       }
     ],
@@ -66,4 +76,14 @@ docs {
     "unreadCount": 1
   }
   ```
+
+  ## Delivery Status
+
+  `emailDelivery`
+  Shows whether backend attempted email delivery and whether it succeeded.
+
+  `pushDelivery`
+  Shows whether backend attempted push delivery and whether it succeeded.
+
+  If login email does not arrive, check the latest `type: "security"` notification and inspect `emailDelivery.error`.
 }
