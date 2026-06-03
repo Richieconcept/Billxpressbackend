@@ -72,6 +72,16 @@ docs {
   
   `referredBy`  
   Optional. Use another user's referral code if available. Leave empty if there is no referral.
+
+  Example with referral:
+
+  ```json
+  {
+    "referredBy": "IMO5751"
+  }
+  ```
+
+  The user who owns `IMO5751` does not earn immediately on registration. They earn only when this new user makes their first successful wallet funding.
   
   ## Frontend 3-Step UI
   
@@ -175,4 +185,10 @@ docs {
   If `virtualAccount` is `null`, registration still worked. The frontend can later call `Create Virtual Account` from the wallet screen.
 
   If only one account is returned, show that account and continue.
+
+  ## Referral Note For Frontend
+
+  If the app has a referral input field, send the value as `referredBy`.
+
+  Do not calculate referral reward on the frontend. The backend automatically credits the referrer after the new user's first successful funding.
 }

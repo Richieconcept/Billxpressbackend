@@ -21,11 +21,25 @@ auth:bearer {
 docs {
   # Referral Summary
 
-  Gets the logged-in user's referral code, referral balance, and reward stats.
+  Use this endpoint for the referral dashboard screen.
+
+  It returns the logged-in user's referral code, reward settings, referral balance, and referral stats.
 
   ## Endpoint
 
   `GET /api/v1/referrals/summary`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Request Body
+
+  No body is required.
 
   ## Expected Success Response
 
@@ -45,4 +59,47 @@ docs {
     }
   }
   ```
+
+  ## Response Field Meaning
+
+  `referralCode`
+  The code this user shares with friends.
+
+  `settings.firstDepositRewardPercent`
+  The percentage reward the referrer earns from the referred user's first successful deposit.
+
+  `settings.minimumRedeemAmount`
+  Minimum referral balance that can be moved into the user's main wallet.
+
+  `referredUsersCount`
+  Total users who registered with this user's referral code.
+
+  `qualifiedRewardsCount`
+  How many referred users have made their first successful deposit and generated a reward.
+
+  `pendingReferralsCount`
+  Referred users who registered but have not yet made their first successful deposit.
+
+  `totalReferralEarned`
+  Total referral reward ever earned by this user.
+
+  `referralBalance`
+  Current referral balance available to redeem into main wallet.
+
+  ## Frontend Notes
+
+  Show this endpoint on the referral dashboard.
+
+  Suggested display:
+
+  - referral code with copy/share button
+  - referral balance
+  - total earned
+  - pending referrals
+  - successful referrals
+  - reward rule: `Earn 3% from your friend's first deposit`
+
+  To redeem referral balance, call:
+
+  `POST /api/v1/wallet/referral/redeem`
 }

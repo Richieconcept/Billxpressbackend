@@ -21,11 +21,78 @@ auth:bearer {
 docs {
   # Referred Users
 
-  Lists users who registered with the logged-in user's referral code.
+  Use this endpoint to show people the logged-in user has invited.
+
+  It lists users who registered with the logged-in user's referral code and shows whether each user has qualified for reward.
 
   ## Endpoint
 
   `GET /api/v1/referrals/referred-users`
 
-  Each user includes whether they have qualified for a first-deposit referral reward.
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Query Params
+
+  `page`
+  Optional. Defaults to `1`.
+
+  `limit`
+  Optional. Defaults to `20`. Maximum is `100`.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "referredUsers": [
+      {
+        "user": {
+          "id": "...",
+          "firstName": "Ben",
+          "lastName": "User",
+          "username": "benuser",
+          "email": "ben@example.com",
+          "phone": "08012345678",
+          "createdAt": "..."
+        },
+        "qualified": true,
+        "reward": {
+          "id": "...",
+          "qualifyingAmount": 1000,
+          "rewardPercent": 3,
+          "rewardAmount": 30,
+          "status": "successful"
+        }
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1,
+      "pages": 1
+    }
+  }
+  ```
+
+  ## Response Field Meaning
+
+  `qualified`
+  `true` means this referred user has made their first successful deposit and reward has been created.
+
+  `reward`
+  Referral reward record. It is `null` if the referred user has not qualified yet.
+
+  ## Frontend Notes
+
+  Show this as the "people you invited" list.
+
+  Suggested status labels:
+
+  - `qualified: true` -> `Reward earned`
+  - `qualified: false` -> `Waiting for first deposit`
 }

@@ -6,11 +6,25 @@ meta {
 docs {
   # Referral APIs
 
-  Referral rewards are based on the referred user's first successful wallet funding only.
+  Use this folder for everything related to referrals:
+
+  - showing the user's referral code
+  - showing referral earning stats
+  - showing users they referred
+  - showing referral reward history
+  - admin auditing referral rewards
+
+  ## Simple Explanation
+
+  User A invites User B with User A's referral code.
+
+  User A does **not** earn when User B only registers.
+
+  User A earns only when User B makes their **first successful wallet funding**.
 
   ## Reward Rule
 
-  If User A refers User B, User A earns a percentage of User B's first successful deposit.
+  If User A refers User B, User A earns a percentage of User B's first successful deposit only once.
 
   Current default:
 
@@ -27,6 +41,77 @@ docs {
 
   The reward is credited to User A's `referralBalance`.
 
+  ## Where Referral Code Comes From
+
+  The user's referral code is returned in login/register/current-user responses:
+
+  ```json
+  {
+    "user": {
+      "referralCode": "IMO5751"
+    }
+  }
+  ```
+
+  The frontend can also call:
+
+  ```txt
+  GET /api/v1/referrals/summary
+  ```
+
+  and use `referral.referralCode`.
+
+  ## How A New User Uses A Referral Code
+
+  During registration, send the inviter's code as `referredBy`:
+
+  ```json
+  {
+    "firstName": "Ben",
+    "lastName": "User",
+    "username": "benuser",
+    "email": "ben@example.com",
+    "phone": "08012345678",
+    "password": "Password123",
+    "confirmPassword": "Password123",
+    "transactionPin": "1234",
+    "referredBy": "IMO5751"
+  }
+  ```
+
+  If there is no referral code, send an empty string or do not send `referredBy`.
+
+  ## When Reward Is Created
+
+  Reward is created automatically by the backend after first successful funding through:
+
+  - PocketFi virtual account webhook
+  - Monnify webhook
+  - Monnify confirm payment endpoint
+
+  The frontend must not calculate or credit referral reward itself.
+
+  ## Frontend Suggested Screens
+
+  Referral dashboard:
+
+  - call `Referral Summary`
+  - show referral code
+  - show referral balance
+  - show total earned
+  - show pending referrals
+  - show qualified rewards
+
+  Referral history:
+
+  - call `Referral Rewards`
+  - show each reward and amount earned
+
+  Referred users:
+
+  - call `Referred Users`
+  - show who signed up and whether they qualified
+
   ## Redeem Rule
 
   Referral balance is not withdrawn outside the platform. Users redeem referral balance into their main spending wallet.
@@ -38,4 +123,10 @@ docs {
   ```
 
   So the user can redeem from NGN 100 upward.
+
+  To redeem referral balance, use the wallet endpoint:
+
+  ```txt
+  POST /api/v1/wallet/referral/redeem
+  ```
 }

@@ -21,9 +21,84 @@ auth:bearer {
 docs {
   # Referral Rewards
 
-  Lists the logged-in user's referral reward history.
+  Use this endpoint for the referral earning history screen.
+
+  It lists rewards the logged-in user has earned from referred users' first deposits.
 
   ## Endpoint
 
   `GET /api/v1/referrals/rewards`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Query Params
+
+  `page`
+  Optional. Defaults to `1`.
+
+  `limit`
+  Optional. Defaults to `20`. Maximum is `100`.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "rewards": [
+      {
+        "id": "...",
+        "trigger": "first_deposit",
+        "qualifyingAmount": 1000,
+        "rewardPercent": 3,
+        "rewardAmount": 30,
+        "status": "successful",
+        "referredUser": {
+          "_id": "...",
+          "firstName": "Ben",
+          "lastName": "User",
+          "username": "benuser",
+          "email": "ben@example.com"
+        },
+        "createdAt": "..."
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1,
+      "pages": 1
+    }
+  }
+  ```
+
+  ## Response Field Meaning
+
+  `qualifyingAmount`
+  Amount the referred user funded on their first successful deposit.
+
+  `rewardPercent`
+  Percentage used to calculate the reward.
+
+  `rewardAmount`
+  Amount credited to the logged-in user's referral wallet.
+
+  `status`
+  `successful` means the referral reward was credited. `failed` means the backend tried but could not complete reward crediting.
+
+  ## Frontend Notes
+
+  Show this as a list of referral earnings.
+
+  Example row:
+
+  ```txt
+  Ben User funded NGN 1,000
+  You earned NGN 30
+  Status: successful
+  ```
 }
