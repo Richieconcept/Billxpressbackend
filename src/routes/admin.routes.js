@@ -16,6 +16,7 @@ import {
   setUserStatus,
   updateUser,
 } from "../controllers/adminUser.controller.js";
+import { listAdminReferralRewards } from "../controllers/referral.controller.js";
 import { authorizeRoles, protect } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -33,6 +34,12 @@ router.patch(
 );
 router.delete("/users/:userId", protect, authorizeRoles("admin"), deleteUser);
 router.get("/admins", protect, authorizeRoles("admin"), listAdmins);
+router.get(
+  "/referrals/rewards",
+  protect,
+  authorizeRoles("admin"),
+  listAdminReferralRewards
+);
 router.patch("/make-admin/:userId", protect, authorizeRoles("admin"), makeAdmin);
 router.get(
   "/notifications",

@@ -1,0 +1,29 @@
+meta {
+  name: 2. Referral Rewards
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/referrals/rewards?limit=20&page=1
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Referral Rewards
+
+  Lists the logged-in user's referral reward history.
+
+  ## Endpoint
+
+  `GET /api/v1/referrals/rewards`
+}

@@ -1,0 +1,48 @@
+meta {
+  name: 1. Referral Summary
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/referrals/summary
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Referral Summary
+
+  Gets the logged-in user's referral code, referral balance, and reward stats.
+
+  ## Endpoint
+
+  `GET /api/v1/referrals/summary`
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "referral": {
+      "referralCode": "IMO5751",
+      "settings": {
+        "firstDepositRewardPercent": 3,
+        "minimumRedeemAmount": 100
+      },
+      "referredUsersCount": 5,
+      "qualifiedRewardsCount": 2,
+      "pendingReferralsCount": 3,
+      "totalReferralEarned": 60,
+      "referralBalance": 60
+    }
+  }
+  ```
+}

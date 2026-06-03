@@ -79,6 +79,7 @@ export const registerUser = async (req, res) => {
     const normalizedUsername = username?.trim().toLowerCase();
     const normalizedEmail = email?.trim().toLowerCase();
     const normalizedPhone = phone?.trim();
+    const normalizedReferredBy = referredBy?.trim().toUpperCase() || null;
 
     // 1. Validate fields
     if (
@@ -162,7 +163,7 @@ export const registerUser = async (req, res) => {
       password: hashedPassword,
       transactionPin: hashedPin,
       referralCode,
-      referredBy: referredBy || null,
+      referredBy: normalizedReferredBy,
       emailVerified: false,
       authTier: "tier_1",
       kycLevel: 0,

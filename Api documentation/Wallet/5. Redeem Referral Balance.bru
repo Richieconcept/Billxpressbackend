@@ -81,11 +81,11 @@ docs {
 
   ## Common Errors
 
-  Referral balance is below the minimum:
+  Referral balance is below the minimum. Current default minimum is `NGN 100`:
 
   ```json
   {
-    "message": "Minimum referral redeem amount is 1000"
+    "message": "Minimum referral redeem amount is 100"
   }
   ```
 
@@ -108,4 +108,6 @@ docs {
   ## Frontend Notes
 
   Only show the redeem button when `referralBalance` is at least the minimum redeem amount.
+
+  Referral earnings are credited from first-deposit referral rewards. If User B funds `NGN 1,000` for the first time after registering with User A's referral code, User A earns `3%`, which is `NGN 30`.
 }

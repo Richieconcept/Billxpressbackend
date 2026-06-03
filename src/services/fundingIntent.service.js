@@ -16,6 +16,7 @@ import {
   serializeFundingFee,
 } from "./fundingFee.service.js";
 import { createNotificationBestEffort } from "./notification.service.js";
+import { processFirstDepositReferralRewardBestEffort } from "./referral.service.js";
 
 const getFundingExpiryDate = () => {
   const minutes = Number(process.env.MONNIFY_FUNDING_EXPIRES_MINUTES || 15);
@@ -249,6 +250,14 @@ export const confirmMonnifyFundingIntent = async (user, fundingIntentId) => {
       paymentReference: intent.paymentReference,
       confirmedBy: "user_status_check",
     },
+  });
+
+  await processFirstDepositReferralRewardBestEffort({
+    referredUserId: intent.user,
+    qualifyingAmountInMinorUnit: intent.amount,
+    fundingTransaction: creditResult.transaction,
+    provider: "monnify",
+    providerReference: intent.providerReference,
   });
 
   return {

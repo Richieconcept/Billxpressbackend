@@ -1,0 +1,40 @@
+meta {
+  name: 4. Admin Referral Rewards
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/referrals/rewards?limit=20&page=1
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Referral Rewards
+
+  Admin audit endpoint for referral rewards.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/referrals/rewards`
+
+  ## Query Params
+
+  `status`
+  Optional: `processing`, `successful`, or `failed`.
+
+  `referrerId`
+  Optional.
+
+  `referredUserId`
+  Optional.
+}

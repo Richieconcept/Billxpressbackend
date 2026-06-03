@@ -1,0 +1,31 @@
+meta {
+  name: 3. Referred Users
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/referrals/referred-users?limit=20&page=1
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Referred Users
+
+  Lists users who registered with the logged-in user's referral code.
+
+  ## Endpoint
+
+  `GET /api/v1/referrals/referred-users`
+
+  Each user includes whether they have qualified for a first-deposit referral reward.
+}

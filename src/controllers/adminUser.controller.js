@@ -203,7 +203,7 @@ export const createUser = async (req, res) => {
       password: await bcrypt.hash(password, 10),
       transactionPin: await bcrypt.hash(transactionPin, 10),
       referralCode: await generateUniqueReferralCode(normalizedUsername),
-      referredBy: referredBy || null,
+      referredBy: referredBy?.trim().toUpperCase() || null,
       role: "user",
       authTier,
       kycLevel,

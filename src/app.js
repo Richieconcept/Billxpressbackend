@@ -2,6 +2,7 @@ import express from "express";
 import adminRoutes from "./routes/admin.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import referralRoutes from "./routes/referral.routes.js";
 import testRoutes from "./routes/test.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import walletRoutes from "./routes/wallet.routes.js";
@@ -48,6 +49,7 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/wallet", walletRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/referrals", referralRoutes);
 app.use("/api/v1/test", testRoutes);
 
 const getHealthResponse = () => ({

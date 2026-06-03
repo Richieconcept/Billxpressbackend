@@ -11,6 +11,7 @@ import {
 } from "../services/wallet.service.js";
 import { calculateFundingFee } from "../services/fundingFee.service.js";
 import { createNotificationBestEffort } from "../services/notification.service.js";
+import { processFirstDepositReferralRewardBestEffort } from "../services/referral.service.js";
 
 const getRawPayload = (req) => {
   if (Buffer.isBuffer(req.body)) {
@@ -260,6 +261,14 @@ export const handlePocketFiWebhook = async (req, res) => {
       },
     });
 
+    await processFirstDepositReferralRewardBestEffort({
+      referredUserId: virtualAccount.user,
+      qualifyingAmountInMinorUnit: grossAmountInMinorUnit,
+      fundingTransaction: creditResult.transaction,
+      provider: "pocketfi",
+      providerReference,
+    });
+
     webhookEvent.processed = true;
     await webhookEvent.save();
 
@@ -385,6 +394,14 @@ export const handleMonnifyWebhook = async (req, res) => {
         providerReference,
         paymentReference,
       },
+    });
+
+    await processFirstDepositReferralRewardBestEffort({
+      referredUserId: intent.user,
+      qualifyingAmountInMinorUnit: intent.amount,
+      fundingTransaction: creditResult.transaction,
+      provider: "monnify",
+      providerReference,
     });
 
     intent.status = "paid";

@@ -1,0 +1,41 @@
+meta {
+  name: Referrals
+  seq: 5
+}
+
+docs {
+  # Referral APIs
+
+  Referral rewards are based on the referred user's first successful wallet funding only.
+
+  ## Reward Rule
+
+  If User A refers User B, User A earns a percentage of User B's first successful deposit.
+
+  Current default:
+
+  ```txt
+  REFERRAL_FIRST_DEPOSIT_REWARD_PERCENT=3
+  ```
+
+  Example:
+
+  ```txt
+  User B first deposit: NGN 1,000
+  User A reward: 3% = NGN 30
+  ```
+
+  The reward is credited to User A's `referralBalance`.
+
+  ## Redeem Rule
+
+  Referral balance is not withdrawn outside the platform. Users redeem referral balance into their main spending wallet.
+
+  Current default minimum:
+
+  ```txt
+  REFERRAL_MIN_REDEEM_AMOUNT=100
+  ```
+
+  So the user can redeem from NGN 100 upward.
+}
