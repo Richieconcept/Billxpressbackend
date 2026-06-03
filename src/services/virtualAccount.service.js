@@ -16,7 +16,7 @@ const formatPocketFiAccountName = (accountName) => {
     return normalizedAccountName;
   }
 
-  return `${normalizedAccountName} (Billxpress)`;
+  return `${normalizedAccountName} (BillXpress)`;
 };
 
 export const serializeVirtualAccount = (virtualAccount) => ({

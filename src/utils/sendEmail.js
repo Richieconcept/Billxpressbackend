@@ -10,7 +10,7 @@ export const sendEmail = async ({
 }) => {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL;
-  const senderName = process.env.BREVO_SENDER_NAME || "Billxpress";
+  const senderName = process.env.BREVO_SENDER_NAME || "BillXpress";
 
   if (!apiKey || !senderEmail) {
     throw new Error("Brevo email credentials are not configured");

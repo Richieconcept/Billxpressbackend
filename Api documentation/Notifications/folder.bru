@@ -56,15 +56,23 @@ docs {
 
   ## Email Design
 
-  Backend email notifications use the Billxpress orange theme.
+  Backend email notifications use the BillXpress orange theme.
 
-  The footer includes social media icon buttons. By default, they point to `billxpress` handles:
+  The footer includes visible social media buttons with icon-style labels and text labels. This is intentional because some email apps hide external images, but they will still show the social links.
+
+  By default, the links point to `billxpress` handles:
 
   ```txt
   BILLXPRESS_X_URL=https://x.com/billxpress
   BILLXPRESS_INSTAGRAM_URL=https://instagram.com/billxpress
   BILLXPRESS_FACEBOOK_URL=https://facebook.com/billxpress
   BILLXPRESS_LINKEDIN_URL=https://linkedin.com/company/billxpress
+  ```
+
+  If the sender name still shows with the old lowercase brand spelling in a live email, update this Railway/Brevo environment value:
+
+  ```txt
+  BREVO_SENDER_NAME=BillXpress
   ```
 
   ## Popup Notifications After Login

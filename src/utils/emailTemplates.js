@@ -20,29 +20,29 @@ const escapeHtml = (value = "") =>
 const getSocialLinks = () => [
   {
     label: "X",
+    iconText: "X",
     url: process.env.BILLXPRESS_X_URL || "https://x.com/billxpress",
-    icon: "https://cdn.simpleicons.org/x/ffffff",
   },
   {
     label: "Instagram",
+    iconText: "IG",
     url:
       process.env.BILLXPRESS_INSTAGRAM_URL ||
       "https://instagram.com/billxpress",
-    icon: "https://cdn.simpleicons.org/instagram/ffffff",
   },
   {
     label: "Facebook",
+    iconText: "f",
     url:
       process.env.BILLXPRESS_FACEBOOK_URL ||
       "https://facebook.com/billxpress",
-    icon: "https://cdn.simpleicons.org/facebook/ffffff",
   },
   {
     label: "LinkedIn",
+    iconText: "in",
     url:
       process.env.BILLXPRESS_LINKEDIN_URL ||
       "https://linkedin.com/company/billxpress",
-    icon: "https://cdn.simpleicons.org/linkedin/ffffff",
   },
 ];
 
@@ -56,15 +56,19 @@ const renderSocialLinks = () => {
   return `
     <tr>
       <td align="center" style="padding:18px 0 0;">
-        ${links
-          .map(
-            (link) => `
-              <a href="${escapeHtml(link.url)}" style="display:inline-block;margin:0 4px;width:32px;height:32px;line-height:32px;border-radius:999px;background:${BRAND.orange};color:#ffffff;font-size:11px;font-weight:700;text-align:center;text-decoration:none;">
-                <img src="${escapeHtml(link.icon)}" alt="${escapeHtml(link.label)}" width="15" height="15" style="border:0;display:inline-block;margin-top:8px;vertical-align:top;">
-              </a>
-            `
-          )
-          .join("")}
+        <div style="background:#fff7ed;border:1px solid ${BRAND.border};border-radius:12px;padding:14px 12px 12px;">
+          <div style="margin:0 0 10px;color:${BRAND.orangeDark};font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Follow ${BRAND.name}</div>
+          ${links
+            .map(
+              (link) => `
+                <a href="${escapeHtml(link.url)}" style="display:inline-block;margin:4px 3px;padding:7px 10px;border-radius:999px;background:#ffffff;border:1px solid ${BRAND.border};color:${BRAND.orangeDark};font-size:12px;font-weight:700;text-decoration:none;">
+                  <span style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:999px;background:${BRAND.orange};color:#ffffff;font-size:10px;font-weight:800;text-align:center;vertical-align:middle;">${escapeHtml(link.iconText)}</span>
+                  <span style="display:inline-block;margin-left:6px;vertical-align:middle;">${escapeHtml(link.label)}</span>
+                </a>
+              `
+            )
+            .join("")}
+        </div>
       </td>
     </tr>
   `;
@@ -118,6 +122,7 @@ export const billxpressEmailLayout = ({
                           <div style="display:inline-block;width:44px;height:44px;line-height:44px;border-radius:12px;background:#ffffff;color:${BRAND.orangeDark};font-weight:800;font-size:23px;text-align:center;">B</div>
                           <span style="display:inline-block;margin-left:11px;color:#ffffff;font-weight:800;font-size:22px;vertical-align:middle;">${BRAND.name}</span>
                           <div style="margin-top:14px;color:#ffedd5;font-size:13px;line-height:1.5;font-weight:600;">Fast wallet funding, bill payments, and digital services.</div>
+                          <div style="display:inline-block;margin-top:12px;padding:6px 10px;border-radius:999px;background:#fff7ed;color:${BRAND.orangeDark};font-size:12px;font-weight:800;">Secure ${BRAND.name} alert</div>
                         </td>
                       </tr>
                     </table>
@@ -200,12 +205,12 @@ export const emailVerificationTemplate = ({ username, otp }) => {
   const safeUsername = username || "there";
 
   return {
-    subject: "Your Billxpress verification code",
-    textContent: `Hi ${safeUsername}, your Billxpress verification code is ${otp}. This code expires in 10 minutes.`,
+    subject: `Your ${BRAND.name} verification code`,
+    textContent: `Hi ${safeUsername}, your ${BRAND.name} verification code is ${otp}. This code expires in 10 minutes.`,
     htmlContent: billxpressEmailLayout({
       title: "Verify your email",
-      preheader: `Your Billxpress verification code is ${otp}`,
-      greeting: `Hi ${safeUsername}, welcome to Billxpress.`,
+      preheader: `Your ${BRAND.name} verification code is ${otp}`,
+      greeting: `Hi ${safeUsername}, welcome to ${BRAND.name}.`,
       body: `
         <p style="margin:0 0 18px;">Use this code to verify your email address.</p>
         <div style="margin:0 0 18px;padding:18px 20px;background:#ffedd5;border:1px solid #fdba74;border-radius:8px;font-size:32px;font-weight:800;letter-spacing:5px;text-align:center;color:${BRAND.orangeDark};">
@@ -213,7 +218,7 @@ export const emailVerificationTemplate = ({ username, otp }) => {
         </div>
       `,
       footerNote:
-        "This code expires in 10 minutes. If you did not create a Billxpress account, you can ignore this email.",
+        `This code expires in 10 minutes. If you did not create a ${BRAND.name} account, you can ignore this email.`,
     }),
   };
 };

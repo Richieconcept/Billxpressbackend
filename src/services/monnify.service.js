@@ -99,7 +99,7 @@ export const createMonnifyTransferIntent = async ({
     customerName,
     customerEmail,
     paymentReference,
-    paymentDescription: "Billxpress wallet funding",
+    paymentDescription: "BillXpress wallet funding",
     paymentMethods: ["ACCOUNT_TRANSFER"],
   };
   const initResponse = await requestMonnify(

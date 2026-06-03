@@ -23,7 +23,7 @@ body:json {
   {
     "target": "user",
     "userId": "{{userId}}",
-    "title": "Welcome to Billxpress",
+    "title": "Welcome to BillXpress",
     "message": "Your account is ready. You can now fund your wallet and start using services.",
     "type": "admin_announcement",
     "channel": "both",
@@ -38,6 +38,8 @@ docs {
   # Admin Create Notification
 
   Admin creates an in-app notification and optional push/email notification.
+
+  If `channel` is `email`, `both`, or `all`, the user can receive a branded BillXpress email with the orange theme and social links in the footer.
 
   ## Endpoint
 

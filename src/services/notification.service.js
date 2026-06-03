@@ -48,7 +48,7 @@ const sendNotificationEmail = async ({ user, title, message, type }) => {
       message,
       footerNote:
         type === "security"
-          ? "If this login was not you, change your password immediately and contact Billxpress support."
+          ? "If this login was not you, change your password immediately and contact BillXpress support."
           : undefined,
     });
 

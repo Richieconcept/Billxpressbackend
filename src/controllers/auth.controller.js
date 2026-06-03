@@ -269,9 +269,9 @@ export const loginUser = async (req, res) => {
     if (shouldNotifyOnLogin()) {
       await createNotificationBestEffort({
         userId: user._id,
-        title: "New login to your Billxpress account",
+        title: "New login to your BillXpress account",
         message:
-          "Your Billxpress account was just logged in. If this was not you, please change your password immediately.",
+          "Your BillXpress account was just logged in. If this was not you, please change your password immediately.",
         type: "security",
         channel: process.env.AUTH_LOGIN_NOTIFICATION_CHANNEL || "both",
         priority: "normal",

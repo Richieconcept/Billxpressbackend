@@ -28,7 +28,7 @@ docs {
 
   Use this endpoint when a logged-in user does not yet have a wallet funding account.
 
-  This creates a permanent bank account number the user can transfer money into to fund their Billxpress wallet.
+  This creates a permanent bank account number the user can transfer money into to fund their BillXpress wallet.
 
   ## Endpoint
 
@@ -64,19 +64,19 @@ docs {
       "provider": "pocketfi",
       "bankName": "paga",
       "accountNumber": "0742053373",
-      "accountName": "Test User (Billxpress)",
+      "accountName": "Test User (BillXpress)",
       "accounts": [
         {
           "provider": "pocketfi",
           "bankName": "paga",
           "accountNumber": "0742053373",
-          "accountName": "Test User (Billxpress)"
+          "accountName": "Test User (BillXpress)"
         },
         {
           "provider": "pocketfi",
           "bankName": "kuda",
           "accountNumber": "1234567890",
-          "accountName": "Test User (Billxpress)"
+          "accountName": "Test User (BillXpress)"
         }
       ],
       "feePolicy": {
@@ -98,13 +98,13 @@ docs {
       "virtualAccount": {
       "bankName": "paga",
       "accountNumber": "0742053373",
-      "accountName": "Test User (Billxpress)",
+      "accountName": "Test User (BillXpress)",
       "accounts": [
         {
           "provider": "pocketfi",
           "bankName": "paga",
           "accountNumber": "0742053373",
-          "accountName": "Test User (Billxpress)"
+          "accountName": "Test User (BillXpress)"
         }
       ],
       "feePolicy": {
@@ -121,7 +121,7 @@ docs {
 
   After success, show every item in `virtualAccount.accounts` on the funding screen. If `accounts` is empty for an older user, show the top-level `bankName`, `accountNumber`, and `accountName`.
 
-  `accountName` is the PocketFi account name formatted with `(Billxpress)` for display, so it matches what users see when transferring.
+  `accountName` is the PocketFi account name formatted with `(BillXpress)` for display, so it matches what users see when transferring.
 
   `feePolicy` tells the frontend what to show before the user transfers. If the user transfers `N2,000` and the fee is `1%`, the fee is `N20` and the wallet receives `N1,980`.
 }
