@@ -1,6 +1,7 @@
 import DeviceToken from "../models/deviceToken.model.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
+import { notificationEmailTemplate } from "../utils/emailTemplates.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendExpoPushNotifications } from "./pushNotification.service.js";
 
@@ -41,12 +42,20 @@ const shouldSendPush = (channel) => PUSH_CHANNELS.has(channel);
 
 const sendNotificationEmail = async ({ user, title, message, type }) => {
   try {
+    const template = notificationEmailTemplate({
+      name: `${user.firstName} ${user.lastName}`.trim() || user.username,
+      title,
+      message,
+      footerNote:
+        type === "security"
+          ? "If this login was not you, change your password immediately and contact Billxpress support."
+          : undefined,
+    });
+
     await sendEmail({
       to: user.email,
       name: `${user.firstName} ${user.lastName}`.trim() || user.username,
-      subject: title,
-      textContent: message,
-      htmlContent: `<p>${message}</p>`,
+      ...template,
       tags: ["notification", type],
     });
 

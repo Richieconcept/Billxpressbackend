@@ -54,6 +54,21 @@ docs {
 
   `both` means in-app + push + email attempt. If Brevo is not configured on the deployed server, in-app notification still works but email delivery will fail silently and be stored on the notification delivery status.
 
+  ## Email Design
+
+  Backend email notifications use the Billxpress orange theme.
+
+  Optional social links can be configured with:
+
+  ```txt
+  BILLXPRESS_X_URL=
+  BILLXPRESS_INSTAGRAM_URL=
+  BILLXPRESS_FACEBOOK_URL=
+  BILLXPRESS_LINKEDIN_URL=
+  ```
+
+  If these values are empty, the email still works but social buttons are hidden.
+
   ## Popup Notifications After Login
 
   After login or app unlock, frontend can call:
