@@ -128,6 +128,33 @@ docs {
 
   Later features like dollar card, betting, BVN-gated flows, wallet limits, or other KYC-sensitive actions can require a higher `authTier`.
 
+  ## Login Security Notification
+
+  After successful login, the backend creates a `security` notification.
+
+  Default behavior:
+
+  ```txt
+  AUTH_LOGIN_NOTIFICATION_ENABLED=true
+  AUTH_LOGIN_NOTIFICATION_CHANNEL=both
+  ```
+
+  This means the backend attempts:
+
+  - in-app notification
+  - email notification
+  - push notification if the user has registered a device token
+
+  The frontend does not need to send a separate notification request after login.
+
+  If the app wants to show login popups, call:
+
+  ```txt
+  GET /api/v1/notifications/popup
+  ```
+
+  after login.
+
   ## Rate Limit
 
   Maximum 10 login attempts per 15 minutes per IP/identifier.

@@ -25,6 +25,7 @@ docs {
 
   After that, the backend can send push notifications when:
 
+  - user logs in
   - admin creates an announcement
   - wallet funding succeeds
   - referral reward is credited
@@ -39,6 +40,19 @@ docs {
   ```
 
   If the app uses bare React Native Firebase later, we can add FCM server delivery while keeping the same device-token endpoint.
+
+  ## Email Notifications
+
+  Email notifications use Brevo.
+
+  Login security notification is enabled by default:
+
+  ```txt
+  AUTH_LOGIN_NOTIFICATION_ENABLED=true
+  AUTH_LOGIN_NOTIFICATION_CHANNEL=both
+  ```
+
+  `both` means in-app + push + email attempt. If Brevo is not configured on the deployed server, in-app notification still works but email delivery will fail silently and be stored on the notification delivery status.
 
   ## Popup Notifications After Login
 

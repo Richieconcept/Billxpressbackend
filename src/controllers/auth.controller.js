@@ -20,6 +20,7 @@ import {
   getOrCreateVirtualAccountForUser,
   serializeVirtualAccount,
 } from "../services/virtualAccount.service.js";
+import { createNotificationBestEffort } from "../services/notification.service.js";
 
 const sendServerError = (res, publicMessage, error) => {
   console.error(publicMessage, error);
@@ -41,6 +42,10 @@ const getRefreshTokenFromRequest = (req) =>
 
 const getDeviceNameFromRequest = (req) =>
   req.body?.deviceName || req.headers["x-device-name"];
+
+const shouldNotifyOnLogin = () =>
+  String(process.env.AUTH_LOGIN_NOTIFICATION_ENABLED || "true").toLowerCase() ===
+  "true";
 
 const buildAuthResponse = ({ message, user, token, refreshToken, session }) => ({
   message,
@@ -260,6 +265,23 @@ export const loginUser = async (req, res) => {
       userAgent: req.headers["user-agent"],
       ipAddress: req.ip,
     });
+
+    if (shouldNotifyOnLogin()) {
+      await createNotificationBestEffort({
+        userId: user._id,
+        title: "New login to your Billxpress account",
+        message:
+          "Your Billxpress account was just logged in. If this was not you, please change your password immediately.",
+        type: "security",
+        channel: process.env.AUTH_LOGIN_NOTIFICATION_CHANNEL || "both",
+        priority: "normal",
+        data: {
+          deviceName: getDeviceNameFromRequest(req) || null,
+          ipAddress: req.ip,
+          userAgent: req.headers["user-agent"] || null,
+        },
+      });
+    }
 
     // 5. Return response
     res.json(
