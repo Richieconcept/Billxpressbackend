@@ -2,10 +2,11 @@ const BRAND = {
   name: "BillXpress",
   orange: "#f97316",
   orangeDark: "#c2410c",
-  navy: "#123f52",
-  paleBlue: "#dff2fb",
-  pageBg: "#f3f3f3",
-  border: "#e5e7eb",
+  orangeSoft: "#fff3e8",
+  orangeLight: "#ffedd5",
+  navy: "#2f2418",
+  pageBg: "#fff8f1",
+  border: "#fed7aa",
   text: "#243746",
   muted: "#64748b",
 };
@@ -69,25 +70,6 @@ const getSocialLinks = () => [
   },
 ];
 
-const serviceTiles = [
-  {
-    label: "Pay TV Subscription",
-    iconText: "TV",
-  },
-  {
-    label: "Pay Electricity Bills",
-    iconText: "E",
-  },
-  {
-    label: "Buy Airtime",
-    iconText: "AIR",
-  },
-  {
-    label: "Buy Data",
-    iconText: "DATA",
-  },
-];
-
 const renderLogo = () => {
   const logoUrl = getLogoUrl();
 
@@ -106,33 +88,6 @@ const renderLogo = () => {
     </table>
   `;
 };
-
-const renderServiceTiles = () => `
-  <tr>
-    <td style="padding:18px 18px 20px;border-top:1px solid ${BRAND.border};border-bottom:1px solid ${BRAND.border};">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-        <tr>
-          ${serviceTiles
-            .map(
-              (tile) => `
-                <td width="25%" align="center" style="padding:0 5px;">
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fafafa;border:1px solid #f0f0f0;">
-                    <tr>
-                      <td align="center" style="padding:15px 5px 12px;">
-                        <div style="width:30px;height:30px;border-radius:8px;background:#fff3e8;color:${BRAND.orangeDark};font-size:10px;font-weight:800;line-height:30px;text-align:center;margin:0 auto 8px;">${escapeHtml(tile.iconText)}</div>
-                        <div style="color:#000000;font-size:11px;line-height:15px;font-weight:700;">${escapeHtml(tile.label)}</div>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              `
-            )
-            .join("")}
-        </tr>
-      </table>
-    </td>
-  </tr>
-`;
 
 const renderStoreLinks = () => {
   const links = getStoreLinks().filter((link) => link.url);
@@ -211,9 +166,9 @@ export const billxpressEmailLayout = ({
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${BRAND.pageBg};margin:0;padding:0;">
           <tr>
             <td align="center" style="padding:8px 10px 24px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:500px;background:#ffffff;border-top:4px solid ${BRAND.navy};">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:500px;background:#ffffff;border-top:4px solid ${BRAND.orange};">
                 <tr>
-                  <td style="background:${BRAND.paleBlue};padding:42px 32px 40px;">
+                  <td style="background:${BRAND.orangeSoft};padding:42px 32px 40px;">
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                       <tr>
                         <td width="58%" valign="middle" style="vertical-align:middle;">
@@ -245,7 +200,6 @@ export const billxpressEmailLayout = ({
                     }
                   </td>
                 </tr>
-                ${renderServiceTiles()}
                 <tr>
                   <td style="padding:23px 25px 20px;">
                     <p style="margin:0 0 16px;color:#374151;font-size:11px;line-height:16px;">
