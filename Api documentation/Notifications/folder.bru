@@ -56,13 +56,36 @@ docs {
 
   ## Email Design
 
-  Backend email notifications use the BillXpress orange theme.
+  Backend email notifications now use one shared BillXpress template for all emails.
 
-  The footer includes visible social media buttons with icon-style labels and text labels. This is intentional because some email apps hide external images, but they will still show the social links.
+  The design is a centered email card with:
+
+  - dark top border
+  - light blue header
+  - BillXpress logo on the left
+  - `Need Help? Click here for support` on the right
+  - message content
+  - four service boxes: TV, electricity, airtime, and data
+  - support email/phone
+  - app store buttons when links are configured
+  - social media buttons
+
+  To show the exact logo in the email header, upload the logo somewhere public and set:
+
+  ```txt
+  BILLXPRESS_LOGO_URL=https://yourdomain.com/billxpress-logo.png
+  ```
+
+  If `BILLXPRESS_LOGO_URL` is empty, the email still works but shows a text fallback logo.
 
   By default, the links point to `billxpress` handles:
 
   ```txt
+  BILLXPRESS_SUPPORT_EMAIL=support@billxpress.com
+  BILLXPRESS_SUPPORT_PHONE=
+  BILLXPRESS_SUPPORT_URL=
+  BILLXPRESS_APP_STORE_URL=
+  BILLXPRESS_PLAY_STORE_URL=
   BILLXPRESS_X_URL=https://x.com/billxpress
   BILLXPRESS_INSTAGRAM_URL=https://instagram.com/billxpress
   BILLXPRESS_FACEBOOK_URL=https://facebook.com/billxpress
