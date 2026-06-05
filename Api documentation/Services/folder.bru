@@ -66,4 +66,16 @@ docs {
   7. Send notification/email.
 
   This protects the app from stale prices and failed provider requests.
+
+  ## UjayData Purchase ID Note
+
+  UjayData plan response contains both `pId` and `planid`.
+
+  For purchase, BillXpress uses `pId` by default. In our API response this is:
+
+  ```txt
+  providerPlanId
+  ```
+
+  The frontend should still send only the normal `id` from our plan response. The backend handles the provider mapping.
 }

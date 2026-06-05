@@ -71,16 +71,16 @@ export const fetchPlans = async () => {
 };
 
 const getPurchasePlanValue = (plan) => {
-  const valueKey = process.env.UJAYDATA_DATA_PURCHASE_PLAN_VALUE || "planid";
+  const valueKey = process.env.UJAYDATA_DATA_PURCHASE_PLAN_VALUE || "pId";
   const rawPlan = plan.raw || {};
 
   return (
     rawPlan[valueKey] ||
     plan[valueKey] ||
-    rawPlan.planid ||
     rawPlan.pId ||
-    plan.providerPlanCode ||
     plan.providerPlanId ||
+    rawPlan.planid ||
+    plan.providerPlanCode ||
     plan.name
   );
 };
