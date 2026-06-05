@@ -1,0 +1,26 @@
+meta {
+  name: Data
+  seq: 1
+}
+
+docs {
+  # Data Service
+
+  Data endpoints are separated here so frontend can easily find data plan and data purchase requests.
+
+  Public frontend endpoints:
+
+  ```txt
+  GET  /api/v1/services/data/plans
+  POST /api/v1/services/data/purchase
+  ```
+
+  Admin settings endpoints:
+
+  ```txt
+  GET   /api/v1/admin/services/data/settings
+  PATCH /api/v1/admin/services/data/settings
+  ```
+
+  The backend fetches live plans from the active provider, applies BillXpress markup, debits wallet on purchase, and refunds automatically if provider purchase fails.
+}

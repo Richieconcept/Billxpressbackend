@@ -1,5 +1,6 @@
 import express from "express";
 import adminRoutes from "./routes/admin.routes.js";
+import airtimeServiceRoutes from "./routes/airtimeService.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import dataServiceRoutes from "./routes/dataService.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
@@ -49,6 +50,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/wallet", walletRoutes);
+app.use("/api/v1/services", airtimeServiceRoutes);
 app.use("/api/v1/services", dataServiceRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/referrals", referralRoutes);

@@ -8,92 +8,29 @@ docs {
 
   This folder contains bill/service purchase endpoints for the mobile app.
 
-  ## Data Service Flow
-
-  The frontend should only call BillXpress endpoints. Do not call UjayData directly from the app.
-
-  Current data provider:
+  The requests are separated into subfolders:
 
   ```txt
-  ujaydata
+  Services / Data
+  Services / Airtime
   ```
 
-  The backend is built so admin can switch to another provider later without changing the frontend endpoints.
+  ## Frontend Rule
 
-  ## Live Pricing Rule
+  The frontend should only call BillXpress endpoints.
 
-  Data plans are fetched live from the active provider whenever the frontend calls:
+  Do not call UjayData or any other provider directly from the app.
 
-  ```txt
-  GET /api/v1/services/data/plans
-  ```
+  ## Shared Wallet Rule
 
-  The backend then applies the BillXpress markup percentage.
+  Service purchases follow this safe backend flow:
 
-  Example:
+  1. Backend calculates the current BillXpress selling price.
+  2. Backend verifies transaction PIN.
+  3. Backend debits wallet.
+  4. Backend calls the active provider.
+  5. Backend refunds wallet automatically if provider fails.
+  6. Backend sends notification/email.
 
-  ```txt
-  Provider price: N200
-  Normal user markup: 15%
-  User sees: N230
-
-  Vendor markup: 10%
-  Vendor sees: N220
-  ```
-
-  The frontend should display `sellingPrice`, not `costPrice`.
-
-  ## Data Purchase Rule
-
-  When buying data, frontend sends:
-
-  ```json
-  {
-    "planId": "136",
-    "phone": "08012345678",
-    "transactionPin": "1234"
-  }
-  ```
-
-  Backend will:
-
-  1. Fetch the live plan again.
-  2. Recalculate the current selling price.
-  3. Verify transaction PIN.
-  4. Debit wallet.
-  5. Call the active provider.
-  6. Refund wallet automatically if provider fails.
-  7. Send notification/email.
-
-  This protects the app from stale prices and failed provider requests.
-
-  ## UjayData Purchase ID Note
-
-  UjayData plan response contains both `pId` and `planid`.
-
-  For purchase, BillXpress uses `pId` by default. In our API response this is:
-
-  ```txt
-  providerPlanId
-  ```
-
-  The frontend should still send only the normal `id` from our plan response. The backend handles the provider mapping.
-
-  ## Airtime Service Flow
-
-  Airtime follows the same wallet-safe structure:
-
-  1. Frontend fetches supported networks.
-  2. User enters amount and phone number.
-  3. Frontend can call quote endpoint to show final price.
-  4. User enters transaction PIN.
-  5. Backend debits wallet.
-  6. Backend calls active airtime provider.
-  7. Backend refunds wallet automatically if provider fails.
-
-  Airtime has no plan list. The user chooses network and enters the airtime value.
-
-  If admin sets airtime markup to `0`, user pays exactly the airtime value.
-
-  If admin sets airtime markup to `5`, user buying `N100` airtime pays `N105`.
+  Data and airtime have separate admin settings so admin can set markup and enable/disable each service independently.
 }

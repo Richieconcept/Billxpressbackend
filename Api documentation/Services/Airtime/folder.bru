@@ -1,0 +1,27 @@
+meta {
+  name: Airtime
+  seq: 2
+}
+
+docs {
+  # Airtime Service
+
+  Airtime endpoints are separated here so frontend can easily find airtime network, quote, and purchase requests.
+
+  Public frontend endpoints:
+
+  ```txt
+  GET  /api/v1/services/airtime/networks
+  POST /api/v1/services/airtime/quote
+  POST /api/v1/services/airtime/purchase
+  ```
+
+  Admin settings endpoints:
+
+  ```txt
+  GET   /api/v1/admin/services/airtime/settings
+  PATCH /api/v1/admin/services/airtime/settings
+  ```
+
+  The user chooses a network and enters an airtime amount. The backend calculates BillXpress markup, debits wallet on purchase, and refunds automatically if provider purchase fails.
+}
