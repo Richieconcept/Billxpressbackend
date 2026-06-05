@@ -1,0 +1,82 @@
+meta {
+  name: 1. Data Plans
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/services/data/plans
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Data Plans
+
+  Fetches live data plans from the active backend provider and returns BillXpress selling prices.
+
+  ## Endpoint
+
+  `GET /api/v1/services/data/plans`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Important For Frontend
+
+  Display `sellingPrice` to the user.
+
+  Do not display `costPrice` as the amount to pay. `costPrice` is included only so admins/testers can understand pricing.
+
+  The backend fetches the live provider price on every request, then applies markup:
+
+  - normal user uses `userMarkupPercent`
+  - active vendor uses `vendorMarkupPercent`
+
+  ## Expected Response
+
+  ```json
+  {
+    "provider": "ujaydata",
+    "pricing": {
+      "userMarkupPercent": 15,
+      "vendorMarkupPercent": 10,
+      "appliedMarkupPercent": 15,
+      "roundingMode": "ceil"
+    },
+    "plans": [
+      {
+        "id": "136",
+        "provider": "ujaydata",
+        "providerPlanId": "136",
+        "providerPlanCode": "421",
+        "network": "GLO",
+        "networkCode": "2",
+        "name": "500MB",
+        "type": "Corporate",
+        "validity": "30 days",
+        "validityDays": 30,
+        "costPrice": 199,
+        "sellingPrice": 229,
+        "profit": 30,
+        "markupPercent": 15,
+        "available": true
+      }
+    ],
+    "count": 1
+  }
+  ```
+}

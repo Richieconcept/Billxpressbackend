@@ -1,0 +1,88 @@
+meta {
+  name: 4. Admin Update Data Settings
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/services/data/settings
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "isEnabled": true,
+    "activeProvider": "ujaydata",
+    "userMarkupPercent": 15,
+    "vendorMarkupPercent": 10,
+    "roundingMode": "ceil"
+  }
+}
+
+docs {
+  # Admin Update Data Settings
+
+  Admin updates data service provider and markup settings.
+
+  ## Endpoint
+
+  `PATCH /api/v1/admin/services/data/settings`
+
+  ## Authentication
+
+  Admin JWT required.
+
+  ## Body Fields
+
+  `isEnabled`
+  Use `true` to allow data purchases or `false` to temporarily disable data service.
+
+  `activeProvider`
+  Current supported value is `ujaydata`.
+
+  Later, when another provider is added, admin can switch this value and the frontend endpoints will stay the same.
+
+  `userMarkupPercent`
+  Percentage added on top of provider cost price for normal users.
+
+  `vendorMarkupPercent`
+  Percentage added on top of provider cost price for active vendors.
+
+  `roundingMode`
+  Use `ceil` to round up to the next naira, or `round` to round normally.
+
+  ## Example
+
+  If provider price is `N199` and `userMarkupPercent` is `15`, frontend will see:
+
+  ```txt
+  N199 + 15% = N228.85
+  ceil = N229
+  ```
+
+  ## Expected Response
+
+  ```json
+  {
+    "message": "Data service settings updated successfully",
+    "settings": {
+      "service": "data",
+      "isEnabled": true,
+      "activeProvider": "ujaydata",
+      "userMarkupPercent": 15,
+      "vendorMarkupPercent": 10,
+      "roundingMode": "ceil"
+    }
+  }
+  ```
+}

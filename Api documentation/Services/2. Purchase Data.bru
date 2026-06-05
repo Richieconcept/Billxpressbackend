@@ -1,0 +1,110 @@
+meta {
+  name: 2. Purchase Data
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/services/data/purchase
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "planId": "136",
+    "phone": "08012345678",
+    "transactionPin": "1234"
+  }
+}
+
+docs {
+  # Purchase Data
+
+  Buys data for a user using their BillXpress wallet balance.
+
+  ## Endpoint
+
+  `POST /api/v1/services/data/purchase`
+
+  ## Authentication
+
+  Required.
+
+  ## Body Fields
+
+  `planId`
+  Required. Use the `id` returned from `Data Plans`.
+
+  `phone`
+  Required. Customer phone number. Must be 11 digits and start with `0`.
+
+  `transactionPin`
+  Required. User's 4-digit transaction PIN.
+
+  ## What Backend Does
+
+  1. Fetches the selected plan live from active provider.
+  2. Calculates the current BillXpress selling price.
+  3. Verifies transaction PIN.
+  4. Debits wallet.
+  5. Calls provider.
+  6. If provider fails, wallet is refunded automatically.
+  7. Sends notification/email.
+
+  ## Success Response
+
+  Status: `201 Created`
+
+  ```json
+  {
+    "status": "successful",
+    "message": "Data purchase successful",
+    "plan": {
+      "id": "136",
+      "network": "GLO",
+      "name": "500MB",
+      "sellingPrice": 229
+    },
+    "wallet": {
+      "mainBalance": 1771
+    },
+    "transaction": {
+      "type": "service_payment",
+      "direction": "debit",
+      "amount": 229,
+      "status": "successful",
+      "reference": "DATA_..."
+    }
+  }
+  ```
+
+  ## Failed Provider Response
+
+  If provider fails after wallet debit, backend refunds the wallet and returns the failed transaction plus refund transaction.
+
+  ```json
+  {
+    "message": "Data purchase failed",
+    "wallet": {
+      "mainBalance": 2000
+    },
+    "transaction": {
+      "status": "reversed"
+    },
+    "refundTransaction": {
+      "type": "reversal",
+      "direction": "credit"
+    }
+  }
+  ```
+}

@@ -1,0 +1,69 @@
+meta {
+  name: Services
+  seq: 6
+}
+
+docs {
+  # Services APIs
+
+  This folder contains bill/service purchase endpoints for the mobile app.
+
+  ## Data Service Flow
+
+  The frontend should only call BillXpress endpoints. Do not call UjayData directly from the app.
+
+  Current data provider:
+
+  ```txt
+  ujaydata
+  ```
+
+  The backend is built so admin can switch to another provider later without changing the frontend endpoints.
+
+  ## Live Pricing Rule
+
+  Data plans are fetched live from the active provider whenever the frontend calls:
+
+  ```txt
+  GET /api/v1/services/data/plans
+  ```
+
+  The backend then applies the BillXpress markup percentage.
+
+  Example:
+
+  ```txt
+  Provider price: N200
+  Normal user markup: 15%
+  User sees: N230
+
+  Vendor markup: 10%
+  Vendor sees: N220
+  ```
+
+  The frontend should display `sellingPrice`, not `costPrice`.
+
+  ## Data Purchase Rule
+
+  When buying data, frontend sends:
+
+  ```json
+  {
+    "planId": "136",
+    "phone": "08012345678",
+    "transactionPin": "1234"
+  }
+  ```
+
+  Backend will:
+
+  1. Fetch the live plan again.
+  2. Recalculate the current selling price.
+  3. Verify transaction PIN.
+  4. Debit wallet.
+  5. Call the active provider.
+  6. Refund wallet automatically if provider fails.
+  7. Send notification/email.
+
+  This protects the app from stale prices and failed provider requests.
+}

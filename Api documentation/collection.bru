@@ -36,6 +36,7 @@ docs {
   4. Run `Login User`. This saves the JWT into `authToken`.
   5. Run `Get Current User` to confirm the token works.
   6. Run wallet requests such as `Get Wallet`, `Get Virtual Account`, or `Create One-Time Funding Account`.
+  7. Run service requests such as `Data Plans` and `Purchase Data`.
 
   Every protected endpoint needs:
 
@@ -106,4 +107,22 @@ docs {
   The frontend should never credit the wallet itself. The backend credits the wallet after webhook confirmation or Monnify status confirmation.
 
   Referral earnings are redeemed into the user's main wallet, not withdrawn to bank.
+
+  ## Data Service Rule
+
+  The frontend should fetch plans from:
+
+  ```txt
+  GET /api/v1/services/data/plans
+  ```
+
+  The backend fetches live plans from the active provider, applies BillXpress markup, and returns `sellingPrice`.
+
+  When buying data, send:
+
+  ```txt
+  POST /api/v1/services/data/purchase
+  ```
+
+  The backend debits the wallet, calls the active provider, and refunds automatically if the provider fails.
 }

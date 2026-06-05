@@ -9,6 +9,10 @@ import {
   removeAdmin,
 } from "../controllers/admin.controller.js";
 import {
+  getAdminDataSettings,
+  updateAdminDataSettings,
+} from "../controllers/dataService.controller.js";
+import {
   createUser,
   deleteUser,
   getUser,
@@ -39,6 +43,18 @@ router.get(
   protect,
   authorizeRoles("admin"),
   listAdminReferralRewards
+);
+router.get(
+  "/services/data/settings",
+  protect,
+  authorizeRoles("admin"),
+  getAdminDataSettings
+);
+router.patch(
+  "/services/data/settings",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminDataSettings
 );
 router.patch("/make-admin/:userId", protect, authorizeRoles("admin"), makeAdmin);
 router.get(

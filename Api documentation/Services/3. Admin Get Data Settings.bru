@@ -1,0 +1,54 @@
+meta {
+  name: 3. Admin Get Data Settings
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/services/data/settings
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Get Data Settings
+
+  Admin checks the active data provider and markup settings.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/services/data/settings`
+
+  ## Authentication
+
+  Admin JWT required.
+
+  ## Expected Response
+
+  ```json
+  {
+    "settings": {
+      "service": "data",
+      "isEnabled": true,
+      "activeProvider": "ujaydata",
+      "availableProviders": [
+        {
+          "name": "ujaydata",
+          "available": true
+        }
+      ],
+      "userMarkupPercent": 15,
+      "vendorMarkupPercent": 10,
+      "roundingMode": "ceil"
+    }
+  }
+  ```
+}
