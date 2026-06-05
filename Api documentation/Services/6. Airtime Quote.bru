@@ -1,0 +1,61 @@
+meta {
+  name: 6. Airtime Quote
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/services/airtime/quote
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "amount": 100
+  }
+}
+
+docs {
+  # Airtime Quote
+
+  Calculates how much the user will pay for an airtime amount.
+
+  ## Endpoint
+
+  `POST /api/v1/services/airtime/quote`
+
+  ## Body Fields
+
+  `amount`
+  Required. Airtime value the user wants to buy.
+
+  ## Expected Response
+
+  If airtime markup is `0%`:
+
+  ```json
+  {
+    "quote": {
+      "amount": 100,
+      "sellingPrice": 100,
+      "profit": 0,
+      "markupPercent": 0,
+      "roundingMode": "ceil"
+    }
+  }
+  ```
+
+  If airtime markup is `5%`, `sellingPrice` becomes `105`.
+
+  Frontend should display `sellingPrice` as the wallet amount to be deducted.
+}

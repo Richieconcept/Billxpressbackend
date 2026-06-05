@@ -78,4 +78,22 @@ docs {
   ```
 
   The frontend should still send only the normal `id` from our plan response. The backend handles the provider mapping.
+
+  ## Airtime Service Flow
+
+  Airtime follows the same wallet-safe structure:
+
+  1. Frontend fetches supported networks.
+  2. User enters amount and phone number.
+  3. Frontend can call quote endpoint to show final price.
+  4. User enters transaction PIN.
+  5. Backend debits wallet.
+  6. Backend calls active airtime provider.
+  7. Backend refunds wallet automatically if provider fails.
+
+  Airtime has no plan list. The user chooses network and enters the airtime value.
+
+  If admin sets airtime markup to `0`, user pays exactly the airtime value.
+
+  If admin sets airtime markup to `5`, user buying `N100` airtime pays `N105`.
 }

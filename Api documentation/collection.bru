@@ -110,7 +110,7 @@ docs {
 
   ## Data Service Rule
 
-  The frontend should fetch plans from:
+  The frontend should fetch data plans from:
 
   ```txt
   GET /api/v1/services/data/plans
@@ -125,4 +125,26 @@ docs {
   ```
 
   The backend debits the wallet, calls the active provider, and refunds automatically if the provider fails.
+
+  ## Airtime Service Rule
+
+  The frontend should fetch airtime networks from:
+
+  ```txt
+  GET /api/v1/services/airtime/networks
+  ```
+
+  The user enters the airtime amount. Frontend can call:
+
+  ```txt
+  POST /api/v1/services/airtime/quote
+  ```
+
+  Then purchase with:
+
+  ```txt
+  POST /api/v1/services/airtime/purchase
+  ```
+
+  The backend calculates markup, debits wallet, calls the active provider, and refunds automatically if the provider fails.
 }

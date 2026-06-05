@@ -1,0 +1,56 @@
+meta {
+  name: 8. Admin Get Airtime Settings
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/services/airtime/settings
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Get Airtime Settings
+
+  Admin checks airtime provider and markup settings.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/services/airtime/settings`
+
+  ## Authentication
+
+  Admin JWT required.
+
+  ## Expected Response
+
+  ```json
+  {
+    "settings": {
+      "service": "airtime",
+      "isEnabled": true,
+      "activeProvider": "ujaydata",
+      "availableProviders": [
+        {
+          "name": "ujaydata",
+          "available": true
+        }
+      ],
+      "userMarkupPercent": 0,
+      "vendorMarkupPercent": 0,
+      "roundingMode": "ceil",
+      "minimumAmount": 50,
+      "maximumAmount": 50000
+    }
+  }
+  ```
+}

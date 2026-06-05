@@ -9,6 +9,10 @@ import {
   removeAdmin,
 } from "../controllers/admin.controller.js";
 import {
+  getAdminAirtimeSettings,
+  updateAdminAirtimeSettings,
+} from "../controllers/airtimeService.controller.js";
+import {
   getAdminDataSettings,
   updateAdminDataSettings,
 } from "../controllers/dataService.controller.js";
@@ -43,6 +47,18 @@ router.get(
   protect,
   authorizeRoles("admin"),
   listAdminReferralRewards
+);
+router.get(
+  "/services/airtime/settings",
+  protect,
+  authorizeRoles("admin"),
+  getAdminAirtimeSettings
+);
+router.patch(
+  "/services/airtime/settings",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminAirtimeSettings
 );
 router.get(
   "/services/data/settings",

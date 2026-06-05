@@ -1,0 +1,61 @@
+meta {
+  name: 5. Airtime Networks
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/services/airtime/networks
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Airtime Networks
+
+  Returns the supported airtime networks and current pricing settings for the logged-in user.
+
+  ## Endpoint
+
+  `GET /api/v1/services/airtime/networks`
+
+  ## Authentication
+
+  Required.
+
+  ## Expected Response
+
+  ```json
+  {
+    "provider": "ujaydata",
+    "pricing": {
+      "userMarkupPercent": 0,
+      "vendorMarkupPercent": 0,
+      "appliedMarkupPercent": 0,
+      "roundingMode": "ceil",
+      "minimumAmount": 50,
+      "maximumAmount": 50000
+    },
+    "networks": [
+      {
+        "code": "MTN",
+        "name": "MTN",
+        "available": true
+      },
+      {
+        "code": "AIRTEL",
+        "name": "Airtel",
+        "available": true
+      }
+    ]
+  }
+  ```
+}

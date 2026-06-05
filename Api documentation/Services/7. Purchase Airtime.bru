@@ -1,0 +1,92 @@
+meta {
+  name: 7. Purchase Airtime
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/services/airtime/purchase
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "network": "MTN",
+    "phone": "08012345678",
+    "amount": 100,
+    "transactionPin": "1234"
+  }
+}
+
+docs {
+  # Purchase Airtime
+
+  Buys airtime using the user's BillXpress wallet.
+
+  ## Endpoint
+
+  `POST /api/v1/services/airtime/purchase`
+
+  ## Body Fields
+
+  `network`
+  Required. Use one of the network codes from `Airtime Networks`: `MTN`, `AIRTEL`, `GLO`, `9MOBILE`.
+
+  `phone`
+  Required. Customer phone number. Must be 11 digits and start with `0`.
+
+  `amount`
+  Required. Airtime value to buy.
+
+  `transactionPin`
+  Required. User's 4-digit transaction PIN.
+
+  ## What Backend Does
+
+  1. Calculates current selling price.
+  2. Verifies transaction PIN.
+  3. Debits wallet.
+  4. Calls active airtime provider.
+  5. Refunds wallet automatically if provider fails.
+  6. Sends notification/email.
+
+  ## Success Response
+
+  ```json
+  {
+    "status": "successful",
+    "message": "Airtime purchase successful",
+    "network": {
+      "code": "MTN",
+      "name": "MTN",
+      "available": true
+    },
+    "quote": {
+      "amount": 100,
+      "sellingPrice": 100,
+      "profit": 0,
+      "markupPercent": 0
+    },
+    "wallet": {
+      "mainBalance": 900
+    },
+    "transaction": {
+      "type": "service_payment",
+      "direction": "debit",
+      "amount": 100,
+      "status": "successful",
+      "reference": "AIRTIME_..."
+    }
+  }
+  ```
+}
