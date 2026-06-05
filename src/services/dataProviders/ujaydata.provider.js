@@ -36,7 +36,9 @@ const requestUjayData = async (path, options = {}) => {
   }
 
   if (!response.ok) {
-    const error = new Error("UjayData request failed");
+    const error = new Error(
+      data?.message || data?.msg || "UjayData request failed"
+    );
     error.statusCode = 502;
     error.providerResponse = data;
     throw error;
@@ -98,7 +100,7 @@ export const purchaseData = async ({ plan, phone, reference }) => {
     [planField]: String(getPurchasePlanValue(plan)),
   };
 
-  const response = await requestUjayData("/data", {
+  const response = await requestUjayData("/data/", {
     method: "POST",
     body: JSON.stringify(payload),
   });
