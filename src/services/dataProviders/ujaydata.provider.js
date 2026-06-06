@@ -50,6 +50,19 @@ const requestUjayData = async (path, options = {}) => {
 const isPlanAvailable = (plan) =>
   String(plan.networkStatus || "").toLowerCase() === "on";
 
+const getCostPrice = (plan) => {
+  const priceCandidates = [
+    plan.vendorprice,
+    plan.agentprice,
+    plan.userprice,
+    plan.price,
+  ]
+    .map(toNumber)
+    .filter((price) => price > 0);
+
+  return priceCandidates[0] || 0;
+};
+
 export const fetchPlans = async () => {
   const response = await requestUjayData("/data?plans");
   const plans = Array.isArray(response.plans) ? response.plans : [];
@@ -64,7 +77,7 @@ export const fetchPlans = async () => {
     type: String(plan.type || ""),
     validity: plan.day ? `${plan.day} day${String(plan.day) === "1" ? "" : "s"}` : null,
     validityDays: toNumber(plan.day),
-    costPrice: toNumber(plan.price),
+    costPrice: getCostPrice(plan),
     available: isPlanAvailable(plan),
     raw: plan,
   }));
