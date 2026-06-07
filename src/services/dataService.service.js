@@ -64,6 +64,10 @@ export const serializeDataServiceSetting = (settings) => ({
 
 export const updateDataServiceSetting = async (payload, adminUserId) => {
   const settings = await getOrCreateDataServiceSetting();
+  const source =
+    payload && typeof payload === "object" && payload.settings
+      ? payload.settings
+      : payload || {};
   const allowedFields = [
     "isEnabled",
     "activeProvider",
@@ -71,10 +75,26 @@ export const updateDataServiceSetting = async (payload, adminUserId) => {
     "vendorMarkupPercent",
     "roundingMode",
   ];
+  const receivedFields = allowedFields.filter((field) => source[field] !== undefined);
 
-  allowedFields.forEach((field) => {
-    if (payload[field] !== undefined) {
-      settings[field] = payload[field];
+  if (receivedFields.length === 0) {
+    const error = new Error(
+      "No valid data service settings were provided. Send JSON fields like activeProvider, userMarkupPercent, or vendorMarkupPercent."
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  receivedFields.forEach((field) => {
+    if (["userMarkupPercent", "vendorMarkupPercent"].includes(field)) {
+      settings[field] = Number(source[field]);
+    } else if (field === "isEnabled") {
+      settings[field] =
+        typeof source[field] === "string"
+          ? source[field].toLowerCase() === "true"
+          : source[field];
+    } else {
+      settings[field] = source[field];
     }
   });
 
