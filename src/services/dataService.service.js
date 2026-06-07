@@ -123,7 +123,7 @@ export const getDataPlansForUser = async (user) => {
   const provider = getDataProvider(settings.activeProvider);
   const plans = await provider.fetchPlans();
   const filteredPlans = plans.filter(
-    (plan) => plan.providerPlanId && plan.network && plan.name
+    (plan) => plan.providerPlanId && plan.network && plan.name && plan.available
   );
 
   return {

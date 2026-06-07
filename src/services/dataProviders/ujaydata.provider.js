@@ -47,8 +47,29 @@ const requestUjayData = async (path, options = {}) => {
   return data;
 };
 
-const isPlanAvailable = (plan) =>
-  String(plan.networkStatus || "").toLowerCase() === "on";
+const isOn = (value) => String(value || "").toLowerCase() === "on";
+
+const getPlanTypeStatus = (plan) => {
+  const type = String(plan.type || "").toLowerCase();
+
+  if (type.includes("sme")) return plan.smeStatus;
+  if (type.includes("gifting")) return plan.giftingStatus;
+  if (type.includes("corporate")) return plan.corporateStatus;
+  if (type.includes("vtu")) return plan.vtuStatus;
+  if (type.includes("share") || type.includes("sell")) {
+    return plan.sharesellStatus || plan.datashareStatus;
+  }
+  if (type.includes("pin")) return plan.datapinStatus;
+
+  return undefined;
+};
+
+const isPlanAvailable = (plan) => {
+  if (!isOn(plan.networkStatus)) return false;
+
+  const typeStatus = getPlanTypeStatus(plan);
+  return typeStatus === undefined ? true : isOn(typeStatus);
+};
 
 const getCostPrice = (plan) => {
   const priceCandidates = [
