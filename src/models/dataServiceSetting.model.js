@@ -16,8 +16,8 @@ const dataServiceSettingSchema = new mongoose.Schema(
 
     activeProvider: {
       type: String,
-      enum: ["ujaydata"],
-      default: "ujaydata",
+      enum: ["smeapi", "ujaydata"],
+      default: "smeapi",
     },
 
     userMarkupPercent: {

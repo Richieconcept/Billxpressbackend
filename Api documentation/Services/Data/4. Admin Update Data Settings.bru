@@ -22,7 +22,7 @@ auth:bearer {
 body:json {
   {
     "isEnabled": true,
-    "activeProvider": "ujaydata",
+    "activeProvider": "smeapi",
     "userMarkupPercent": 15,
     "vendorMarkupPercent": 10,
     "roundingMode": "ceil"
@@ -48,9 +48,9 @@ docs {
   Use `true` to allow data purchases or `false` to temporarily disable data service.
 
   `activeProvider`
-  Current supported value is `ujaydata`.
+  Supported values are `smeapi` and `ujaydata`.
 
-  Later, when another provider is added, admin can switch this value and the frontend endpoints will stay the same.
+  `smeapi` is the primary data provider. `ujaydata` is the backup provider. Admin can switch this value anytime and the frontend endpoints will stay the same.
 
   `userMarkupPercent`
   Percentage added on top of provider cost price for normal users.
@@ -78,7 +78,7 @@ docs {
     "settings": {
       "service": "data",
       "isEnabled": true,
-      "activeProvider": "ujaydata",
+      "activeProvider": "smeapi",
       "userMarkupPercent": 15,
       "vendorMarkupPercent": 10,
       "roundingMode": "ceil"

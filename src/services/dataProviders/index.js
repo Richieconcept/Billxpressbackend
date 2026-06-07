@@ -1,6 +1,8 @@
+import smeapiProvider from "./smeapi.provider.js";
 import ujaydataProvider from "./ujaydata.provider.js";
 
 const providers = {
+  smeapi: smeapiProvider,
   ujaydata: ujaydataProvider,
 };
 
