@@ -22,9 +22,9 @@ auth:bearer {
 body:json {
   {
     "isEnabled": true,
-    "activeProvider": "smeapi",
-    "userMarkupPercent": 15,
-    "vendorMarkupPercent": 10,
+    "activeProvider": "ujaydata",
+    "userMarkupPercent": 1,
+    "vendorMarkupPercent": 1,
     "roundingMode": "ceil"
   }
 }
@@ -33,6 +33,14 @@ docs {
   # Admin Update Data Settings
 
   Admin updates data service provider and markup settings.
+
+  This request must be sent as raw JSON with:
+
+  ```txt
+  Content-Type: application/json
+  ```
+
+  If the body is not sent as JSON, the backend will not receive the fields correctly.
 
   ## Endpoint
 
@@ -63,6 +71,32 @@ docs {
 
   ## Example
 
+  To switch to UjayData with 1% markup for both normal users and vendors:
+
+  ```json
+  {
+    "isEnabled": true,
+    "activeProvider": "ujaydata",
+    "userMarkupPercent": 1,
+    "vendorMarkupPercent": 1,
+    "roundingMode": "ceil"
+  }
+  ```
+
+  To switch back to SMEAPI with no markup:
+
+  ```json
+  {
+    "isEnabled": true,
+    "activeProvider": "smeapi",
+    "userMarkupPercent": 0,
+    "vendorMarkupPercent": 0,
+    "roundingMode": "ceil"
+  }
+  ```
+
+  ## Price Calculation
+
   If provider price is `N199` and `userMarkupPercent` is `15`, frontend will see:
 
   ```txt
@@ -78,9 +112,9 @@ docs {
     "settings": {
       "service": "data",
       "isEnabled": true,
-      "activeProvider": "smeapi",
-      "userMarkupPercent": 15,
-      "vendorMarkupPercent": 10,
+      "activeProvider": "ujaydata",
+      "userMarkupPercent": 1,
+      "vendorMarkupPercent": 1,
       "roundingMode": "ceil"
     }
   }
