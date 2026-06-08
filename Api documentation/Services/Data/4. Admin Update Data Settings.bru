@@ -23,9 +23,23 @@ body:json {
   {
     "isEnabled": true,
     "activeProvider": "ujaydata",
-    "userMarkupPercent": 1,
-    "vendorMarkupPercent": 1,
-    "roundingMode": "ceil"
+    "userMarkupPercent": 15,
+    "vendorMarkupPercent": 10,
+    "roundingMode": "ceil",
+    "userPricingTiers": [
+      { "minCost": 0, "maxCost": 500, "markupPercent": 15 },
+      { "minCost": 501, "maxCost": 1500, "markupPercent": 10 },
+      { "minCost": 1501, "maxCost": 3000, "markupPercent": 7 },
+      { "minCost": 3001, "maxCost": 6000, "markupPercent": 5 },
+      { "minCost": 6001, "maxCost": null, "markupPercent": 3 }
+    ],
+    "vendorPricingTiers": [
+      { "minCost": 0, "maxCost": 500, "markupPercent": 10 },
+      { "minCost": 501, "maxCost": 1500, "markupPercent": 7 },
+      { "minCost": 1501, "maxCost": 3000, "markupPercent": 5 },
+      { "minCost": 3001, "maxCost": 6000, "markupPercent": 3 },
+      { "minCost": 6001, "maxCost": null, "markupPercent": 2 }
+    ]
   }
 }
 
@@ -61,37 +75,71 @@ docs {
   `smeapi` is the primary data provider. `ujaydata` is the backup provider. Admin can switch this value anytime and the frontend endpoints will stay the same.
 
   `userMarkupPercent`
-  Percentage added on top of provider cost price for normal users.
+  Fallback percentage added on top of provider cost price for normal users.
+
+  If `userPricingTiers` is set and a plan cost falls inside a tier, the tier markup is used instead.
 
   `vendorMarkupPercent`
-  Percentage added on top of provider cost price for active vendors.
+  Fallback percentage added on top of provider cost price for active vendors.
+
+  If `vendorPricingTiers` is set and a plan cost falls inside a tier, the tier markup is used instead.
+
+  `userPricingTiers`
+  Optional. Tiered pricing for normal users. Use this to make small plans profitable and big plans cheaper.
+
+  Each tier has:
+
+  - `minCost`: provider cost price starts from this amount
+  - `maxCost`: provider cost price ends at this amount, or `null` for no upper limit
+  - `markupPercent`: percentage to add for plans inside this cost range
+
+  `vendorPricingTiers`
+  Optional. Tiered pricing for active vendors.
+
+  Send an empty array `[]` if you want to remove tiered pricing and go back to flat percentage.
 
   `roundingMode`
   Use `ceil` to round up to the next naira, or `round` to round normally.
 
   ## Example
 
-  To switch to UjayData with 1% markup for both normal users and vendors:
+  To switch to UjayData with tiered pricing:
 
   ```json
   {
     "isEnabled": true,
     "activeProvider": "ujaydata",
-    "userMarkupPercent": 1,
-    "vendorMarkupPercent": 1,
-    "roundingMode": "ceil"
+    "userMarkupPercent": 15,
+    "vendorMarkupPercent": 10,
+    "roundingMode": "ceil",
+    "userPricingTiers": [
+      { "minCost": 0, "maxCost": 500, "markupPercent": 15 },
+      { "minCost": 501, "maxCost": 1500, "markupPercent": 10 },
+      { "minCost": 1501, "maxCost": 3000, "markupPercent": 7 },
+      { "minCost": 3001, "maxCost": 6000, "markupPercent": 5 },
+      { "minCost": 6001, "maxCost": null, "markupPercent": 3 }
+    ],
+    "vendorPricingTiers": [
+      { "minCost": 0, "maxCost": 500, "markupPercent": 10 },
+      { "minCost": 501, "maxCost": 1500, "markupPercent": 7 },
+      { "minCost": 1501, "maxCost": 3000, "markupPercent": 5 },
+      { "minCost": 3001, "maxCost": 6000, "markupPercent": 3 },
+      { "minCost": 6001, "maxCost": null, "markupPercent": 2 }
+    ]
   }
   ```
 
-  To switch back to SMEAPI with no markup:
+  To switch back to flat markup only, send empty arrays:
 
   ```json
   {
     "isEnabled": true,
     "activeProvider": "smeapi",
-    "userMarkupPercent": 0,
-    "vendorMarkupPercent": 0,
-    "roundingMode": "ceil"
+    "userMarkupPercent": 15,
+    "vendorMarkupPercent": 10,
+    "roundingMode": "ceil",
+    "userPricingTiers": [],
+    "vendorPricingTiers": []
   }
   ```
 
@@ -113,9 +161,23 @@ docs {
       "service": "data",
       "isEnabled": true,
       "activeProvider": "ujaydata",
-      "userMarkupPercent": 1,
-      "vendorMarkupPercent": 1,
-      "roundingMode": "ceil"
+      "userMarkupPercent": 15,
+      "vendorMarkupPercent": 10,
+      "roundingMode": "ceil",
+      "userPricingTiers": [
+        {
+          "minCost": 0,
+          "maxCost": 500,
+          "markupPercent": 15
+        }
+      ],
+      "vendorPricingTiers": [
+        {
+          "minCost": 0,
+          "maxCost": 500,
+          "markupPercent": 10
+        }
+      ]
     }
   }
   ```

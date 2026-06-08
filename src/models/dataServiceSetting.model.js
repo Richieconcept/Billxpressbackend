@@ -1,5 +1,29 @@
 import mongoose from "mongoose";
 
+const pricingTierSchema = new mongoose.Schema(
+  {
+    minCost: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    maxCost: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    markupPercent: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 100,
+    },
+  },
+  { _id: false }
+);
+
 const dataServiceSettingSchema = new mongoose.Schema(
   {
     service: {
@@ -32,6 +56,16 @@ const dataServiceSettingSchema = new mongoose.Schema(
       default: 10,
       min: 0,
       max: 100,
+    },
+
+    userPricingTiers: {
+      type: [pricingTierSchema],
+      default: [],
+    },
+
+    vendorPricingTiers: {
+      type: [pricingTierSchema],
+      default: [],
     },
 
     roundingMode: {

@@ -25,10 +25,13 @@ export const getDataPlans = async (req, res) => {
       pricing: {
         userMarkupPercent: result.settings.userMarkupPercent,
         vendorMarkupPercent: result.settings.vendorMarkupPercent,
-        appliedMarkupPercent:
-          req.user.role === "vendor" && req.user.isVendorActive
-            ? result.settings.vendorMarkupPercent
-            : result.settings.userMarkupPercent,
+        userPricingTiers: result.settings.userPricingTiers,
+        vendorPricingTiers: result.settings.vendorPricingTiers,
+        appliedPricingModel: result.plans.some(
+          (plan) => plan.pricingModel === "tiered"
+        )
+          ? "tiered"
+          : "flat",
         roundingMode: result.settings.roundingMode,
       },
       plans: result.plans,

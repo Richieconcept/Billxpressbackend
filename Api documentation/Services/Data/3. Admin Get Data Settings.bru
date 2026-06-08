@@ -20,19 +20,19 @@ auth:bearer {
 
 docs {
   # Admin Get Data Settings
-
+  
   Admin checks the active data provider and markup settings.
-
+  
   ## Endpoint
-
+  
   `GET /api/v1/admin/services/data/settings`
-
+  
   ## Authentication
-
+  
   Admin JWT required.
-
+  
   ## Expected Response
-
+  
   ```json
   {
     "settings": {
@@ -51,6 +51,30 @@ docs {
       ],
       "userMarkupPercent": 15,
       "vendorMarkupPercent": 10,
+      "userPricingTiers": [
+        {
+          "minCost": 0,
+          "maxCost": 500,
+          "markupPercent": 15
+        },
+        {
+          "minCost": 6001,
+          "maxCost": null,
+          "markupPercent": 3
+        }
+      ],
+      "vendorPricingTiers": [
+        {
+          "minCost": 0,
+          "maxCost": 500,
+          "markupPercent": 10
+        },
+        {
+          "minCost": 6001,
+          "maxCost": null,
+          "markupPercent": 2
+        }
+      ],
       "roundingMode": "ceil"
     }
   }

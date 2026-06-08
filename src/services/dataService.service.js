@@ -14,10 +14,51 @@ import { createNotificationBestEffort } from "./notification.service.js";
 import { getDataProvider, listDataProviders } from "./dataProviders/index.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
 
-const getMarkupPercentForUser = (settings, user) =>
-  user.role === "vendor" && user.isVendorActive
+const normalizePricingTiers = (tiers = []) =>
+  (Array.isArray(tiers) ? tiers : [])
+    .map((tier) => ({
+      minCost: Number(tier.minCost),
+      maxCost:
+        tier.maxCost === null || tier.maxCost === undefined || tier.maxCost === ""
+          ? null
+          : Number(tier.maxCost),
+      markupPercent: Number(tier.markupPercent),
+    }))
+    .filter(
+      (tier) =>
+        Number.isFinite(tier.minCost) &&
+        tier.minCost >= 0 &&
+        (tier.maxCost === null ||
+          (Number.isFinite(tier.maxCost) && tier.maxCost >= tier.minCost)) &&
+        Number.isFinite(tier.markupPercent) &&
+        tier.markupPercent >= 0 &&
+        tier.markupPercent <= 100
+    )
+    .sort((a, b) => a.minCost - b.minCost);
+
+const isVendorUser = (user) => user.role === "vendor" && user.isVendorActive;
+
+const getPricingTierForCost = (tiers = [], costPrice) =>
+  normalizePricingTiers(tiers).find(
+    (tier) =>
+      costPrice >= tier.minCost &&
+      (tier.maxCost === null || costPrice <= tier.maxCost)
+  );
+
+const getPricingForUser = (settings, user, costPrice) => {
+  const vendor = isVendorUser(user);
+  const tiers = vendor ? settings.vendorPricingTiers : settings.userPricingTiers;
+  const fallbackMarkupPercent = vendor
     ? settings.vendorMarkupPercent
     : settings.userMarkupPercent;
+  const matchedTier = getPricingTierForCost(tiers, costPrice);
+
+  return {
+    markupPercent: matchedTier?.markupPercent ?? fallbackMarkupPercent,
+    pricingModel: matchedTier ? "tiered" : "flat",
+    pricingTier: matchedTier || null,
+  };
+};
 
 const roundSellingPrice = (amount, roundingMode) => {
   if (roundingMode === "round") {
@@ -57,6 +98,8 @@ export const serializeDataServiceSetting = (settings) => ({
   availableProviders: listDataProviders(),
   userMarkupPercent: settings.userMarkupPercent,
   vendorMarkupPercent: settings.vendorMarkupPercent,
+  userPricingTiers: normalizePricingTiers(settings.userPricingTiers),
+  vendorPricingTiers: normalizePricingTiers(settings.vendorPricingTiers),
   roundingMode: settings.roundingMode,
   updatedBy: settings.updatedBy,
   createdAt: settings.createdAt,
@@ -74,6 +117,8 @@ export const updateDataServiceSetting = async (payload, adminUserId) => {
     "activeProvider",
     "userMarkupPercent",
     "vendorMarkupPercent",
+    "userPricingTiers",
+    "vendorPricingTiers",
     "roundingMode",
   ];
   const receivedFields = allowedFields.filter((field) => source[field] !== undefined);
@@ -89,6 +134,8 @@ export const updateDataServiceSetting = async (payload, adminUserId) => {
   receivedFields.forEach((field) => {
     if (["userMarkupPercent", "vendorMarkupPercent"].includes(field)) {
       settings[field] = Number(source[field]);
+    } else if (["userPricingTiers", "vendorPricingTiers"].includes(field)) {
+      settings[field] = normalizePricingTiers(source[field]);
     } else if (field === "isEnabled") {
       settings[field] =
         typeof source[field] === "string"
@@ -106,10 +153,10 @@ export const updateDataServiceSetting = async (payload, adminUserId) => {
 };
 
 export const serializeDataPlanForUser = ({ plan, settings, user }) => {
-  const markupPercent = getMarkupPercentForUser(settings, user);
+  const pricingConfig = getPricingForUser(settings, user, plan.costPrice);
   const pricing = calculateSellingPrice({
     costPrice: plan.costPrice,
-    markupPercent,
+    markupPercent: pricingConfig.markupPercent,
     roundingMode: settings.roundingMode,
   });
 
@@ -127,7 +174,9 @@ export const serializeDataPlanForUser = ({ plan, settings, user }) => {
     costPrice: plan.costPrice,
     sellingPrice: pricing.sellingPrice,
     profit: pricing.profit,
-    markupPercent,
+    markupPercent: pricingConfig.markupPercent,
+    pricingModel: pricingConfig.pricingModel,
+    pricingTier: pricingConfig.pricingTier,
     available: plan.available,
   };
 };

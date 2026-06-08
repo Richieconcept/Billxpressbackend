@@ -43,8 +43,11 @@ docs {
 
   The backend fetches the live provider price on every request, then applies markup:
 
-  - normal user uses `userMarkupPercent`
-  - active vendor uses `vendorMarkupPercent`
+  - normal user uses `userPricingTiers` when a matching tier exists
+  - active vendor uses `vendorPricingTiers` when a matching tier exists
+  - if no tier matches, backend falls back to `userMarkupPercent` or `vendorMarkupPercent`
+
+  Each plan returns the exact `markupPercent`, `pricingModel`, `sellingPrice`, and `profit` used for that user.
 
   ## Expected Response
 
@@ -54,7 +57,21 @@ docs {
     "pricing": {
       "userMarkupPercent": 15,
       "vendorMarkupPercent": 10,
-      "appliedMarkupPercent": 15,
+      "userPricingTiers": [
+        {
+          "minCost": 0,
+          "maxCost": 500,
+          "markupPercent": 15
+        }
+      ],
+      "vendorPricingTiers": [
+        {
+          "minCost": 0,
+          "maxCost": 500,
+          "markupPercent": 10
+        }
+      ],
+      "appliedPricingModel": "tiered",
       "roundingMode": "ceil"
     },
     "plans": [
@@ -73,6 +90,12 @@ docs {
         "sellingPrice": 229,
         "profit": 30,
         "markupPercent": 15,
+        "pricingModel": "tiered",
+        "pricingTier": {
+          "minCost": 0,
+          "maxCost": 500,
+          "markupPercent": 15
+        },
         "available": true
       }
     ],
