@@ -48,6 +48,13 @@ docs {
 
   Admin updates data service provider and markup settings.
 
+  Use this request when admin wants to:
+
+  - switch between `smeapi` and `ujaydata`
+  - change normal user profit margin
+  - change vendor profit margin
+  - make big data plans cheaper using tiered pricing
+
   This request must be sent as raw JSON with:
 
   ```txt
@@ -101,6 +108,56 @@ docs {
   `roundingMode`
   Use `ceil` to round up to the next naira, or `round` to round normally.
 
+  ## Recommended MVP Tier Structure
+
+  This structure keeps small plans profitable but prevents large plans from becoming too expensive:
+
+  ```txt
+  Normal users:
+  Cost 0 - 500       => 15%
+  Cost 501 - 1500    => 10%
+  Cost 1501 - 3000   => 7%
+  Cost 3001 - 6000   => 5%
+  Cost 6001 and above => 3%
+
+  Vendors:
+  Cost 0 - 500       => 10%
+  Cost 501 - 1500    => 7%
+  Cost 1501 - 3000   => 5%
+  Cost 3001 - 6000   => 3%
+  Cost 6001 and above => 2%
+  ```
+
+  ## How Tier Matching Works
+
+  Backend checks the provider `costPrice` and finds the first tier where:
+
+  ```txt
+  costPrice >= minCost
+  and
+  costPrice <= maxCost
+  ```
+
+  If `maxCost` is `null`, it means there is no upper limit.
+
+  Example:
+
+  ```txt
+  MTN 36GB costPrice = 10700
+  It matches { "minCost": 6001, "maxCost": null, "markupPercent": 3 }
+  User selling price = 10700 + 3% = 11021
+  Profit = 321
+  ```
+
+  Without tiered pricing, 15% would make that plan:
+
+  ```txt
+  10700 + 15% = 12305
+  Profit = 1605
+  ```
+
+  That is too expensive for big packages, so tiered pricing is better.
+
   ## Example
 
   To switch to UjayData with tiered pricing:
@@ -145,12 +202,40 @@ docs {
 
   ## Price Calculation
 
-  If provider price is `N199` and `userMarkupPercent` is `15`, frontend will see:
+  If provider price is `N199` and the matched user markup is `15`, frontend will see:
 
   ```txt
   N199 + 15% = N228.85
   ceil = N229
   ```
+
+  If provider price is `N10,700` and the matched user markup is `3`, frontend will see:
+
+  ```txt
+  N10,700 + 3% = N11,021
+  profit = N321
+  ```
+
+  ## Frontend/Admin Dashboard Notes
+
+  The admin dashboard should allow admin to edit:
+
+  - active provider
+  - fallback normal user markup
+  - fallback vendor markup
+  - user pricing tiers
+  - vendor pricing tiers
+  - rounding mode
+
+  The user app does not call this endpoint. Only admin dashboard should call it.
+
+  The user app should only fetch final plan prices from:
+
+  ```txt
+  GET /api/v1/services/data/plans
+  ```
+
+  Do not calculate markup on the frontend. Backend already returns final `sellingPrice`.
 
   ## Expected Response
 
