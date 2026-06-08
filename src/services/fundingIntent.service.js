@@ -25,7 +25,7 @@ const getFundingExpiryDate = () => {
   return new Date(Date.now() + safeMinutes * 60 * 1000);
 };
 
-export const serializeFundingIntent = (intent) => ({
+export const serializeFundingIntent = async (intent) => ({
   id: intent._id,
   provider: intent.provider,
   providerReference: intent.providerReference,
@@ -36,7 +36,7 @@ export const serializeFundingIntent = (intent) => ({
   amount: fromMinorUnit(intent.amount),
   fee: fromMinorUnit(intent.fee),
   amountToReceive: fromMinorUnit(intent.amountToReceive),
-  feePolicy: serializeFundingFee(intent.provider),
+  feePolicy: await serializeFundingFee(intent.provider),
   expiresAt: intent.expiresAt,
   status: intent.status,
   createdAt: intent.createdAt,
@@ -54,14 +54,8 @@ export const createMonnifyFundingIntent = async (user, amount) => {
     throw error;
   }
 
-  const feeResult = calculateFundingFee(amountInMinorUnit, "monnify");
+  const feeResult = await calculateFundingFee(amountInMinorUnit, "monnify");
   const { fee, amountToReceive } = feeResult;
-
-  if (amountToReceive <= 0) {
-    const error = new Error("Funding amount must be greater than the fee");
-    error.statusCode = 400;
-    throw error;
-  }
 
   const paymentReference = generateTransactionReference("MNFUND");
   const providerIntent = await createMonnifyTransferIntent({
@@ -204,9 +198,12 @@ export const confirmMonnifyFundingIntent = async (user, fundingIntentId) => {
     throw error;
   }
 
+  const amountToCredit = amountPaidInMinorUnit || intent.amount;
+  intent.amountToReceive = amountToCredit;
+
   const creditResult = await creditWallet({
     userId: intent.user,
-    amountInMinorUnit: intent.amountToReceive,
+    amountInMinorUnit: amountToCredit,
     walletType: "main",
     type: "funding",
     reference: generateTransactionReference("MNF"),
@@ -217,8 +214,9 @@ export const confirmMonnifyFundingIntent = async (user, fundingIntentId) => {
       providerTransaction,
       fee: intent.fee,
       grossAmount: intent.amount,
-      amountCredited: intent.amountToReceive,
-      feePaidBy: "user",
+      amountPaid: amountPaidInMinorUnit,
+      amountCredited: amountToCredit,
+      feePaidBy: "platform",
       confirmedBy: "user_status_check",
     },
   });
@@ -235,16 +233,17 @@ export const confirmMonnifyFundingIntent = async (user, fundingIntentId) => {
     userId: intent.user,
     title: "Wallet funded successfully",
     message: `Your wallet has been credited with NGN ${fromMinorUnit(
-      intent.amountToReceive
+      amountToCredit
     )}.`,
     type: "wallet_funding_success",
     channel: "both",
     priority: "normal",
     data: {
       provider: "monnify",
-      amount: fromMinorUnit(intent.amountToReceive),
+      amount: fromMinorUnit(amountToCredit),
       grossAmount: fromMinorUnit(intent.amount),
       fee: fromMinorUnit(intent.fee),
+      userReceivesFullAmount: true,
       reference: creditResult.transaction.reference,
       providerReference: intent.providerReference,
       paymentReference: intent.paymentReference,

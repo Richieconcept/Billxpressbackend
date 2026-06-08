@@ -182,7 +182,7 @@ export const registerUser = async (req, res) => {
 
     try {
       const virtualAccountResult = await getOrCreateVirtualAccountForUser(user);
-      virtualAccount = serializeVirtualAccount(
+      virtualAccount = await serializeVirtualAccount(
         virtualAccountResult.virtualAccount
       );
       virtualAccountCreated = virtualAccountResult.created;

@@ -1,0 +1,107 @@
+meta {
+  name: 10. Admin Update Funding Settings
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/funding/settings
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "provider": "pocketfi",
+    "percent": 1,
+    "flat": 0
+  }
+}
+
+docs {
+  # Admin Update Funding Settings
+
+  Admin uses this endpoint to set the wallet funding charge for one provider.
+
+  Use it for:
+
+  - `pocketfi` permanent virtual-account funding
+  - `monnify` one-time funding account
+
+  ## Endpoint
+
+  `PATCH /api/v1/admin/funding/settings`
+
+  ## Authentication
+
+  Admin JWT required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Body Fields
+
+  `provider`
+  Required. Use either `pocketfi` or `monnify`.
+
+  `percent`
+  Optional. Percentage funding charge. Use `1` for 1%.
+
+  `flat`
+  Optional. Flat naira charge. Use `0` when no flat charge is needed.
+
+  ## Example Body
+
+  ```json
+  {
+    "provider": "pocketfi",
+    "percent": 1,
+    "flat": 0
+  }
+  ```
+
+  To update Monnify instead:
+
+  ```json
+  {
+    "provider": "monnify",
+    "percent": 1,
+    "flat": 0
+  }
+  ```
+
+  ## Expected Response
+
+  ```json
+  {
+    "message": "Funding fee setting updated successfully",
+    "setting": {
+      "provider": "pocketfi",
+      "percent": 1,
+      "flat": 0,
+      "creditPolicy": "gross",
+      "paidBy": "platform",
+      "userReceivesFullAmount": true,
+      "message": "Funding charge is 1%. The user wallet is credited with the full transferred amount."
+    }
+  }
+  ```
+
+  ## Important Rule
+
+  This setting does not reduce the wallet credit.
+
+  If the user transfers `N2,000`, the backend credits `N2,000` to the user's wallet. The `percent` and `flat` values are for funding charge display/accounting.
+
+  The user app does not call this endpoint. Only the admin dashboard should call it.
+}

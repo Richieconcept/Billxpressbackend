@@ -19,7 +19,7 @@ const formatPocketFiAccountName = (accountName) => {
   return `${normalizedAccountName} (BillXpress)`;
 };
 
-export const serializeVirtualAccount = (virtualAccount) => ({
+export const serializeVirtualAccount = async (virtualAccount) => ({
   id: virtualAccount._id,
   provider: virtualAccount.provider,
   bankName: virtualAccount.bankName,
@@ -35,7 +35,7 @@ export const serializeVirtualAccount = (virtualAccount) => ({
       createdAt: account.createdAt,
     })) || [],
   providerErrors: virtualAccount.providerErrors || [],
-  feePolicy: serializeFundingFee("pocketfi"),
+  feePolicy: await serializeFundingFee("pocketfi"),
   status: virtualAccount.status,
   createdAt: virtualAccount.createdAt,
 });

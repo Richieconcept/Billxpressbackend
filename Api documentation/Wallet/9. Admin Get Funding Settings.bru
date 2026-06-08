@@ -1,0 +1,77 @@
+meta {
+  name: 9. Admin Get Funding Settings
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/funding/settings
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Get Funding Settings
+
+  Admin uses this endpoint to see the current wallet funding charge settings for PocketFi and Monnify.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/funding/settings`
+
+  ## Authentication
+
+  Admin JWT required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Expected Response
+
+  ```json
+  {
+    "settings": [
+      {
+        "provider": "pocketfi",
+        "percent": 1,
+        "flat": 0,
+        "creditPolicy": "gross",
+        "paidBy": "platform",
+        "userReceivesFullAmount": true,
+        "message": "Funding charge is 1%. The user wallet is credited with the full transferred amount."
+      },
+      {
+        "provider": "monnify",
+        "percent": 1,
+        "flat": 0,
+        "creditPolicy": "gross",
+        "paidBy": "platform",
+        "userReceivesFullAmount": true,
+        "message": "Funding charge is 1%. The user wallet is credited with the full transferred amount."
+      }
+    ]
+  }
+  ```
+
+  ## Important Rule
+
+  The user always receives the full amount they transfer.
+
+  Example:
+
+  - User transfers: `N2,000`
+  - Funding charge setting: `1%`
+  - Fee shown/accounted for: `N20`
+  - Wallet credit: `N2,000`
+
+  The frontend should display the `message` from `feePolicy` when showing funding account details.
+}

@@ -54,9 +54,9 @@ docs {
         "type": "funding",
         "walletType": "main",
         "direction": "credit",
-        "amount": 1980,
+        "amount": 2000,
         "balanceBefore": 0,
-        "balanceAfter": 1980,
+        "balanceAfter": 2000,
         "currency": "NGN",
         "reference": "PFI_...",
         "provider": "pocketfi",
@@ -77,7 +77,7 @@ docs {
 
   Use `walletType` to show whether it affected the main wallet or referral wallet.
 
-  For funding transactions, `amount` is the actual amount credited to the wallet after user-paid fees.
+  For funding transactions, `amount` is the exact amount credited to the wallet. Funding now credits the full transferred amount.
 
   The app can ignore `provider`, `providerReference`, `metadata`, and raw IDs unless a screen specifically needs them.
 }

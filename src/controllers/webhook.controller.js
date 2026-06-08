@@ -213,12 +213,13 @@ export const handlePocketFiWebhook = async (req, res) => {
     const settlementAmountInMinorUnit = settlementAmount
       ? toMinorUnit(settlementAmount)
       : null;
-    const feeResult = settlementAmountInMinorUnit
-      ? {
-          fee: Math.max(0, grossAmountInMinorUnit - settlementAmountInMinorUnit),
-          amountToReceive: settlementAmountInMinorUnit,
-        }
-      : calculateFundingFee(grossAmountInMinorUnit, "pocketfi");
+    const feeResult = await calculateFundingFee(
+      grossAmountInMinorUnit,
+      "pocketfi"
+    );
+    const providerSettlementFee = settlementAmountInMinorUnit
+      ? Math.max(0, grossAmountInMinorUnit - settlementAmountInMinorUnit)
+      : null;
 
     if (feeResult.amountToReceive <= 0) {
       throw new Error("Funding amount after fee must be greater than zero");
@@ -237,8 +238,10 @@ export const handlePocketFiWebhook = async (req, res) => {
         ...payload,
         fee: feeResult.fee,
         grossAmount: grossAmountInMinorUnit,
+        settlementAmount: settlementAmountInMinorUnit,
+        providerSettlementFee,
         amountCredited: feeResult.amountToReceive,
-        feePaidBy: "user",
+        feePaidBy: "platform",
       },
     });
 
@@ -256,6 +259,7 @@ export const handlePocketFiWebhook = async (req, res) => {
         amount: fromMinorUnit(feeResult.amountToReceive),
         grossAmount: fromMinorUnit(grossAmountInMinorUnit),
         fee: fromMinorUnit(feeResult.fee),
+        userReceivesFullAmount: true,
         reference: creditResult.transaction.reference,
         providerReference,
       },
@@ -364,32 +368,46 @@ export const handleMonnifyWebhook = async (req, res) => {
       throw new Error("Paid amount is less than expected funding amount");
     }
 
+    const feeResult = await calculateFundingFee(
+      paidAmountInMinorUnit,
+      "monnify"
+    );
+    intent.amountToReceive = paidAmountInMinorUnit;
+
     const creditResult = await creditWallet({
       userId: intent.user,
-      amountInMinorUnit: intent.amountToReceive,
+      amountInMinorUnit: paidAmountInMinorUnit,
       walletType: "main",
       type: "funding",
       reference: generateTransactionReference("MNF"),
       provider: "monnify",
       providerReference,
       narration: "Wallet funding via Monnify one-time transfer",
-      metadata: payload,
+      metadata: {
+        ...payload,
+        fee: feeResult.fee,
+        grossAmount: intent.amount,
+        amountPaid: paidAmountInMinorUnit,
+        amountCredited: paidAmountInMinorUnit,
+        feePaidBy: "platform",
+      },
     });
 
     await createNotificationBestEffort({
       userId: intent.user,
       title: "Wallet funded successfully",
       message: `Your wallet has been credited with NGN ${fromMinorUnit(
-        intent.amountToReceive
+        paidAmountInMinorUnit
       )}.`,
       type: "wallet_funding_success",
       channel: "both",
       priority: "normal",
       data: {
         provider: "monnify",
-        amount: fromMinorUnit(intent.amountToReceive),
+        amount: fromMinorUnit(paidAmountInMinorUnit),
         grossAmount: fromMinorUnit(intent.amount),
-        fee: fromMinorUnit(intent.fee),
+        fee: fromMinorUnit(feeResult.fee),
+        userReceivesFullAmount: true,
         reference: creditResult.transaction.reference,
         providerReference,
         paymentReference,
@@ -406,6 +424,7 @@ export const handleMonnifyWebhook = async (req, res) => {
 
     intent.status = "paid";
     intent.paidAt = new Date();
+    intent.fee = feeResult.fee;
     await intent.save();
 
     webhookEvent.processed = true;

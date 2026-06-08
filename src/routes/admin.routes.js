@@ -17,6 +17,10 @@ import {
   updateAdminDataSettings,
 } from "../controllers/dataService.controller.js";
 import {
+  getAdminFundingFeeSettings,
+  updateAdminFundingFeeSetting,
+} from "../controllers/fundingFee.controller.js";
+import {
   createUser,
   deleteUser,
   getUser,
@@ -71,6 +75,18 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminDataSettings
+);
+router.get(
+  "/funding/settings",
+  protect,
+  authorizeRoles("admin"),
+  getAdminFundingFeeSettings
+);
+router.patch(
+  "/funding/settings",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminFundingFeeSetting
 );
 router.patch("/make-admin/:userId", protect, authorizeRoles("admin"), makeAdmin);
 router.get(

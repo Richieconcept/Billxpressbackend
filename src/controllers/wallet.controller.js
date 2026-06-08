@@ -72,7 +72,7 @@ export const getVirtualAccount = async (req, res) => {
     }
 
     res.json({
-      virtualAccount: serializeVirtualAccount(virtualAccount),
+      virtualAccount: await serializeVirtualAccount(virtualAccount),
     });
   } catch (error) {
     sendWalletError(res, "Could not fetch virtual account", error);
@@ -86,13 +86,13 @@ export const createVirtualAccount = async (req, res) => {
     if (!result.created) {
       return res.json({
         message: "Virtual account already exists",
-        virtualAccount: serializeVirtualAccount(result.virtualAccount),
+        virtualAccount: await serializeVirtualAccount(result.virtualAccount),
       });
     }
 
     res.status(201).json({
       message: "Virtual account created successfully",
-      virtualAccount: serializeVirtualAccount(result.virtualAccount),
+      virtualAccount: await serializeVirtualAccount(result.virtualAccount),
     });
   } catch (error) {
     sendWalletError(res, "Could not create virtual account", error);
@@ -105,7 +105,7 @@ export const createFundingIntent = async (req, res) => {
 
     res.status(201).json({
       message: "Funding account created successfully",
-      fundingIntent: serializeFundingIntent(intent),
+      fundingIntent: await serializeFundingIntent(intent),
     });
   } catch (error) {
     sendWalletError(res, "Could not create funding account", error);
@@ -125,7 +125,7 @@ export const confirmFundingIntent = async (req, res) => {
           : "Payment has not been confirmed yet",
       status: result.status,
       alreadyProcessed: Boolean(result.alreadyProcessed),
-      fundingIntent: serializeFundingIntent(result.intent),
+      fundingIntent: await serializeFundingIntent(result.intent),
     };
 
     if (result.status === "pending") {

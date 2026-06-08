@@ -62,12 +62,14 @@ docs {
       "bankName": "SafeHaven MFB",
       "amount": 2000,
       "fee": 20,
-      "amountToReceive": 1980,
+      "amountToReceive": 2000,
       "feePolicy": {
-        "paidBy": "user",
+        "paidBy": "platform",
         "percent": 1,
         "flat": 0,
-        "message": "Funding fee is 1% and is paid by the user. The wallet is credited with the amount after fee."
+        "creditPolicy": "gross",
+        "userReceivesFullAmount": true,
+        "message": "Funding charge is 1%. The user wallet is credited with the full transferred amount."
       },
       "expiresAt": "...",
       "status": "pending",
@@ -88,11 +90,13 @@ docs {
   - fee
   - amount to receive
 
-  If the user enters `N2,000` and the fee is `1%`, show:
+  If the user enters `N2,000` and the funding charge is `1%`, show:
 
   - Amount entered: `N2,000`
   - Fee: `N20`
-  - Amount to receive: `N1,980`
+  - Amount to receive: `N2,000`
+
+  `amountToReceive` is the wallet credit amount. It should match the amount the user is asked to transfer.
 
   When the user taps **I have transferred the money**, call:
 

@@ -136,10 +136,12 @@ docs {
         }
       ],
       "feePolicy": {
-        "paidBy": "user",
+        "paidBy": "platform",
         "percent": 1,
         "flat": 0,
-        "message": "Funding fee is 1% and is paid by the user. The wallet is credited with the amount after fee."
+        "creditPolicy": "gross",
+        "userReceivesFullAmount": true,
+        "message": "Funding charge is 1%. The user wallet is credited with the full transferred amount."
       }
     },
     "virtualAccounts": [

@@ -59,6 +59,14 @@ docs {
           "accountName": "Test User (BillXpress)"
         }
       ],
+      "feePolicy": {
+        "paidBy": "platform",
+        "percent": 1,
+        "flat": 0,
+        "creditPolicy": "gross",
+        "userReceivesFullAmount": true,
+        "message": "Funding charge is 1%. The user wallet is credited with the full transferred amount."
+      },
       "status": "active"
     }
   }
@@ -79,4 +87,6 @@ docs {
   If this returns `404`, show a button like `Create Funding Account`, then call `Create Virtual Account`.
 
   Show the list in `virtualAccount.accounts`. It may contain Paga, Kuda, or both depending on what PocketFi returns.
+
+  Show `feePolicy.message` on the funding screen. The important rule is: if the user transfers `N2,000`, the backend credits `N2,000` to the wallet.
 }
