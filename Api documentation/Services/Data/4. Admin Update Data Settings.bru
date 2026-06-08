@@ -45,123 +45,93 @@ body:json {
 
 docs {
   # Admin Update Data Settings
-
+  
   Admin updates data service provider and markup settings.
 
   Use this request when admin wants to:
 
   - switch between `smeapi` and `ujaydata`
-  - change normal user profit margin
-  - change vendor profit margin
-  - make big data plans cheaper using tiered pricing
-
+  - change normal user fallback percentage
+  - change vendor fallback percentage
+  - configure tiered margins so small plans stay profitable and big plans stay affordable
+  
   This request must be sent as raw JSON with:
-
+  
   ```txt
   Content-Type: application/json
   ```
-
+  
   If the body is not sent as JSON, the backend will not receive the fields correctly.
-
+  
   ## Endpoint
-
+  
   `PATCH /api/v1/admin/services/data/settings`
-
+  
   ## Authentication
-
+  
   Admin JWT required.
-
+  
   ## Body Fields
-
+  
   `isEnabled`
   Use `true` to allow data purchases or `false` to temporarily disable data service.
-
+  
   `activeProvider`
   Supported values are `smeapi` and `ujaydata`.
-
+  
   `smeapi` is the primary data provider. `ujaydata` is the backup provider. Admin can switch this value anytime and the frontend endpoints will stay the same.
-
+  
   `userMarkupPercent`
-  Fallback percentage added on top of provider cost price for normal users.
-
-  If `userPricingTiers` is set and a plan cost falls inside a tier, the tier markup is used instead.
-
+  Fallback percentage for normal users. Backend uses this only when no `userPricingTiers` range matches the provider `costPrice`.
+  
   `vendorMarkupPercent`
-  Fallback percentage added on top of provider cost price for active vendors.
-
-  If `vendorPricingTiers` is set and a plan cost falls inside a tier, the tier markup is used instead.
+  Fallback percentage for active vendors. Backend uses this only when no `vendorPricingTiers` range matches the provider `costPrice`.
 
   `userPricingTiers`
-  Optional. Tiered pricing for normal users. Use this to make small plans profitable and big plans cheaper.
+  Optional tiered percentage rules for normal users.
+
+  `vendorPricingTiers`
+  Optional tiered percentage rules for vendors.
 
   Each tier has:
 
-  - `minCost`: provider cost price starts from this amount
-  - `maxCost`: provider cost price ends at this amount, or `null` for no upper limit
-  - `markupPercent`: percentage to add for plans inside this cost range
+  - `minCost`: provider cost price must be at least this amount
+  - `maxCost`: provider cost price must be at most this amount
+  - `markupPercent`: percentage to add when this tier matches
 
-  `vendorPricingTiers`
-  Optional. Tiered pricing for active vendors.
-
-  Send an empty array `[]` if you want to remove tiered pricing and go back to flat percentage.
-
+  Use `maxCost: null` for the last tier when there is no upper limit.
+  
   `roundingMode`
   Use `ceil` to round up to the next naira, or `round` to round normally.
 
   ## Recommended MVP Tier Structure
 
-  This structure keeps small plans profitable but prevents large plans from becoming too expensive:
+  Normal users:
 
   ```txt
-  Normal users:
-  Cost 0 - 500       => 15%
-  Cost 501 - 1500    => 10%
-  Cost 1501 - 3000   => 7%
-  Cost 3001 - 6000   => 5%
-  Cost 6001 and above => 3%
+  cost 0 - 500        => 15%
+  cost 501 - 1500     => 10%
+  cost 1501 - 3000    => 7%
+  cost 3001 - 6000    => 5%
+  cost 6001 and above => 3%
+  ```
 
   Vendors:
-  Cost 0 - 500       => 10%
-  Cost 501 - 1500    => 7%
-  Cost 1501 - 3000   => 5%
-  Cost 3001 - 6000   => 3%
-  Cost 6001 and above => 2%
-  ```
-
-  ## How Tier Matching Works
-
-  Backend checks the provider `costPrice` and finds the first tier where:
 
   ```txt
-  costPrice >= minCost
-  and
-  costPrice <= maxCost
+  cost 0 - 500        => 10%
+  cost 501 - 1500     => 7%
+  cost 1501 - 3000    => 5%
+  cost 3001 - 6000    => 3%
+  cost 6001 and above => 2%
   ```
 
-  If `maxCost` is `null`, it means there is no upper limit.
-
-  Example:
-
-  ```txt
-  MTN 36GB costPrice = 10700
-  It matches { "minCost": 6001, "maxCost": null, "markupPercent": 3 }
-  User selling price = 10700 + 3% = 11021
-  Profit = 321
-  ```
-
-  Without tiered pricing, 15% would make that plan:
-
-  ```txt
-  10700 + 15% = 12305
-  Profit = 1605
-  ```
-
-  That is too expensive for big packages, so tiered pricing is better.
-
+  This keeps small bundles profitable but stops big bundles from becoming too expensive.
+  
   ## Example
-
+  
   To switch to UjayData with tiered pricing:
-
+  
   ```json
   {
     "isEnabled": true,
@@ -185,9 +155,9 @@ docs {
     ]
   }
   ```
-
-  To switch back to flat markup only, send empty arrays:
-
+  
+  To remove tiered pricing and use flat percentages only:
+  
   ```json
   {
     "isEnabled": true,
@@ -199,46 +169,44 @@ docs {
     "vendorPricingTiers": []
   }
   ```
-
+  
   ## Price Calculation
-
-  If provider price is `N199` and the matched user markup is `15`, frontend will see:
-
+  
+  If provider cost is `199` and the matched markup is `15%`:
+  
   ```txt
-  N199 + 15% = N228.85
-  ceil = N229
+  199 + 15% = 228.85
+  ceil = 229
+  sellingPrice = 229
+  profit = 30
   ```
 
-  If provider price is `N10,700` and the matched user markup is `3`, frontend will see:
+  If provider cost is `10700` and the matched markup is `3%`:
 
   ```txt
-  N10,700 + 3% = N11,021
-  profit = N321
+  10700 + 3% = 11021
+  sellingPrice = 11021
+  profit = 321
   ```
 
-  ## Frontend/Admin Dashboard Notes
+  Without tiered pricing, 15% on `10700` would produce `12305`, which is too expensive for large packages.
 
-  The admin dashboard should allow admin to edit:
+  ## Frontend Notes
 
-  - active provider
-  - fallback normal user markup
-  - fallback vendor markup
-  - user pricing tiers
-  - vendor pricing tiers
-  - rounding mode
+  The normal user app should not call this endpoint.
 
-  The user app does not call this endpoint. Only admin dashboard should call it.
+  The admin dashboard can call this endpoint to update pricing rules.
 
-  The user app should only fetch final plan prices from:
+  The user app should only fetch final data prices from:
 
   ```txt
   GET /api/v1/services/data/plans
   ```
 
-  Do not calculate markup on the frontend. Backend already returns final `sellingPrice`.
-
+  The frontend should display `sellingPrice` only. Backend already calculates markup, profit, and tier matching.
+  
   ## Expected Response
-
+  
   ```json
   {
     "message": "Data service settings updated successfully",
