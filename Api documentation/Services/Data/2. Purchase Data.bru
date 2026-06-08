@@ -88,13 +88,26 @@ docs {
   }
   ```
 
-  ## Failed Provider Response
+  ## If User Wallet Balance Is Too Low
+
+  This means the user does not have enough money in their BillXpress wallet.
+
+  ```json
+  {
+    "message": "Insufficient wallet balance"
+  }
+  ```
+
+  Show the user a message like: `Your wallet balance is not enough for this purchase.`
+
+  ## If Provider Is Out Of Funds Or Temporarily Down
 
   If provider fails after wallet debit, backend refunds the wallet and returns the failed transaction plus refund transaction.
 
   ```json
   {
-    "message": "Data purchase failed",
+    "message": "Data purchase is temporarily unavailable. Please try again later. Your wallet has been refunded.",
+    "code": "provider_insufficient_funds",
     "wallet": {
       "mainBalance": 2000
     },
@@ -107,4 +120,8 @@ docs {
     }
   }
   ```
+
+  Important: `provider_insufficient_funds` is not the user's wallet problem. It means the upstream data provider account or service cannot complete the purchase at that moment.
+
+  The frontend should not tell the user to fund their BillXpress wallet for this error. Show a service-unavailable message and let them try again later.
 }

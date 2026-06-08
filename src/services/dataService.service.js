@@ -12,6 +12,7 @@ import {
 } from "./wallet.service.js";
 import { createNotificationBestEffort } from "./notification.service.js";
 import { getDataProvider, listDataProviders } from "./dataProviders/index.js";
+import { getPublicProviderFailure } from "./providerFailure.service.js";
 
 const getMarkupPercentForUser = (settings, user) =>
   user.role === "vendor" && user.isVendorActive
@@ -271,10 +272,13 @@ export const purchaseDataForUser = async ({
       providerResponse: providerResult.raw,
     };
   } catch (error) {
+    const publicFailure = getPublicProviderFailure(error, "Data purchase");
+
     debitResult.transaction.status = "reversed";
     debitResult.transaction.metadata = {
       ...debitResult.transaction.metadata,
       providerError: error.providerResponse || error.message,
+      publicError: publicFailure,
     };
     await debitResult.transaction.save();
 
@@ -289,14 +293,15 @@ export const purchaseDataForUser = async ({
       metadata: {
         service: "data",
         originalReference: reference,
-        reason: error.message,
+        reason: publicFailure.message,
+        providerFailureCode: publicFailure.code,
       },
     });
 
     await createNotificationBestEffort({
       userId: user._id,
       title: "Data purchase failed",
-      message: `Your ${pricedPlan.network} ${pricedPlan.name} data purchase failed. Your wallet has been refunded.`,
+      message: publicFailure.message,
       type: "service_purchase_failed",
       channel: "both",
       priority: "normal",
@@ -307,10 +312,13 @@ export const purchaseDataForUser = async ({
         reference,
         refundReference: refundResult.transaction.reference,
         provider: provider.name,
+        failureCode: publicFailure.code,
       },
     });
 
-    error.statusCode = error.statusCode || 502;
+    error.message = publicFailure.message;
+    error.statusCode = publicFailure.statusCode;
+    error.code = publicFailure.code;
     error.wallet = refundResult.wallet;
     error.transaction = debitResult.transaction;
     error.refundTransaction = refundResult.transaction;
@@ -330,6 +338,7 @@ export const serializeDataPurchaseResult = (result) => ({
 
 export const serializeFailedDataPurchase = (error) => ({
   message: error.message,
+  code: error.code,
   wallet: error.wallet ? serializeWallet(error.wallet) : undefined,
   transaction: error.transaction
     ? serializeTransaction(error.transaction)

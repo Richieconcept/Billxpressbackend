@@ -14,6 +14,7 @@ import {
   getAirtimeProvider,
   listAirtimeProviders,
 } from "./airtimeProviders/index.js";
+import { getPublicProviderFailure } from "./providerFailure.service.js";
 
 const getMarkupPercentForUser = (settings, user) =>
   user.role === "vendor" && user.isVendorActive
@@ -267,10 +268,13 @@ export const purchaseAirtimeForUser = async ({
       providerResponse: providerResult.raw,
     };
   } catch (error) {
+    const publicFailure = getPublicProviderFailure(error, "Airtime purchase");
+
     debitResult.transaction.status = "reversed";
     debitResult.transaction.metadata = {
       ...debitResult.transaction.metadata,
       providerError: error.providerResponse || error.message,
+      publicError: publicFailure,
     };
     await debitResult.transaction.save();
 
@@ -285,14 +289,15 @@ export const purchaseAirtimeForUser = async ({
       metadata: {
         service: "airtime",
         originalReference: reference,
-        reason: error.message,
+        reason: publicFailure.message,
+        providerFailureCode: publicFailure.code,
       },
     });
 
     await createNotificationBestEffort({
       userId: user._id,
       title: "Airtime purchase failed",
-      message: `Your ${normalizedNetwork} airtime purchase failed. Your wallet has been refunded.`,
+      message: publicFailure.message,
       type: "service_purchase_failed",
       channel: "both",
       priority: "normal",
@@ -305,10 +310,13 @@ export const purchaseAirtimeForUser = async ({
         reference,
         refundReference: refundResult.transaction.reference,
         provider: provider.name,
+        failureCode: publicFailure.code,
       },
     });
 
-    error.statusCode = error.statusCode || 502;
+    error.message = publicFailure.message;
+    error.statusCode = publicFailure.statusCode;
+    error.code = publicFailure.code;
     error.wallet = refundResult.wallet;
     error.transaction = debitResult.transaction;
     error.refundTransaction = refundResult.transaction;
@@ -329,6 +337,7 @@ export const serializeAirtimePurchaseResult = (result) => ({
 
 export const serializeFailedAirtimePurchase = (error) => ({
   message: error.message,
+  code: error.code,
   wallet: error.wallet ? serializeWallet(error.wallet) : undefined,
   transaction: error.transaction
     ? serializeTransaction(error.transaction)
