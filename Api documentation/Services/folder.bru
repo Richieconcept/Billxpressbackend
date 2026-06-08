@@ -13,13 +13,14 @@ docs {
   ```txt
   Services / Data
   Services / Airtime
+  Services / Social Growth
   ```
 
   ## Frontend Rule
 
   The frontend should only call BillXpress endpoints.
 
-  Do not call UjayData or any other provider directly from the app.
+  Do not call UjayData, SMEAPI, VheeBoost, or any other provider directly from the app.
 
   ## Shared Wallet Rule
 
@@ -32,5 +33,5 @@ docs {
   5. Backend refunds wallet automatically if provider fails.
   6. Backend sends notification/email.
 
-  Data and airtime have separate admin settings so admin can set markup and enable/disable each service independently.
+  Data, airtime, and social growth have separate admin settings so admin can set markup and enable/disable each service independently.
 }

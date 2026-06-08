@@ -1,0 +1,39 @@
+meta {
+  name: Social Growth
+  seq: 3
+}
+
+docs {
+  # Social Growth Service
+
+  Social Growth lets users buy services like followers, likes, views, comments, and other social media growth products.
+
+  The frontend should only call BillXpress endpoints. Do not call VheeBoost directly from the app.
+
+  ## User Flow
+
+  1. Call `GET /api/v1/services/social-growth/services`.
+  2. Show categories and services returned by the backend.
+  3. User chooses a service, enters their social media link, and enters quantity.
+  4. Call `POST /api/v1/services/social-growth/quote`.
+  5. Show the final `sellingPrice`.
+  6. When user confirms, call `POST /api/v1/services/social-growth/orders`.
+  7. Backend verifies transaction PIN, debits wallet, sends order to VheeBoost, then saves transaction and order history.
+  8. If VheeBoost fails, backend refunds the wallet automatically.
+
+  ## Pricing Rule
+
+  VheeBoost returns `rate` as provider cost per `1000` quantity.
+
+  Example:
+
+  ```txt
+  rate = 1425.6
+  quantity = 1000
+  provider cost = 1425.6
+  markup = 15%
+  sellingPrice = 1640
+  ```
+
+  Admin can control the markup tiers.
+}

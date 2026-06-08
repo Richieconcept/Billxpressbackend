@@ -1,0 +1,38 @@
+meta {
+  name: 4. List Social Growth Orders
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/services/social-growth/orders
+  body: none
+  auth: bearer
+}
+
+params:query {
+  limit: 50
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # List Social Growth Orders
+
+  Shows the logged-in user's social growth order history.
+
+  ## Endpoint
+
+  `GET /api/v1/services/social-growth/orders`
+
+  ## Query
+
+  `limit`
+  Optional. Default is `50`, max is `100`.
+}

@@ -37,6 +37,11 @@
       "enabled": true
     },
     {
+      "name": "socialGrowthOrderId",
+      "value": "paste-social-growth-order-id-here",
+      "enabled": true
+    },
+    {
       "name": "notificationId",
       "value": "paste-notification-id-here",
       "enabled": true

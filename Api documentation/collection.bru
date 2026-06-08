@@ -149,4 +149,26 @@ docs {
   ```
 
   The backend calculates markup, debits wallet, calls the active provider, and refunds automatically if the provider fails.
+
+  ## Social Growth Service Rule
+
+  The frontend should fetch social growth services from:
+
+  ```txt
+  GET /api/v1/services/social-growth/services
+  ```
+
+  Before placing an order, quote the selected service and quantity:
+
+  ```txt
+  POST /api/v1/services/social-growth/quote
+  ```
+
+  Then place the order with:
+
+  ```txt
+  POST /api/v1/services/social-growth/orders
+  ```
+
+  The backend calculates tiered markup, debits wallet, calls VheeBoost, saves order history, and refunds automatically if the provider fails.
 }

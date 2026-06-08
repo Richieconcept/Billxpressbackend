@@ -1,0 +1,70 @@
+meta {
+  name: 2. Social Growth Quote
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/services/social-growth/quote
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "serviceId": "1",
+    "quantity": 1000
+  }
+}
+
+docs {
+  # Social Growth Quote
+
+  Calculates the final BillXpress price for a social growth order before the user pays.
+
+  ## Endpoint
+
+  `POST /api/v1/services/social-growth/quote`
+
+  ## Body Fields
+
+  `serviceId`
+  Required. Use the `id` from `Social Growth Services`.
+
+  `quantity`
+  Required. Must be between the service `min` and `max`.
+
+  ## Expected Response
+
+  ```json
+  {
+    "quote": {
+      "id": "1",
+      "name": "TikTok Likes",
+      "rate": 1425.6,
+      "rateUnit": "per_1000",
+      "quoteQuantity": 1000,
+      "costPrice": 1425.6,
+      "sellingPrice": 1640,
+      "profit": 214.4,
+      "markupPercent": 15,
+      "pricingModel": "tiered"
+    }
+  }
+  ```
+
+  ## Frontend Notes
+
+  Show `sellingPrice` as the amount the user will pay from wallet.
+
+  Do not calculate price on the frontend. The backend already applies the correct user/vendor tier.
+}

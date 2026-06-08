@@ -1,0 +1,71 @@
+meta {
+  name: 1. Social Growth Services
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/services/social-growth/services
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Social Growth Services
+
+  Fetches live social growth services from the active provider and returns BillXpress final prices.
+
+  ## Endpoint
+
+  `GET /api/v1/services/social-growth/services`
+
+  ## Authentication
+
+  User JWT required.
+
+  ## Expected Response
+
+  ```json
+  {
+    "provider": "vheeboost",
+    "pricing": {
+      "appliedPricingModel": "tiered",
+      "roundingMode": "ceil",
+      "rateUnit": "per_1000"
+    },
+    "services": [
+      {
+        "id": "1",
+        "provider": "vheeboost",
+        "name": "TikTok Likes",
+        "category": "TikTok",
+        "rate": 1425.6,
+        "rateUnit": "per_1000",
+        "min": 10,
+        "max": 1000000,
+        "quoteQuantity": 10,
+        "costPrice": 14.26,
+        "sellingPrice": 17,
+        "profit": 2.74,
+        "markupPercent": 15,
+        "available": true
+      }
+    ],
+    "count": 1530
+  }
+  ```
+
+  ## Frontend Notes
+
+  Group services by `category`.
+
+  Show `sellingPrice` only for the default/minimum quantity shown in this list. When the user enters their own quantity, call `Social Growth Quote` to get the real final price.
+}

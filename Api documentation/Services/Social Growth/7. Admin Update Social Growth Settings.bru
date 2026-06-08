@@ -1,0 +1,95 @@
+meta {
+  name: 7. Admin Update Social Growth Settings
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/services/social-growth/settings
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "isEnabled": true,
+    "activeProvider": "vheeboost",
+    "userMarkupPercent": 15,
+    "vendorMarkupPercent": 10,
+    "roundingMode": "ceil",
+    "userPricingTiers": [
+      { "minCost": 0, "maxCost": 1000, "markupPercent": 15 },
+      { "minCost": 1001, "maxCost": 5000, "markupPercent": 10 },
+      { "minCost": 5001, "maxCost": 15000, "markupPercent": 7 },
+      { "minCost": 15001, "maxCost": 50000, "markupPercent": 5 },
+      { "minCost": 50001, "maxCost": null, "markupPercent": 3 }
+    ],
+    "vendorPricingTiers": [
+      { "minCost": 0, "maxCost": 1000, "markupPercent": 10 },
+      { "minCost": 1001, "maxCost": 5000, "markupPercent": 7 },
+      { "minCost": 5001, "maxCost": 15000, "markupPercent": 5 },
+      { "minCost": 15001, "maxCost": 50000, "markupPercent": 3 },
+      { "minCost": 50001, "maxCost": null, "markupPercent": 2 }
+    ]
+  }
+}
+
+docs {
+  # Admin Update Social Growth Settings
+
+  Admin uses this endpoint to update social growth pricing.
+
+  ## Endpoint
+
+  `PATCH /api/v1/admin/services/social-growth/settings`
+
+  ## Body Fields
+
+  `isEnabled`
+  Use `true` to allow purchases or `false` to disable social growth.
+
+  `activeProvider`
+  Currently only `vheeboost`.
+
+  `userPricingTiers`
+  Percentage rules for normal users based on provider cost.
+
+  `vendorPricingTiers`
+  Percentage rules for vendors based on provider cost.
+
+  `roundingMode`
+  Use `ceil` to round up to the next naira.
+
+  ## Recommended MVP Tier Structure
+
+  Normal users:
+
+  ```txt
+  cost 0 - 1000        => 15%
+  cost 1001 - 5000     => 10%
+  cost 5001 - 15000    => 7%
+  cost 15001 - 50000   => 5%
+  cost 50001 and above => 3%
+  ```
+
+  Vendors:
+
+  ```txt
+  cost 0 - 1000        => 10%
+  cost 1001 - 5000     => 7%
+  cost 5001 - 15000    => 5%
+  cost 15001 - 50000   => 3%
+  cost 50001 and above => 2%
+  ```
+
+  The frontend user app should not call this endpoint. Only admin dashboard should call it.
+}

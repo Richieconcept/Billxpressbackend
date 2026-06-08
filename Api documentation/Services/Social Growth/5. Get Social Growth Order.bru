@@ -1,0 +1,45 @@
+meta {
+  name: 5. Get Social Growth Order
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/services/social-growth/orders/{{socialGrowthOrderId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Get Social Growth Order
+
+  Fetches one order and syncs its latest status from VheeBoost.
+
+  ## Endpoint
+
+  `GET /api/v1/services/social-growth/orders/:orderId`
+
+  ## Bruno Variable
+
+  Set `socialGrowthOrderId` to the `order.id` returned when placing an order.
+
+  ## Status Values
+
+  Possible backend statuses:
+
+  - `processing`
+  - `in_progress`
+  - `completed`
+  - `partial`
+  - `canceled`
+  - `failed`
+  - `refunded`
+}

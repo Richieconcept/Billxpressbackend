@@ -17,6 +17,10 @@ import {
   updateAdminDataSettings,
 } from "../controllers/dataService.controller.js";
 import {
+  getAdminSocialGrowthSettings,
+  updateAdminSocialGrowthSettings,
+} from "../controllers/socialGrowth.controller.js";
+import {
   getAdminFundingFeeSettings,
   updateAdminFundingFeeSetting,
 } from "../controllers/fundingFee.controller.js";
@@ -75,6 +79,18 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminDataSettings
+);
+router.get(
+  "/services/social-growth/settings",
+  protect,
+  authorizeRoles("admin"),
+  getAdminSocialGrowthSettings
+);
+router.patch(
+  "/services/social-growth/settings",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminSocialGrowthSettings
 );
 router.get(
   "/funding/settings",

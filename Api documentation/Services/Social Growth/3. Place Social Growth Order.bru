@@ -1,0 +1,98 @@
+meta {
+  name: 3. Place Social Growth Order
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/services/social-growth/orders
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "serviceId": "1",
+    "link": "https://www.tiktok.com/@username/video/1234567890",
+    "quantity": 1000,
+    "transactionPin": "1234"
+  }
+}
+
+docs {
+  # Place Social Growth Order
+
+  Places a paid social growth order.
+
+  ## Endpoint
+
+  `POST /api/v1/services/social-growth/orders`
+
+  ## What Backend Does
+
+  1. Checks the user's transaction PIN.
+  2. Fetches the live service from VheeBoost.
+  3. Calculates final BillXpress price.
+  4. Debits the user's wallet.
+  5. Sends the order to VheeBoost.
+  6. Saves order and transaction history.
+  7. If provider fails, refunds the user automatically.
+
+  ## Body Fields
+
+  `serviceId`
+  Required. Use the service `id`.
+
+  `link`
+  Required. Social media link the user wants to grow.
+
+  `quantity`
+  Required. Must respect service min and max.
+
+  `transactionPin`
+  Required. User's 4-digit transaction PIN.
+
+  `runs` and `interval`
+  Optional. Only send these if we later support drip-feed services in the UI.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "status": "successful",
+    "message": "Social growth order placed successfully",
+    "quote": {
+      "sellingPrice": 1640,
+      "profit": 214.4,
+      "markupPercent": 15
+    },
+    "order": {
+      "id": "...",
+      "provider": "vheeboost",
+      "providerOrderId": "116",
+      "serviceName": "TikTok Likes",
+      "quantity": 1000,
+      "sellingPrice": 1640,
+      "status": "processing"
+    },
+    "wallet": {
+      "mainBalance": 5000
+    },
+    "transaction": {
+      "type": "service_payment",
+      "direction": "debit",
+      "amount": 1640,
+      "status": "successful"
+    }
+  }
+  ```
+}

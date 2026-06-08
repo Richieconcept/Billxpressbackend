@@ -1,0 +1,29 @@
+meta {
+  name: 6. Admin Get Social Growth Settings
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/services/social-growth/settings
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Get Social Growth Settings
+
+  Admin uses this to see the active social growth provider and pricing tiers.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/services/social-growth/settings`
+}
