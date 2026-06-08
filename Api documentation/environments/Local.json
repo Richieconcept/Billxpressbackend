@@ -1,0 +1,60 @@
+{
+  "name": "Local",
+  "variables": [
+    {
+      "name": "baseUrl",
+      "value": "http://localhost:5000",
+      "enabled": true
+    },
+    {
+      "name": "vendorApiKey",
+      "value": "paste-vendor-api-key-here",
+      "enabled": true
+    },
+    {
+      "name": "adminSetupSecret",
+      "value": "change-me",
+      "enabled": true
+    },
+    {
+      "name": "pocketfiSignature",
+      "value": "generated-hmac-signature",
+      "enabled": true
+    },
+    {
+      "name": "monnifySignature",
+      "value": "generated-hmac-signature",
+      "enabled": true
+    },
+    {
+      "name": "walletAmount",
+      "value": "1000",
+      "enabled": true
+    },
+    {
+      "name": "fundingIntentId",
+      "value": "paste-funding-intent-id-here",
+      "enabled": true
+    },
+    {
+      "name": "notificationId",
+      "value": "paste-notification-id-here",
+      "enabled": true
+    },
+    {
+      "name": "userId",
+      "value": "6a1c4dff954fafd73329d772",
+      "enabled": true
+    },
+    {
+      "name": "registeredEmail",
+      "value": "imobonifaceben@gmail.com",
+      "enabled": true
+    },
+    {
+      "name": "emailOtp",
+      "value": "44156",
+      "enabled": true
+    }
+  ]
+}

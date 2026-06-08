@@ -1,0 +1,60 @@
+{
+  "name": "Billxpress",
+  "variables": [
+    {
+      "name": "baseUrl",
+      "value": "https://billxpressbackend-production.up.railway.app",
+      "enabled": true
+    },
+    {
+      "name": "vendorApiKey",
+      "value": "paste-vendor-api-key-here",
+      "enabled": true
+    },
+    {
+      "name": "adminSetupSecret",
+      "value": "change-me",
+      "enabled": true
+    },
+    {
+      "name": "pocketfiSignature",
+      "value": "generated-hmac-signature",
+      "enabled": true
+    },
+    {
+      "name": "monnifySignature",
+      "value": "generated-hmac-signature",
+      "enabled": true
+    },
+    {
+      "name": "walletAmount",
+      "value": "1000",
+      "enabled": true
+    },
+    {
+      "name": "fundingIntentId",
+      "value": "paste-funding-intent-id-here",
+      "enabled": true
+    },
+    {
+      "name": "notificationId",
+      "value": "paste-notification-id-here",
+      "enabled": true
+    },
+    {
+      "name": "userId",
+      "value": "paste-user-id-here",
+      "enabled": true
+    },
+    {
+      "name": "registeredEmail",
+      "value": "user@example.com",
+      "enabled": true
+    },
+    {
+      "name": "emailOtp",
+      "value": "12345",
+      "enabled": true
+    }
+  ]
+}
