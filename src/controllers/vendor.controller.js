@@ -72,6 +72,16 @@ const sendVendorError = (res, publicMessage, error) => {
     };
   }
 
+  if (error.refundTransaction || error.wallet) {
+    body.data = {
+      ...(body.data || {}),
+      refundTransaction: error.refundTransaction
+        ? serializeTransaction(error.refundTransaction)
+        : undefined,
+      wallet: error.wallet ? serializeWallet(error.wallet) : undefined,
+    };
+  }
+
   if (process.env.NODE_ENV !== "production") {
     body.error = error.message;
   }
