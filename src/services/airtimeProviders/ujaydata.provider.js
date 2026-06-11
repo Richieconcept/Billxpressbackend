@@ -50,20 +50,6 @@ const isSuccessfulPurchase = (response) => {
   return status === "success" || status === "successful" || message.includes("successful");
 };
 
-const DEFAULT_NETWORK_CODES = {
-  MTN: "1",
-  GLO: "2",
-  "9MOBILE": "3",
-  AIRTEL: "4",
-};
-
-const getAirtimeNetworkCode = (network) => {
-  const normalizedNetwork = String(network || "").trim().toUpperCase();
-  const envKey = `UJAYDATA_AIRTIME_${normalizedNetwork}_NETWORK_CODE`;
-
-  return process.env[envKey] || DEFAULT_NETWORK_CODES[normalizedNetwork] || network;
-};
-
 export const getSupportedNetworks = () => [
   { code: "MTN", name: "MTN", available: true },
   { code: "AIRTEL", name: "Airtel", available: true },
@@ -73,7 +59,7 @@ export const getSupportedNetworks = () => [
 
 export const purchaseAirtime = async ({ network, phone, amount, reference }) => {
   const payload = {
-    network: String(getAirtimeNetworkCode(network)),
+    network,
     phone,
     amount: String(amount),
   };
