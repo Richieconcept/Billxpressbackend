@@ -119,6 +119,21 @@ const getPurchasePlanValue = (plan) => {
   );
 };
 
+const getPurchaseNetworkValue = (plan) => {
+  const valueKey =
+    process.env.UJAYDATA_DATA_PURCHASE_NETWORK_VALUE || "networkCode";
+  const rawPlan = plan.raw || {};
+
+  return (
+    rawPlan[valueKey] ||
+    plan[valueKey] ||
+    rawPlan.datanetwork ||
+    rawPlan.networkid ||
+    plan.networkCode ||
+    plan.network
+  );
+};
+
 const isSuccessfulPurchase = (response) => {
   const status = String(response?.status || "").toLowerCase();
   const message = String(response?.message || "").toLowerCase();
@@ -129,7 +144,7 @@ const isSuccessfulPurchase = (response) => {
 export const purchaseData = async ({ plan, phone, reference }) => {
   const planField = process.env.UJAYDATA_DATA_PURCHASE_PLAN_FIELD || "plan";
   const payload = {
-    network: plan.network,
+    network: String(getPurchaseNetworkValue(plan)),
     phone,
     [planField]: String(getPurchasePlanValue(plan)),
   };
