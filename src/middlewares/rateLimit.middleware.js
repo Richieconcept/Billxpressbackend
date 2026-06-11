@@ -39,6 +39,7 @@ export const rateLimit = ({
   max,
   message = "Too many requests, please try again later",
   keyFields = [],
+  code,
 }) => {
   if (!windowMs || !max) {
     throw new Error("rateLimit requires windowMs and max");
@@ -68,7 +69,9 @@ export const rateLimit = ({
       res.set("Retry-After", String(retryAfterSeconds));
 
       return res.status(429).json({
+        success: code ? false : undefined,
         message,
+        code,
         retryAfterSeconds,
       });
     }

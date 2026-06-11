@@ -1,0 +1,15 @@
+meta {
+  name: 2. Vendor Transactions
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/transactions?limit=50
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}

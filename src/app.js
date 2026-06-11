@@ -8,6 +8,7 @@ import referralRoutes from "./routes/referral.routes.js";
 import socialGrowthRoutes from "./routes/socialGrowth.routes.js";
 import testRoutes from "./routes/test.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import vendorRoutes from "./routes/vendor.routes.js";
 import walletRoutes from "./routes/wallet.routes.js";
 import webhookRoutes from "./routes/webhook.routes.js";
 
@@ -50,6 +51,7 @@ app.use(express.json());
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/vendor", vendorRoutes);
 app.use("/api/v1/wallet", walletRoutes);
 app.use("/api/v1/services", airtimeServiceRoutes);
 app.use("/api/v1/services", dataServiceRoutes);

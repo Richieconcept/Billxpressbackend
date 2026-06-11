@@ -1,0 +1,15 @@
+meta {
+  name: 4. Social Growth Orders
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/social-growth/orders?limit=50
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}

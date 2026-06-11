@@ -1,0 +1,21 @@
+meta {
+  name: 3. Data Purchase Lookup
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/data/purchase/{{transactionReference}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}
+
+docs {
+  # Data Purchase Lookup
+
+  Looks up a data purchase by BillXpress `reference`, provider reference, or vendor `customerReference`.
+}

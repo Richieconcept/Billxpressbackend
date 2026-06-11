@@ -1,0 +1,23 @@
+meta {
+  name: 2. Social Growth Quote
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/vendor/social-growth/quote
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "serviceId": "{{socialGrowthServiceId}}",
+    "quantity": 1000
+  }
+}

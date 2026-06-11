@@ -1,0 +1,21 @@
+meta {
+  name: 3. Transaction Lookup
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/transactions/{{transactionReference}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}
+
+docs {
+  # Transaction Lookup
+
+  Looks up a vendor transaction by BillXpress `reference`, provider reference, or vendor `customerReference`.
+}

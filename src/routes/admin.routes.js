@@ -2,6 +2,7 @@ import express from "express";
 import {
   bootstrapFirstAdmin,
   createAdminNotification,
+  getAdminDashboardEarnings,
   listAdmins,
   listAdminNotifications,
   makeAdmin,
@@ -38,6 +39,12 @@ import { authorizeRoles, protect } from "../middlewares/auth.middleware.js";
 const router = express.Router();
 
 router.patch("/bootstrap-admin/:userId", bootstrapFirstAdmin);
+router.get(
+  "/dashboard/earnings",
+  protect,
+  authorizeRoles("admin"),
+  getAdminDashboardEarnings
+);
 router.get("/users", protect, authorizeRoles("admin"), listUsers);
 router.post("/users", protect, authorizeRoles("admin"), createUser);
 router.get("/users/:userId", protect, authorizeRoles("admin"), getUser);

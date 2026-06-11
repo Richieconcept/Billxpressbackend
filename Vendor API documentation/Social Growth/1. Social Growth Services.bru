@@ -1,0 +1,15 @@
+meta {
+  name: 1. Social Growth Services
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/social-growth/services
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}

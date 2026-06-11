@@ -92,6 +92,42 @@ export const requireVendor = (req, res, next) => {
   next();
 };
 
+export const protectVendorApi = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid vendor API key",
+        code: "INVALID_API_KEY",
+      });
+    }
+
+    const apiKey = authHeader.trim();
+    const user = await User.findOne({ apiKey }).select(
+      "-password -transactionPin -emailVerificationOtp"
+    );
+
+    if (!user || user.role !== "vendor" || user.isVendorActive !== true) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid vendor API key",
+        code: "INVALID_API_KEY",
+      });
+    }
+
+    req.user = user;
+    return next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid vendor API key",
+      code: "INVALID_API_KEY",
+    });
+  }
+};
+
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {

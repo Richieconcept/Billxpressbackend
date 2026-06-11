@@ -1,0 +1,74 @@
+meta {
+  name: BillXpress Vendor Public API
+  type: collection
+  version: 1
+}
+
+docs {
+  # BillXpress Vendor Public API
+
+  This is the separate public-facing API documentation collection for approved BillXpress vendors.
+
+  The raw HTML documentation lives at:
+
+  ```txt
+  Vendor API documentation/index.html
+  ```
+
+  ## Base URL
+
+  Production:
+
+  ```txt
+  https://billxpressbackend-production.up.railway.app
+  ```
+
+  Vendor route prefix:
+
+  ```txt
+  /api/v1/vendor
+  ```
+
+  ## Authentication
+
+  Vendor requests use API-key auth:
+
+  ```txt
+  Authorization: {{vendorApiKey}}
+  ```
+
+  Do not prefix vendor API keys with `Bearer`.
+
+  ## Rate Limit
+
+  Vendor API routes currently allow `120 requests per minute` per endpoint/IP.
+
+  When exceeded, the API returns:
+
+  ```json
+  {
+    "success": false,
+    "message": "Too many vendor API requests, please try again shortly",
+    "code": "RATE_LIMITED",
+    "retryAfterSeconds": 30
+  }
+  ```
+
+  ## Planned Vendor Resources
+
+  ```txt
+  GET  /api/v1/vendor/me
+  GET  /api/v1/vendor/wallet
+  GET  /api/v1/vendor/transactions
+  GET  /api/v1/vendor/data/plans
+  POST /api/v1/vendor/data/purchase
+  GET  /api/v1/vendor/data/purchase/:reference
+  GET  /api/v1/vendor/airtime/networks
+  POST /api/v1/vendor/airtime/quote
+  POST /api/v1/vendor/airtime/purchase
+  GET  /api/v1/vendor/social-growth/services
+  POST /api/v1/vendor/social-growth/quote
+  POST /api/v1/vendor/social-growth/orders
+  GET  /api/v1/vendor/social-growth/orders/:orderId
+  ```
+}

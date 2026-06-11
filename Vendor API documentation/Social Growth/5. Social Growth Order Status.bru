@@ -1,0 +1,15 @@
+meta {
+  name: 5. Social Growth Order Status
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/social-growth/orders/{{socialGrowthOrderId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}

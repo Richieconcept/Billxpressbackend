@@ -12,6 +12,7 @@ import {
 } from "./wallet.service.js";
 import { createNotificationBestEffort } from "./notification.service.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
+import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 import {
   getSocialGrowthProvider,
   listSocialGrowthProviders,
@@ -298,10 +299,17 @@ export const purchaseSocialGrowthForUser = async ({
   runs,
   interval,
   transactionPin,
+  customerReference,
+  requireTransactionPin = true,
 }) => {
   const normalizedLink = String(link || "").trim();
 
-  if (!serviceId || !normalizedLink || !quantity || !transactionPin) {
+  if (
+    !serviceId ||
+    !normalizedLink ||
+    !quantity ||
+    (requireTransactionPin && !transactionPin)
+  ) {
     const error = new Error(
       "Service ID, link, quantity, and transaction PIN are required"
     );
@@ -323,7 +331,14 @@ export const purchaseSocialGrowthForUser = async ({
     throw error;
   }
 
-  await verifyTransactionPin(user, transactionPin);
+  if (requireTransactionPin) {
+    await verifyTransactionPin(user, transactionPin);
+  }
+
+  const normalizedCustomerReference = await ensureUniqueCustomerReference({
+    userId: user._id,
+    customerReference,
+  });
 
   const quote = await quoteSocialGrowthForUser({
     user,
@@ -350,6 +365,7 @@ export const purchaseSocialGrowthForUser = async ({
       sellingPrice: quote.sellingPrice,
       profit: quote.profit,
       markupPercent: quote.markupPercent,
+      customerReference: normalizedCustomerReference || undefined,
     },
   });
 

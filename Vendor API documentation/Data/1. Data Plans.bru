@@ -1,0 +1,15 @@
+meta {
+  name: 1. Data Plans
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/data/plans
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}

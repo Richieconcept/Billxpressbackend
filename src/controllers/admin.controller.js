@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
+import Transaction from "../models/transaction.model.js";
 import {
   createNotificationsForUsers,
   serializeNotification,
@@ -22,6 +23,282 @@ const sendAdminError = (res, publicMessage, error) => {
     message: publicMessage,
     error: process.env.NODE_ENV === "production" ? undefined : error.message,
   });
+};
+
+const naira = (value) => Number((Number(value) || 0).toFixed(2));
+
+const percentage = (value, total) => {
+  if (!total || total <= 0) {
+    return 0;
+  }
+
+  return Number(((value / total) * 100).toFixed(2));
+};
+
+const createMetricBucket = () => ({
+  earned: 0,
+  costPrice: 0,
+  sellingPrice: 0,
+  profit: 0,
+  lossAmount: 0,
+  lostProfit: 0,
+  successfulCount: 0,
+  failedCount: 0,
+  reversedCount: 0,
+  totalCount: 0,
+});
+
+const finalizeMetricBucket = (bucket) => {
+  const earned = naira(bucket.earned);
+  const costPrice = naira(bucket.costPrice);
+  const sellingPrice = naira(bucket.sellingPrice);
+  const profit = naira(bucket.profit);
+  const lossAmount = naira(bucket.lossAmount);
+  const lostProfit = naira(bucket.lostProfit);
+
+  return {
+    earned,
+    revenue: earned,
+    costPrice,
+    sellingPrice,
+    profit,
+    lossAmount,
+    lostProfit,
+    lossPercentage: percentage(lossAmount, earned + lossAmount),
+    profitMarginPercentage: percentage(profit, earned),
+    successfulCount: bucket.successfulCount,
+    failedCount: bucket.failedCount,
+    reversedCount: bucket.reversedCount,
+    totalCount: bucket.totalCount,
+    averageSellingPrice: bucket.successfulCount
+      ? naira(sellingPrice / bucket.successfulCount)
+      : 0,
+  };
+};
+
+const getStartOfDay = (date) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const addDays = (date, days) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
+const addMonths = (date, months) => {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+};
+
+const getStartOfWeek = (date) => {
+  const start = getStartOfDay(date);
+  const day = start.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  return addDays(start, diff);
+};
+
+const getStartOfMonth = (date) =>
+  new Date(date.getFullYear(), date.getMonth(), 1);
+
+const padDatePart = (value) => String(value).padStart(2, "0");
+
+const formatDayKey = (date) =>
+  `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(
+    date.getDate()
+  )}`;
+
+const formatMonthKey = (date) =>
+  `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}`;
+
+const getPeriodKey = (date, period) => {
+  if (period === "weekly") {
+    return formatDayKey(getStartOfWeek(date));
+  }
+
+  if (period === "monthly") {
+    return formatMonthKey(getStartOfMonth(date));
+  }
+
+  return formatDayKey(getStartOfDay(date));
+};
+
+const makeSeries = ({ transactions, period, count, now }) => {
+  const currentStart =
+    period === "monthly"
+      ? getStartOfMonth(now)
+      : period === "weekly"
+        ? getStartOfWeek(now)
+        : getStartOfDay(now);
+  const buckets = [];
+  const byKey = new Map();
+
+  for (let index = count - 1; index >= 0; index -= 1) {
+    const start =
+      period === "monthly"
+        ? addMonths(currentStart, -index)
+        : addDays(currentStart, -index * (period === "weekly" ? 7 : 1));
+    const key = getPeriodKey(start, period);
+    const bucket = createMetricBucket();
+
+    buckets.push({
+      period: key,
+      startDate: start.toISOString(),
+      ...bucket,
+    });
+    byKey.set(key, bucket);
+  }
+
+  transactions.forEach((transaction) => {
+    const key = getPeriodKey(transaction.createdAt, period);
+    const bucket = byKey.get(key);
+
+    if (bucket) {
+      addTransactionToBucket(bucket, transaction);
+    }
+  });
+
+  return buckets.map(({ period: key, startDate }) => ({
+    period: key,
+    startDate,
+    ...finalizeMetricBucket(byKey.get(key)),
+  }));
+};
+
+const getNumber = (...values) => {
+  const value = values.find((item) => Number.isFinite(Number(item)));
+  return Number(value) || 0;
+};
+
+const normalizeDashboardTransaction = (transaction) => {
+  const metadata = transaction.metadata || {};
+  const sellingPrice = getNumber(metadata.sellingPrice, transaction.amount / 100);
+  const costPrice = getNumber(metadata.costPrice, metadata.amount, sellingPrice);
+  const profit = getNumber(metadata.profit, sellingPrice - costPrice);
+
+  return {
+    createdAt: transaction.createdAt,
+    status: transaction.status,
+    service: metadata.service || "unknown",
+    sellingPrice,
+    costPrice,
+    profit: Math.max(0, profit),
+  };
+};
+
+const addTransactionToBucket = (bucket, transaction) => {
+  bucket.totalCount += 1;
+
+  if (transaction.status === "successful") {
+    bucket.earned += transaction.sellingPrice;
+    bucket.sellingPrice += transaction.sellingPrice;
+    bucket.costPrice += transaction.costPrice;
+    bucket.profit += transaction.profit;
+    bucket.successfulCount += 1;
+    return;
+  }
+
+  if (transaction.status === "reversed") {
+    bucket.reversedCount += 1;
+  } else if (transaction.status === "failed") {
+    bucket.failedCount += 1;
+  }
+
+  bucket.lossAmount += transaction.sellingPrice;
+  bucket.lostProfit += transaction.profit;
+};
+
+const filterTransactionsFrom = (transactions, startDate) =>
+  transactions.filter((transaction) => transaction.createdAt >= startDate);
+
+const summarizeTransactions = (transactions) => {
+  const bucket = createMetricBucket();
+
+  transactions.forEach((transaction) => addTransactionToBucket(bucket, transaction));
+
+  return finalizeMetricBucket(bucket);
+};
+
+const summarizeByService = (transactions) => {
+  const buckets = new Map();
+
+  transactions.forEach((transaction) => {
+    if (!buckets.has(transaction.service)) {
+      buckets.set(transaction.service, createMetricBucket());
+    }
+
+    addTransactionToBucket(buckets.get(transaction.service), transaction);
+  });
+
+  return Array.from(buckets.entries())
+    .map(([service, bucket]) => ({
+      service,
+      ...finalizeMetricBucket(bucket),
+    }))
+    .sort((a, b) => b.earned - a.earned);
+};
+
+export const getAdminDashboardEarnings = async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfToday = getStartOfDay(now);
+    const startOfWeek = getStartOfWeek(now);
+    const startOfMonth = getStartOfMonth(now);
+    const oldestSeriesStart = addMonths(startOfMonth, -11);
+    const transactions = (
+      await Transaction.find({
+        type: "service_payment",
+        direction: "debit",
+        status: { $in: ["successful", "failed", "reversed"] },
+      })
+        .select("amount status metadata createdAt")
+        .lean()
+    ).map(normalizeDashboardTransaction);
+    const seriesTransactions = filterTransactionsFrom(
+      transactions,
+      oldestSeriesStart
+    );
+
+    res.json({
+      currency: "NGN",
+      generatedAt: now.toISOString(),
+      summary: {
+        allTime: summarizeTransactions(transactions),
+        today: summarizeTransactions(
+          filterTransactionsFrom(transactions, startOfToday)
+        ),
+        thisWeek: summarizeTransactions(
+          filterTransactionsFrom(transactions, startOfWeek)
+        ),
+        thisMonth: summarizeTransactions(
+          filterTransactionsFrom(transactions, startOfMonth)
+        ),
+      },
+      services: summarizeByService(transactions),
+      series: {
+        daily: makeSeries({
+          transactions: seriesTransactions,
+          period: "daily",
+          count: 7,
+          now,
+        }),
+        weekly: makeSeries({
+          transactions: seriesTransactions,
+          period: "weekly",
+          count: 8,
+          now,
+        }),
+        monthly: makeSeries({
+          transactions: seriesTransactions,
+          period: "monthly",
+          count: 12,
+          now,
+        }),
+      },
+    });
+  } catch (error) {
+    sendAdminError(res, "Could not fetch dashboard earnings", error);
+  }
 };
 
 export const listAdmins = async (req, res) => {

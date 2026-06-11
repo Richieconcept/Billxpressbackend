@@ -1,0 +1,27 @@
+meta {
+  name: 1. Vendor Profile
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}
+
+docs {
+  # Vendor Profile
+
+  Returns the authenticated vendor profile and wallet balance.
+
+  Send the API key directly:
+
+  ```txt
+  Authorization: {{vendorApiKey}}
+  ```
+}

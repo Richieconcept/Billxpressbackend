@@ -1,0 +1,21 @@
+meta {
+  name: 4. Airtime Purchase Lookup
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/airtime/purchase/{{transactionReference}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}
+
+docs {
+  # Airtime Purchase Lookup
+
+  Looks up an airtime purchase by BillXpress `reference`, provider reference, or vendor `customerReference`.
+}

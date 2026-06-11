@@ -1,0 +1,15 @@
+meta {
+  name: 1. Airtime Networks
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/airtime/networks
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}

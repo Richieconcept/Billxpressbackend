@@ -1,0 +1,1407 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BillXpress Vendor API Documentation</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fff2e9;
+      --surface: #ffffff;
+      --surface-2: #fff7f1;
+      --sidebar-bg: #0b0b0b;
+      --sidebar-ink: #fff7ed;
+      --sidebar-muted: #d3b8a5;
+      --hero-bg:
+        linear-gradient(rgba(0, 0, 0, 0.82), rgba(26, 11, 2, 0.76)),
+        url("https://images.unsplash.com/photo-1556155092-490a1ba16284?auto=format&fit=crop&w=1800&q=80");
+      --hero-ink: #ffffff;
+      --hero-muted: #ffe7d1;
+      --ink: #050505;
+      --muted: #5f5148;
+      --line: #f0ded1;
+      --code-bg: #111111;
+      --code-ink: #fff7ed;
+      --accent: #fb4b05;
+      --accent-2: #111111;
+      --warn: #b7791f;
+      --danger: #b42318;
+      --radius: 18px;
+      --shadow: 0 24px 70px rgba(91, 45, 18, 0.10);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #111111;
+      --surface: #191919;
+      --surface-2: #24160f;
+      --sidebar-bg: #050505;
+      --sidebar-ink: #fff7ed;
+      --sidebar-muted: #d8bca8;
+      --hero-bg:
+        linear-gradient(rgba(0, 0, 0, 0.78), rgba(18, 7, 1, 0.82)),
+        url("https://images.unsplash.com/photo-1556155092-490a1ba16284?auto=format&fit=crop&w=1800&q=80");
+      --hero-ink: #ffffff;
+      --hero-muted: #ffd8bf;
+      --ink: #fff7ed;
+      --muted: #c9b8ac;
+      --line: #33231a;
+      --code-bg: #050505;
+      --code-ink: #fff7ed;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 24px;
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      color: var(--sidebar-ink);
+      border-right: 1px solid rgba(251, 75, 5, 0.24);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-title {
+      color: var(--sidebar-ink);
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      color: var(--sidebar-muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .sidebar nav {
+      display: block;
+    }
+
+    .nav-group {
+      margin: 24px 0;
+    }
+
+    .nav-label {
+      display: block;
+      color: var(--sidebar-muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: var(--sidebar-ink);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .nav-link:hover {
+      background: rgba(251, 75, 5, 0.14);
+      color: #ffb347;
+    }
+
+    .theme-toggle {
+      width: 100%;
+      margin: 6px 0 8px;
+      padding: 10px 12px;
+      border: 1px solid rgba(251, 75, 5, 0.34);
+      border-radius: 8px;
+      background: rgba(251, 75, 5, 0.12);
+      color: var(--sidebar-ink);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      text-align: left;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(251, 75, 5, 0.22);
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    .hero {
+      padding: 54px 44px 34px;
+      background: var(--hero-bg);
+      background-position: center;
+      background-size: cover;
+      color: var(--hero-ink);
+    }
+
+    .hero-inner,
+    .main {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .hero-preview {
+      display: none;
+    }
+
+    .preview-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+      color: #6f6259;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .preview-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 18px 0 0 #ffd6bd, 36px 0 0 #111111;
+    }
+
+    .preview-balance {
+      padding: 18px;
+      border-radius: 18px;
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .preview-label {
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .preview-amount {
+      margin-top: 2px;
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .preview-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .preview-action {
+      padding: 10px 8px;
+      border-radius: 14px;
+      background: #fff1e8;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .preview-code {
+      padding: 14px;
+      border-radius: 16px;
+      background: #111111;
+      color: #ffbe90;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(251, 75, 5, 0.16);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 18px 0 14px;
+      font-size: 48px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .hero-copy {
+      max-width: 760px;
+      margin: 0;
+      color: var(--hero-muted);
+      font-size: 18px;
+    }
+
+    .quick-meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 34px;
+    }
+
+    .meta-item {
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.10);
+      box-shadow: none;
+    }
+
+    .meta-label {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .meta-value {
+      margin-top: 4px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+      color: var(--hero-ink);
+    }
+
+    .main {
+      padding: 42px 44px 80px;
+    }
+
+    section {
+      margin: 36px 0;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 32px;
+      line-height: 1.2;
+      letter-spacing: 0;
+      color: var(--ink);
+    }
+
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 19px;
+      letter-spacing: 0;
+      color: var(--ink);
+    }
+
+    p {
+      max-width: 820px;
+      margin: 0 0 14px;
+      color: var(--muted);
+    }
+
+    .notice {
+      max-width: 920px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      color: var(--ink);
+    }
+
+    .notice.warning {
+      border-left-color: var(--warn);
+    }
+
+    .endpoint {
+      margin: 18px 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .endpoint-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+
+    .endpoint-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      font-weight: 800;
+    }
+
+    .method {
+      flex: 0 0 auto;
+      min-width: 58px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #fff1e8;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .method.post {
+      background: #111111;
+      color: #ffb347;
+    }
+
+    .path {
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .status-pill {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .endpoint-body {
+      padding: 16px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: var(--surface-2);
+      color: var(--ink);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code,
+    pre {
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    }
+
+    code {
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: var(--surface-2);
+      color: var(--ink);
+      font-size: 0.92em;
+    }
+
+    .code-block {
+      position: relative;
+      margin: 12px 0;
+      border-radius: var(--radius);
+      background: var(--code-bg);
+      color: var(--code-ink);
+      overflow: hidden;
+      box-shadow: 0 18px 50px rgba(17, 17, 17, 0.18);
+    }
+
+    .code-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: #ffbe90;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    pre {
+      margin: 0;
+      padding: 14px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .copy-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .copy-btn:hover {
+      background: #ff6a1a;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .step {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .step-number {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--surface-2);
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    .step-title {
+      margin: 10px 0 4px;
+      font-weight: 900;
+    }
+
+    .step-text {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 0;
+    }
+
+    .badge {
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .footer {
+      padding: 24px 44px 40px;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    @media (max-width: 980px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        margin: 0;
+        border-radius: 0;
+        height: auto;
+      }
+
+      .hero {
+        padding-top: 44px;
+      }
+
+      .hero-inner {
+        min-height: auto;
+      }
+
+      .quick-meta,
+      .grid-2,
+      .steps {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      .main,
+      .footer {
+        padding-left: 22px;
+        padding-right: 22px;
+      }
+
+      h1 {
+        font-size: 42px;
+      }
+
+      .endpoint-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Documentation navigation">
+      <a class="brand" href="#top">
+        <span class="brand-mark">BX</span>
+        <span>
+          <span class="brand-title">BillXpress</span>
+          <span class="brand-subtitle">Vendor API v1</span>
+        </span>
+      </a>
+
+      <button class="theme-toggle" type="button" aria-label="Switch color mode">
+        Light mode
+      </button>
+
+      <nav>
+        <div class="nav-group">
+          <div class="nav-label">Start</div>
+          <a class="nav-link" href="#overview">Overview</a>
+          <a class="nav-link" href="#quickstart">Quickstart</a>
+          <a class="nav-link" href="#authentication">Authentication</a>
+          <a class="nav-link" href="#standard-response">Response Format</a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">Resources</div>
+          <a class="nav-link" href="#account">Account</a>
+          <a class="nav-link" href="#wallet">Wallet</a>
+          <a class="nav-link" href="#data">Data</a>
+          <a class="nav-link" href="#airtime">Airtime</a>
+          <a class="nav-link" href="#social-growth">Social Growth</a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">Operations</div>
+          <a class="nav-link" href="#references">References</a>
+          <a class="nav-link" href="#webhooks">Webhooks</a>
+          <a class="nav-link" href="#rate-limits">Rate Limits</a>
+          <a class="nav-link" href="#errors">Error Codes</a>
+          <a class="nav-link" href="#security">Security</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="content" id="top">
+      <header class="hero">
+        <div class="hero-inner">
+          <span class="eyebrow">Public integration documentation</span>
+          <h1>BillXpress Vendor API Documentation</h1>
+          <p class="hero-copy">
+            Integrate wallet-funded airtime, data, and social growth services into external apps using one vendor API key and predictable JSON responses.
+          </p>
+
+          <div class="hero-preview" aria-hidden="true">
+            <div class="preview-top">
+              <span>Vendor API</span>
+              <span class="preview-dot"></span>
+            </div>
+            <div class="preview-balance">
+              <div class="preview-label">Available Balance</div>
+              <div class="preview-amount">N 514,300.00</div>
+            </div>
+            <div class="preview-actions">
+              <span class="preview-action">Data</span>
+              <span class="preview-action">Airtime</span>
+              <span class="preview-action">Orders</span>
+            </div>
+            <div class="preview-code">
+              POST /vendor/data/purchase<br />
+              status: successful<br />
+              reference: DATA_LX9K
+            </div>
+          </div>
+
+          <div class="quick-meta">
+            <div class="meta-item">
+              <div class="meta-label">Production Base URL</div>
+              <div class="meta-value">https://billxpressbackend-production.up.railway.app</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Vendor Prefix</div>
+              <div class="meta-value">/api/v1/vendor</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Authentication</div>
+              <div class="meta-value">Authorization: YOUR_VENDOR_API_KEY</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="main">
+        <section id="overview">
+          <h2>Overview</h2>
+          <p>
+            The Vendor API is designed for approved BillXpress vendors who want to resell services from their own website, mobile app, agent system, or backend.
+          </p>
+          <p>
+            Vendor requests are authenticated with a vendor API key. The API uses the vendor wallet balance, applies vendor pricing, records transactions, and returns references that vendors can store in their own system.
+          </p>
+
+          <div class="notice warning">
+            This page documents the vendor-facing API contract. These routes should be implemented under <code>/api/v1/vendor</code> and should not require customer JWT tokens or transaction PINs.
+          </div>
+
+          <div class="badge-row" aria-label="Supported services">
+            <span class="badge">Airtime</span>
+            <span class="badge">Data</span>
+            <span class="badge">Social Growth</span>
+            <span class="badge">Wallet</span>
+            <span class="badge">Transactions</span>
+            <span class="badge">Webhooks Ready</span>
+          </div>
+        </section>
+
+        <section id="quickstart">
+          <h2>Quickstart</h2>
+          <div class="steps">
+            <div class="step">
+              <div class="step-number">1</div>
+              <div class="step-title">Get approved</div>
+              <div class="step-text">Create a BillXpress account and request vendor approval from an admin.</div>
+            </div>
+            <div class="step">
+              <div class="step-number">2</div>
+              <div class="step-title">Receive API key</div>
+              <div class="step-text">After approval, the admin dashboard returns a unique vendor API key.</div>
+            </div>
+            <div class="step">
+              <div class="step-number">3</div>
+              <div class="step-title">Fund wallet</div>
+              <div class="step-text">Keep enough balance in the vendor wallet before placing orders.</div>
+            </div>
+            <div class="step">
+              <div class="step-number">4</div>
+              <div class="step-title">Start requests</div>
+              <div class="step-text">Send your API key in the Authorization header and store every reference.</div>
+            </div>
+          </div>
+
+          <div class="code-block">
+            <div class="code-label">Minimal Request <button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>curl -X GET "https://billxpressbackend-production.up.railway.app/api/v1/vendor/me" \
+  -H "Authorization: YOUR_VENDOR_API_KEY"</code></pre>
+          </div>
+        </section>
+
+        <section id="authentication">
+          <h2>Authentication</h2>
+          <p>
+            Send the vendor API key directly in the <code>Authorization</code> header. Do not prefix vendor keys with <code>Bearer</code>.
+          </p>
+
+          <div class="grid-2">
+            <div class="code-block">
+              <div class="code-label">Correct <button class="copy-btn" type="button">Copy</button></div>
+              <pre><code>Authorization: bxp_vendor_live_xxxxxxxxxxxxx</code></pre>
+            </div>
+
+            <div class="code-block">
+              <div class="code-label">Incorrect <button class="copy-btn" type="button">Copy</button></div>
+              <pre><code>Authorization: Bearer bxp_vendor_live_xxxxxxxxxxxxx</code></pre>
+            </div>
+          </div>
+
+          <h3>Authentication Rules</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rule</th>
+                  <th>Requirement</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Account role</td>
+                  <td>The account must have <code>role: "vendor"</code>.</td>
+                </tr>
+                <tr>
+                  <td>Vendor status</td>
+                  <td>The account must have <code>isVendorActive: true</code>.</td>
+                </tr>
+                <tr>
+                  <td>Header</td>
+                  <td>Use <code>Authorization: YOUR_VENDOR_API_KEY</code>.</td>
+                </tr>
+                <tr>
+                  <td>Secret handling</td>
+                  <td>Keep API keys on backend servers only. Do not expose them in browser JavaScript or mobile app bundles.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="standard-response">
+          <h2>Response Format</h2>
+          <p>
+            Public responses should use one predictable envelope so vendors can integrate once and handle all services consistently.
+          </p>
+
+          <div class="grid-2">
+            <div class="code-block">
+              <div class="code-label">Success <button class="copy-btn" type="button">Copy</button></div>
+              <pre><code>{
+  "success": true,
+  "message": "Request completed successfully",
+  "data": {}
+}</code></pre>
+            </div>
+
+            <div class="code-block">
+              <div class="code-label">Error <button class="copy-btn" type="button">Copy</button></div>
+              <pre><code>{
+  "success": false,
+  "message": "Insufficient wallet balance",
+  "code": "INSUFFICIENT_BALANCE"
+}</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="account">
+          <h2>Account</h2>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/me</span>
+              </div>
+              <span class="status-pill">Vendor API key required</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Returns the authenticated vendor profile, active status, and wallet summary.</p>
+              <div class="code-block">
+                <div class="code-label">Response <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>{
+  "success": true,
+  "message": "Vendor profile fetched successfully",
+  "data": {
+    "vendor": {
+      "id": "665f...",
+      "businessName": "Example Vendor",
+      "email": "vendor@example.com",
+      "role": "vendor",
+      "isVendorActive": true,
+      "vendorApprovedAt": "2026-06-11T10:00:00.000Z"
+    },
+    "wallet": {
+      "currency": "NGN",
+      "mainBalance": 25000
+    }
+  }
+}</code></pre>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="wallet">
+          <h2>Wallet</h2>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/wallet</span>
+              </div>
+              <span class="status-pill">Read balance</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Returns the vendor wallet balance. Purchases are debited from this wallet.</p>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/transactions?limit=50</span>
+              </div>
+              <span class="status-pill">Transaction history</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Returns recent transactions for the vendor account. Use this for reconciliation and customer support.</p>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Query</th>
+                      <th>Type</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>limit</code></td>
+                      <td>number</td>
+                      <td>Optional. Maximum number of transactions to return. Recommended max is 100.</td>
+                    </tr>
+                    <tr>
+                      <td><code>service</code></td>
+                      <td>string</td>
+                      <td>Optional. Filter by <code>airtime</code>, <code>data</code>, or <code>social_growth</code>.</td>
+                    </tr>
+                    <tr>
+                      <td><code>status</code></td>
+                      <td>string</td>
+                      <td>Optional. Filter by <code>successful</code>, <code>failed</code>, or <code>reversed</code>.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="data">
+          <h2>Data</h2>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/data/plans</span>
+              </div>
+              <span class="status-pill">Live plans</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Returns available data plans with vendor pricing already applied.</p>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/vendor/data/purchase</span>
+              </div>
+              <span class="status-pill">Debits wallet</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Purchases a data plan for a customer phone number.</p>
+              <div class="grid-2">
+                <div>
+                  <h3>Request Body</h3>
+                  <div class="code-block">
+                    <div class="code-label">JSON <button class="copy-btn" type="button">Copy</button></div>
+                    <pre><code>{
+  "planId": "MTN_1GB_30DAYS",
+  "phone": "08012345678",
+  "customerReference": "vendor-data-0001"
+}</code></pre>
+                  </div>
+                </div>
+                <div>
+                  <h3>Success Response</h3>
+                  <div class="code-block">
+                    <div class="code-label">JSON <button class="copy-btn" type="button">Copy</button></div>
+                    <pre><code>{
+  "success": true,
+  "message": "Data purchase successful",
+  "data": {
+    "reference": "DATA_LX9K...",
+    "customerReference": "vendor-data-0001",
+    "status": "successful",
+    "service": "data",
+    "amount": 1500,
+    "phone": "08012345678"
+  }
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/data/purchase/:reference</span>
+              </div>
+              <span class="status-pill">Lookup</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Checks a data purchase by BillXpress transaction reference or vendor <code>customerReference</code>.</p>
+            </div>
+          </article>
+        </section>
+
+        <section id="airtime">
+          <h2>Airtime</h2>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/airtime/networks</span>
+              </div>
+              <span class="status-pill">Network list</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Returns supported airtime networks and current vendor pricing rules.</p>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/vendor/airtime/quote</span>
+              </div>
+              <span class="status-pill">Price preview</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="code-block">
+                <div class="code-label">Request <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>{
+  "amount": 500
+}</code></pre>
+              </div>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/vendor/airtime/purchase</span>
+              </div>
+              <span class="status-pill">Debits wallet</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="grid-2">
+                <div>
+                  <h3>Request Body</h3>
+                  <div class="code-block">
+                    <div class="code-label">JSON <button class="copy-btn" type="button">Copy</button></div>
+                    <pre><code>{
+  "network": "MTN",
+  "phone": "08012345678",
+  "amount": 500,
+  "customerReference": "vendor-airtime-0001"
+}</code></pre>
+                  </div>
+                </div>
+                <div>
+                  <h3>Success Response</h3>
+                  <div class="code-block">
+                    <div class="code-label">JSON <button class="copy-btn" type="button">Copy</button></div>
+                    <pre><code>{
+  "success": true,
+  "message": "Airtime purchase successful",
+  "data": {
+    "reference": "AIRTIME_LX9K...",
+    "customerReference": "vendor-airtime-0001",
+    "status": "successful",
+    "service": "airtime",
+    "amount": 500,
+    "phone": "08012345678",
+    "network": "MTN"
+  }
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="social-growth">
+          <h2>Social Growth</h2>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/social-growth/services</span>
+              </div>
+              <span class="status-pill">Service catalog</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Returns social growth services with vendor pricing, minimum quantity, maximum quantity, refill support, and category.</p>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/vendor/social-growth/quote</span>
+              </div>
+              <span class="status-pill">Price preview</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="code-block">
+                <div class="code-label">Request <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>{
+  "serviceId": "7788",
+  "quantity": 1000
+}</code></pre>
+              </div>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/vendor/social-growth/orders</span>
+              </div>
+              <span class="status-pill">Creates order</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="code-block">
+                <div class="code-label">Request <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>{
+  "serviceId": "7788",
+  "link": "https://instagram.com/example",
+  "quantity": 1000,
+  "customerReference": "vendor-social-0001"
+}</code></pre>
+              </div>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/social-growth/orders/:orderId</span>
+              </div>
+              <span class="status-pill">Order status</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Returns the current social growth order status, provider order ID, start count, remaining quantity, and timestamps.</p>
+            </div>
+          </article>
+        </section>
+
+        <section id="references">
+          <h2>References And Idempotency</h2>
+          <p>
+            Vendors should send a unique <code>customerReference</code> for every purchase. BillXpress should store it in transaction metadata and prevent duplicate charges for repeated requests with the same reference.
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Reference</th>
+                  <th>Generated By</th>
+                  <th>Purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>reference</code></td>
+                  <td>BillXpress</td>
+                  <td>Official transaction reference for wallet debit and support.</td>
+                </tr>
+                <tr>
+                  <td><code>customerReference</code></td>
+                  <td>Vendor</td>
+                  <td>Vendor's own order ID for reconciliation and duplicate protection.</td>
+                </tr>
+                <tr>
+                  <td><code>providerReference</code></td>
+                  <td>Provider</td>
+                  <td>External provider ID returned by data, airtime, or social growth provider.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="webhooks">
+          <h2>Webhooks</h2>
+          <p>
+            Webhooks notify a vendor backend when an order succeeds, fails, or is reversed. This is useful when the vendor's own checkout cannot wait for provider completion.
+          </p>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/vendor/webhooks</span>
+              </div>
+              <span class="status-pill">Planned</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="code-block">
+                <div class="code-label">Register Webhook <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>{
+  "url": "https://vendor.example.com/billxpress/webhook",
+  "secret": "vendor-generated-secret"
+}</code></pre>
+              </div>
+
+              <h3>Event Example</h3>
+              <div class="code-block">
+                <div class="code-label">Webhook Payload <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>{
+  "event": "data.purchase.successful",
+  "reference": "DATA_LX9K...",
+  "customerReference": "vendor-data-0001",
+  "status": "successful",
+  "amount": 1500,
+  "currency": "NGN",
+  "createdAt": "2026-06-11T10:00:00.000Z"
+}</code></pre>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="rate-limits">
+          <h2>Rate Limits</h2>
+          <p>
+            Vendor API traffic is rate limited to protect service reliability. The current limit is <code>120 requests per minute</code> per endpoint/IP.
+          </p>
+
+          <div class="code-block">
+            <div class="code-label">Rate Limit Response <button class="copy-btn" type="button">Copy</button></div>
+            <pre><code>{
+  "success": false,
+  "message": "Too many vendor API requests, please try again shortly",
+  "code": "RATE_LIMITED",
+  "retryAfterSeconds": 30
+}</code></pre>
+          </div>
+        </section>
+
+        <section id="errors">
+          <h2>Error Codes</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>HTTP</th>
+                  <th>Code</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>401</td>
+                  <td><code>INVALID_API_KEY</code></td>
+                  <td>The vendor API key is missing, invalid, inactive, or belongs to a non-vendor account.</td>
+                </tr>
+                <tr>
+                  <td>400</td>
+                  <td><code>VALIDATION_ERROR</code></td>
+                  <td>A required field is missing or invalid.</td>
+                </tr>
+                <tr>
+                  <td>400</td>
+                  <td><code>INSUFFICIENT_BALANCE</code></td>
+                  <td>The vendor wallet balance is too low for the requested purchase.</td>
+                </tr>
+                <tr>
+                  <td>409</td>
+                  <td><code>DUPLICATE_REFERENCE</code></td>
+                  <td>The <code>customerReference</code> has already been used for this vendor.</td>
+                </tr>
+                <tr>
+                  <td>503</td>
+                  <td><code>SERVICE_UNAVAILABLE</code></td>
+                  <td>The selected service or provider is temporarily unavailable.</td>
+                </tr>
+                <tr>
+                  <td>429</td>
+                  <td><code>RATE_LIMITED</code></td>
+                  <td>The vendor made too many requests in a short period. Wait for <code>retryAfterSeconds</code>.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="security">
+          <h2>Security Guidelines</h2>
+          <div class="notice">
+            Treat every vendor API key like a password. A leaked key can spend the vendor's wallet balance.
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Do</th>
+                  <th>Do Not</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Store the API key in backend environment variables.</td>
+                  <td>Do not put the API key inside frontend JavaScript.</td>
+                </tr>
+                <tr>
+                  <td>Use HTTPS for all requests.</td>
+                  <td>Do not send API requests over plain HTTP in production.</td>
+                </tr>
+                <tr>
+                  <td>Send a unique <code>customerReference</code> for every purchase.</td>
+                  <td>Do not retry purchase requests without idempotency protection.</td>
+                </tr>
+                <tr>
+                  <td>Log BillXpress references for support and reconciliation.</td>
+                  <td>Do not expose provider raw responses to end customers.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <footer class="footer">
+        BillXpress Vendor API Documentation. Built for approved vendor integrations.
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const themeToggle = document.querySelector(".theme-toggle");
+    const savedTheme = localStorage.getItem("billxpressVendorDocsTheme");
+    const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+    const setTheme = (theme) => {
+      document.documentElement.dataset.theme = theme;
+      localStorage.setItem("billxpressVendorDocsTheme", theme);
+
+      if (themeToggle) {
+        themeToggle.innerText = theme === "dark" ? "Light mode" : "Dark mode";
+      }
+    };
+
+    setTheme(savedTheme || preferredTheme);
+
+    if (themeToggle) {
+      themeToggle.addEventListener("click", () => {
+        const currentTheme = document.documentElement.dataset.theme || "light";
+        setTheme(currentTheme === "dark" ? "light" : "dark");
+      });
+    }
+
+    document.querySelectorAll(".copy-btn").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const block = button.closest(".code-block");
+        const code = block ? block.querySelector("code") : null;
+
+        if (!code) {
+          return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(code.innerText);
+          const original = button.innerText;
+          button.innerText = "Copied";
+          window.setTimeout(() => {
+            button.innerText = original;
+          }, 1200);
+        } catch (error) {
+          button.innerText = "Select";
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+meta {
+  name: 2. Purchase Data
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/vendor/data/purchase
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "planId": "{{dataPlanId}}",
+    "phone": "{{customerPhone}}",
+    "customerReference": "vendor-data-001"
+  }
+}

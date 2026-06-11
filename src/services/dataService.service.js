@@ -13,6 +13,7 @@ import {
 import { createNotificationBestEffort } from "./notification.service.js";
 import { getDataProvider, listDataProviders } from "./dataProviders/index.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
+import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
 const normalizePricingTiers = (tiers = []) =>
   (Array.isArray(tiers) ? tiers : [])
@@ -217,8 +218,10 @@ export const purchaseDataForUser = async ({
   planId,
   phone,
   transactionPin,
+  customerReference,
+  requireTransactionPin = true,
 }) => {
-  if (!planId || !phone || !transactionPin) {
+  if (!planId || !phone || (requireTransactionPin && !transactionPin)) {
     const error = new Error("Plan ID, phone number, and transaction PIN are required");
     error.statusCode = 400;
     throw error;
@@ -238,7 +241,14 @@ export const purchaseDataForUser = async ({
     throw error;
   }
 
-  await verifyTransactionPin(user, transactionPin);
+  if (requireTransactionPin) {
+    await verifyTransactionPin(user, transactionPin);
+  }
+
+  const normalizedCustomerReference = await ensureUniqueCustomerReference({
+    userId: user._id,
+    customerReference,
+  });
 
   const settings = await getOrCreateDataServiceSetting();
 
@@ -277,6 +287,7 @@ export const purchaseDataForUser = async ({
       sellingPrice: pricedPlan.sellingPrice,
       profit: pricedPlan.profit,
       markupPercent: pricedPlan.markupPercent,
+      customerReference: normalizedCustomerReference || undefined,
     },
   });
 

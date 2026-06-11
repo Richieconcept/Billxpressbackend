@@ -15,6 +15,7 @@ import {
   listAirtimeProviders,
 } from "./airtimeProviders/index.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
+import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
 const getMarkupPercentForUser = (settings, user) =>
   user.role === "vendor" && user.isVendorActive
@@ -154,11 +155,18 @@ export const purchaseAirtimeForUser = async ({
   phone,
   amount,
   transactionPin,
+  customerReference,
+  requireTransactionPin = true,
 }) => {
   const normalizedNetwork = String(network || "").trim().toUpperCase();
   const normalizedPhone = String(phone || "").trim();
 
-  if (!normalizedNetwork || !normalizedPhone || !amount || !transactionPin) {
+  if (
+    !normalizedNetwork ||
+    !normalizedPhone ||
+    !amount ||
+    (requireTransactionPin && !transactionPin)
+  ) {
     const error = new Error(
       "Network, phone number, amount, and transaction PIN are required"
     );
@@ -180,7 +188,14 @@ export const purchaseAirtimeForUser = async ({
     throw error;
   }
 
-  await verifyTransactionPin(user, transactionPin);
+  if (requireTransactionPin) {
+    await verifyTransactionPin(user, transactionPin);
+  }
+
+  const normalizedCustomerReference = await ensureUniqueCustomerReference({
+    userId: user._id,
+    customerReference,
+  });
 
   const settings = await getOrCreateAirtimeServiceSetting();
 
@@ -220,6 +235,7 @@ export const purchaseAirtimeForUser = async ({
       sellingPrice: quote.sellingPrice,
       profit: quote.profit,
       markupPercent: quote.markupPercent,
+      customerReference: normalizedCustomerReference || undefined,
     },
   });
 

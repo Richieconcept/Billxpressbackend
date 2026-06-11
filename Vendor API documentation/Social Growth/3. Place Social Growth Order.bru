@@ -1,0 +1,25 @@
+meta {
+  name: 3. Place Social Growth Order
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/vendor/social-growth/orders
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "serviceId": "{{socialGrowthServiceId}}",
+    "link": "https://instagram.com/example",
+    "quantity": 1000,
+    "customerReference": "vendor-social-001"
+  }
+}

@@ -1,0 +1,25 @@
+meta {
+  name: 3. Purchase Airtime
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/vendor/airtime/purchase
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "network": "MTN",
+    "phone": "{{customerPhone}}",
+    "amount": 500,
+    "customerReference": "vendor-airtime-001"
+  }
+}
