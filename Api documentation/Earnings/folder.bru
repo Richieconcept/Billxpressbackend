@@ -1,0 +1,101 @@
+meta {
+  name: Earnings
+  type: folder
+  seq: 8
+}
+
+docs {
+  # Earnings
+
+  Admin dashboard finance and service performance endpoints.
+
+  This folder covers platform earnings, cost price, selling price, profit, failed/reversed purchase losses, chart series, and per-service breakdowns.
+
+  ## Current Endpoint
+
+  ```txt
+  GET /api/v1/admin/dashboard/earnings
+  ```
+
+  ## Authentication
+
+  Admin JWT required:
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Dashboard Coverage
+
+  The endpoint returns:
+
+  - all-time totals
+  - today totals
+  - this week totals
+  - this month totals
+  - per-service totals for data, airtime, social growth, and future services
+  - daily chart series
+  - weekly chart series
+  - monthly chart series
+
+  ## Recommended Admin Dashboard Layout
+
+  Main cards:
+
+  - Today earned
+  - Today profit
+  - This week earned
+  - This week profit
+  - This month earned
+  - This month profit
+  - Loss amount
+  - Loss percentage
+
+  Service performance table:
+
+  - Service name
+  - Earned
+  - Cost price
+  - Selling price
+  - Profit
+  - Profit margin percentage
+  - Successful count
+  - Failed/reversed count
+
+  ## Services Included
+
+  Current services:
+
+  - `data`
+  - `airtime`
+  - `social_growth`
+
+  Future services are included automatically if the purchase transaction is saved as `type: "service_payment"` and includes:
+
+  ```json
+  {
+    "metadata": {
+      "service": "electricity",
+      "costPrice": 1000,
+      "sellingPrice": 1100,
+      "profit": 100
+    }
+  }
+  ```
+
+  No new dashboard endpoint is needed for future services. They will appear inside the `services` array using their `metadata.service` value.
+
+  ## Future Service Keys
+
+  Use stable snake_case service keys so the admin dashboard can label and filter services properly:
+
+  - `electricity`
+  - `cable_tv`
+  - `betting`
+  - `esim`
+  - `bulk_sms`
+  - `virtual_card`
+  - `education`
+
+  Each future service should save `costPrice`, `sellingPrice`, and `profit` at purchase time. Do not calculate historical profit from current admin settings.
+}

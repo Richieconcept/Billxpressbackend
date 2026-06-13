@@ -1,0 +1,320 @@
+meta {
+  name: 1. Admin Dashboard Earnings
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/dashboard/earnings
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Dashboard Earnings
+
+  Admin dashboard endpoint for revenue, cost price, selling price, profit, loss, service breakdown, and chart series.
+
+  This endpoint is designed for the admin dashboard earnings/profit cards and charts.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/dashboard/earnings`
+
+  ## Authentication Required
+
+  Admin JWT only:
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## What This Endpoint Counts
+
+  The backend reads successful, failed, and reversed `service_payment` wallet debit transactions.
+
+  It uses the pricing values saved at purchase time inside transaction metadata:
+
+  ```json
+  {
+    "service": "data",
+    "costPrice": 120,
+    "sellingPrice": 132,
+    "profit": 12,
+    "customerReference": "vendor-data-001"
+  }
+  ```
+
+  This means historical dashboard numbers are based on the exact cost and selling price used when the customer bought the service, not the current admin settings.
+
+  ## Services Covered
+
+  Current services:
+
+  - `data`
+  - `airtime`
+  - `social_growth`
+
+  Future services are automatically covered when their purchase transactions are saved as:
+
+  ```json
+  {
+    "type": "service_payment",
+    "direction": "debit",
+    "metadata": {
+      "service": "electricity",
+      "costPrice": 1000,
+      "sellingPrice": 1100,
+      "profit": 100
+    }
+  }
+  ```
+
+  The new service will appear in the `services` breakdown without creating a new dashboard endpoint.
+
+  ## Summary Fields
+
+  `earned`
+  Total successful service sales amount.
+
+  `revenue`
+  Same value as `earned`. Included for dashboard naming flexibility.
+
+  `costPrice`
+  Total provider/base cost for successful service purchases.
+
+  `sellingPrice`
+  Total customer/vendor selling price for successful service purchases.
+
+  `profit`
+  Total profit from successful purchases.
+
+  `lossAmount`
+  Selling value of failed/reversed service purchases.
+
+  `lostProfit`
+  Profit that would have been earned if failed/reversed purchases succeeded.
+
+  `lossPercentage`
+  Percentage of failed/reversed value compared with total attempted value.
+
+  `profitMarginPercentage`
+  Profit as a percentage of earned revenue.
+
+  `successfulCount`, `failedCount`, `reversedCount`, `totalCount`
+  Transaction counts used for dashboard status cards.
+
+  `averageSellingPrice`
+  Average successful sale value.
+
+  ## Response Shape
+
+  `summary.allTime`
+  All service earnings from all time.
+
+  `summary.today`
+  All service earnings from today.
+
+  `summary.thisWeek`
+  All service earnings for the current week.
+
+  `summary.thisMonth`
+  All service earnings for the current month.
+
+  `services`
+  Per-service breakdown. This is where the admin dashboard can show data, airtime, social growth, and future services separately.
+
+  Each item in `services` has the same finance fields as a summary bucket:
+
+  - `earned`
+  - `costPrice`
+  - `sellingPrice`
+  - `profit`
+  - `lossAmount`
+  - `lostProfit`
+  - `lossPercentage`
+  - `profitMarginPercentage`
+  - `successfulCount`
+  - `failedCount`
+  - `reversedCount`
+  - `totalCount`
+  - `averageSellingPrice`
+
+  Use this array for a service performance table or individual service cards.
+
+  `series.daily`
+  Last 7 daily buckets for charts.
+
+  `series.weekly`
+  Last 8 weekly buckets for charts.
+
+  `series.monthly`
+  Last 12 monthly buckets for charts.
+
+  ## Expected Success Response
+
+  Status: `200 OK`
+
+  ```json
+  {
+    "currency": "NGN",
+    "generatedAt": "2026-06-09T14:00:00.000Z",
+    "summary": {
+      "allTime": {
+        "earned": 15000,
+        "revenue": 15000,
+        "costPrice": 12000,
+        "sellingPrice": 15000,
+        "profit": 3000,
+        "lossAmount": 0,
+        "lostProfit": 0,
+        "lossPercentage": 0,
+        "profitMarginPercentage": 20,
+        "successfulCount": 10,
+        "failedCount": 0,
+        "reversedCount": 0,
+        "totalCount": 10,
+        "averageSellingPrice": 1500
+      }
+    },
+    "services": [
+      {
+        "service": "data",
+        "earned": 8000,
+        "revenue": 8000,
+        "costPrice": 7000,
+        "sellingPrice": 8000,
+        "profit": 1000,
+        "lossAmount": 132,
+        "lostProfit": 12,
+        "lossPercentage": 1.62,
+        "profitMarginPercentage": 12.5,
+        "successfulCount": 6,
+        "failedCount": 0,
+        "reversedCount": 1,
+        "totalCount": 7,
+        "averageSellingPrice": 1333.33
+      },
+      {
+        "service": "airtime",
+        "earned": 3000,
+        "revenue": 3000,
+        "costPrice": 2800,
+        "sellingPrice": 3000,
+        "profit": 200,
+        "lossAmount": 0,
+        "lostProfit": 0,
+        "lossPercentage": 0,
+        "profitMarginPercentage": 6.67,
+        "successfulCount": 4,
+        "failedCount": 0,
+        "reversedCount": 0,
+        "totalCount": 4,
+        "averageSellingPrice": 750
+      },
+      {
+        "service": "social_growth",
+        "earned": 4000,
+        "revenue": 4000,
+        "costPrice": 2200,
+        "sellingPrice": 4000,
+        "profit": 1800,
+        "lossAmount": 0,
+        "lostProfit": 0,
+        "lossPercentage": 0,
+        "profitMarginPercentage": 45,
+        "successfulCount": 2,
+        "failedCount": 0,
+        "reversedCount": 0,
+        "totalCount": 2,
+        "averageSellingPrice": 2000
+      }
+    ],
+    "series": {
+      "daily": [
+        {
+          "period": "2026-06-09",
+          "startDate": "2026-06-09T00:00:00.000Z",
+          "earned": 15000,
+          "revenue": 15000,
+          "costPrice": 12000,
+          "sellingPrice": 15000,
+          "profit": 3000,
+          "lossAmount": 0,
+          "lostProfit": 0,
+          "lossPercentage": 0,
+          "profitMarginPercentage": 20,
+          "successfulCount": 10,
+          "failedCount": 0,
+          "reversedCount": 0,
+          "totalCount": 10,
+          "averageSellingPrice": 1500
+        }
+      ],
+      "weekly": [],
+      "monthly": []
+    }
+  }
+  ```
+
+  ## Frontend Usage Notes
+
+  Use `summary.today`, `summary.thisWeek`, and `summary.thisMonth` for the main dashboard cards.
+
+  Use `services` for per-service cards or tables:
+
+  - Data earnings/profit
+  - Airtime earnings/profit
+  - Social growth earnings/profit
+  - Future services such as electricity, cable TV, betting, eSIM, cards, or bulk SMS
+
+  Use `series.daily`, `series.weekly`, and `series.monthly` for charts.
+
+  ## Service Labels
+
+  The backend returns stable service keys. The frontend can display them with friendly labels:
+
+  ```json
+  {
+    "data": "Data",
+    "airtime": "Airtime",
+    "social_growth": "Social Growth",
+    "electricity": "Electricity",
+    "cable_tv": "Cable TV",
+    "betting": "Betting",
+    "esim": "eSIM",
+    "bulk_sms": "Bulk SMS",
+    "virtual_card": "Virtual Card",
+    "education": "Education"
+  }
+  ```
+
+  ## Future Integration Rule
+
+  When adding a new service, save the exact purchase pricing on the service payment transaction:
+
+  ```json
+  {
+    "type": "service_payment",
+    "direction": "debit",
+    "status": "successful",
+    "metadata": {
+      "service": "electricity",
+      "costPrice": 1000,
+      "sellingPrice": 1100,
+      "profit": 100,
+      "customerReference": "optional-vendor-reference"
+    }
+  }
+  ```
+
+  If the provider fails and the wallet is refunded, keep the original transaction as `status: "reversed"`. The dashboard uses reversed/failed service payments to calculate loss amount and lost profit.
+}
