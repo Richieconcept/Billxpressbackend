@@ -6,6 +6,8 @@ import {
   logoutUser,
   verifyEmailOtp,
   resendEmailOtp,
+  requestPasswordResetCode,
+  resetPassword,
   getMe,
 } from "../controllers/auth.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
@@ -41,10 +43,26 @@ const resendEmailOtpLimiter = rateLimit({
   message: "Too many verification code requests, please try again later",
 });
 
+const passwordResetCodeLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 3,
+  keyFields: ["email"],
+  message: "Too many password reset code requests, please try again later",
+});
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  keyFields: ["email"],
+  message: "Too many password reset attempts, please try again later",
+});
+
 router.post("/register", registerLimiter, registerUser);
 router.post("/login", loginLimiter, loginUser);
 router.post("/refresh-session", refreshSession);
 router.post("/logout", logoutUser);
+router.post("/forgot-password", passwordResetCodeLimiter, requestPasswordResetCode);
+router.patch("/reset-password", passwordResetLimiter, resetPassword);
 router.post("/verify-email-otp", verifyEmailOtpLimiter, verifyEmailOtp);
 router.post("/resend-email-otp", resendEmailOtpLimiter, resendEmailOtp);
 router.get("/me", protect, getMe);

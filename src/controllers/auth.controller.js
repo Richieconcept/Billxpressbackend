@@ -5,7 +5,10 @@ import {
   createEmailVerificationOtp,
   hashEmailVerificationOtp,
 } from "../utils/emailVerification.js";
-import { emailVerificationTemplate } from "../utils/emailTemplates.js";
+import {
+  emailVerificationTemplate,
+  passwordResetTemplate,
+} from "../utils/emailTemplates.js";
 import { generateToken } from "../utils/generateToken.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
 import { sendEmail } from "../utils/sendEmail.js";
@@ -46,6 +49,23 @@ const getDeviceNameFromRequest = (req) =>
 const shouldNotifyOnLogin = () =>
   String(process.env.AUTH_LOGIN_NOTIFICATION_ENABLED || "true").toLowerCase() ===
   "true";
+
+const maskEmail = (email = "") => {
+  const [localPart, domain] = String(email).split("@");
+
+  if (!localPart || !domain) {
+    return email;
+  }
+
+  const visibleStart = localPart.slice(0, 2);
+  const visibleEnd = localPart.length > 4 ? localPart.slice(-2) : "";
+  const hiddenLength = Math.max(
+    localPart.length - visibleStart.length - visibleEnd.length,
+    2
+  );
+
+  return `${visibleStart}${"*".repeat(hiddenLength)}${visibleEnd}@${domain}`;
+};
 
 const buildAuthResponse = ({ message, user, token, refreshToken, session }) => ({
   message,
@@ -332,6 +352,164 @@ export const logoutUser = async (req, res) => {
       message: error.statusCode ? error.message : "Logout failed",
       error: process.env.NODE_ENV === "production" ? undefined : error.message,
     });
+  }
+};
+
+export const requestPasswordResetCode = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      return res.status(400).json({
+        message: "Email is required",
+      });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({
+        message: "Please provide a valid email address",
+      });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+passwordResetOtp +passwordResetOtpExpires +passwordResetOtpLastSentAt"
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const resendStatus = canResendEmailVerificationOtp(
+      user.passwordResetOtpLastSentAt
+    );
+
+    if (!resendStatus.allowed) {
+      return res.status(429).json({
+        message: "Please wait before requesting another code",
+        retryAfterSeconds: resendStatus.retryAfterSeconds,
+      });
+    }
+
+    const previousOtp = user.passwordResetOtp;
+    const previousOtpExpires = user.passwordResetOtpExpires;
+    const previousOtpLastSentAt = user.passwordResetOtpLastSentAt;
+    const verification = createEmailVerificationOtp();
+
+    user.passwordResetOtp = verification.hashedOtp;
+    user.passwordResetOtpExpires = verification.expires;
+    user.passwordResetOtpLastSentAt = new Date();
+
+    try {
+      await user.save();
+    } catch (error) {
+      user.passwordResetOtp = previousOtp;
+      user.passwordResetOtpExpires = previousOtpExpires;
+      user.passwordResetOtpLastSentAt = previousOtpLastSentAt;
+      throw error;
+    }
+
+    const template = passwordResetTemplate({
+      username: user.username,
+      otp: verification.otp,
+    });
+
+    try {
+      await sendEmail({
+        to: user.email,
+        name: user.username,
+        tags: ["password-reset"],
+        ...template,
+      });
+    } catch (error) {
+      user.passwordResetOtp = previousOtp;
+      user.passwordResetOtpExpires = previousOtpExpires;
+      user.passwordResetOtpLastSentAt = previousOtpLastSentAt;
+      await user.save();
+      throw error;
+    }
+
+    res.json({
+      message: "Password reset code sent successfully",
+      maskedEmail: maskEmail(user.email),
+    });
+  } catch (error) {
+    return sendServerError(res, "Could not send password reset code", error);
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword, confirmPassword } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+    const resetCode =
+      req.body.resetCode || req.body.resetToken || req.body.code || req.body.otp;
+
+    if (!normalizedEmail || !resetCode || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        message: "Email, reset code, new password, and confirm password are required",
+      });
+    }
+
+    if (!/^\d{5}$/.test(String(resetCode))) {
+      return res.status(400).json({
+        message: "Reset code must be 5 digits",
+      });
+    }
+
+    if (newPassword.length < 5) {
+      return res.status(400).json({
+        message: "New password must be at least 5 characters",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: "Passwords do not match",
+      });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+password +passwordResetOtp +passwordResetOtpExpires +passwordResetOtpLastSentAt"
+    );
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Reset code is invalid or has expired",
+      });
+    }
+
+    if (
+      !user.passwordResetOtp ||
+      !user.passwordResetOtpExpires ||
+      user.passwordResetOtpExpires < Date.now()
+    ) {
+      return res.status(400).json({
+        message: "Reset code is invalid or has expired",
+      });
+    }
+
+    const hashedResetCode = hashEmailVerificationOtp(resetCode);
+
+    if (hashedResetCode !== user.passwordResetOtp) {
+      return res.status(400).json({
+        message: "Reset code is invalid or has expired",
+      });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.passwordResetOtp = null;
+    user.passwordResetOtpExpires = null;
+    user.passwordResetOtpLastSentAt = null;
+    await user.save();
+
+    res.json({
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    return sendServerError(res, "Could not reset password", error);
   }
 };
 

@@ -87,6 +87,24 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    passwordResetOtp: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    passwordResetOtpExpires: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+
+    passwordResetOtpLastSentAt: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+
     transactionPinResetOtp: {
       type: String,
       default: null,
