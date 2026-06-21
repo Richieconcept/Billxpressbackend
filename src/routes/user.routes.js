@@ -1,7 +1,6 @@
 import express from "express";
 import {
   changeMyPassword,
-  changeMyTransactionPin,
   deactivateMyAccount,
   getMyProfile,
   requestTransactionPinResetCode,
@@ -30,7 +29,6 @@ router.use(protect);
 router.get("/me", getMyProfile);
 router.patch("/me", updateMyProfile);
 router.patch("/me/password", changeMyPassword);
-router.patch("/me/transaction-pin", changeMyTransactionPin);
 router.post(
   "/me/transaction-pin/reset-code",
   transactionPinResetCodeLimiter,

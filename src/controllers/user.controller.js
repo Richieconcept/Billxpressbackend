@@ -25,6 +25,23 @@ const normalizeUsername = (value) => normalizeString(value)?.toLowerCase();
 
 const validatePhone = (phone) => /^0\d{10}$/.test(phone);
 
+const maskEmail = (email = "") => {
+  const [localPart, domain] = String(email).split("@");
+
+  if (!localPart || !domain) {
+    return email;
+  }
+
+  const visibleStart = localPart.slice(0, 2);
+  const visibleEnd = localPart.length > 4 ? localPart.slice(-2) : "";
+  const hiddenLength = Math.max(
+    localPart.length - visibleStart.length - visibleEnd.length,
+    2
+  );
+
+  return `${visibleStart}${"*".repeat(hiddenLength)}${visibleEnd}@${domain}`;
+};
+
 const ensureUniqueUserField = async ({ field, value, excludeUserId }) => {
   if (!value) {
     return;
@@ -146,53 +163,6 @@ export const changeMyPassword = async (req, res) => {
   }
 };
 
-export const changeMyTransactionPin = async (req, res) => {
-  try {
-    const { currentTransactionPin, newTransactionPin, confirmTransactionPin } =
-      req.body;
-
-    if (!currentTransactionPin || !newTransactionPin || !confirmTransactionPin) {
-      return res.status(400).json({
-        message:
-          "Current transaction PIN, new transaction PIN, and confirm transaction PIN are required",
-      });
-    }
-
-    if (!/^\d{4}$/.test(newTransactionPin)) {
-      return res.status(400).json({
-        message: "New transaction PIN must be 4 digits",
-      });
-    }
-
-    if (newTransactionPin !== confirmTransactionPin) {
-      return res.status(400).json({
-        message: "Transaction PINs do not match",
-      });
-    }
-
-    const user = await User.findById(req.user._id).select("+transactionPin");
-    const isMatch = await bcrypt.compare(
-      currentTransactionPin,
-      user.transactionPin
-    );
-
-    if (!isMatch) {
-      return res.status(400).json({
-        message: "Current transaction PIN is incorrect",
-      });
-    }
-
-    user.transactionPin = await bcrypt.hash(newTransactionPin, 10);
-    await user.save();
-
-    res.json({
-      message: "Transaction PIN changed successfully",
-    });
-  } catch (error) {
-    sendUserError(res, "Could not change transaction PIN", error);
-  }
-};
-
 export const requestTransactionPinResetCode = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select(
@@ -250,6 +220,7 @@ export const requestTransactionPinResetCode = async (req, res) => {
 
     res.json({
       message: "Transaction PIN reset code sent successfully",
+      maskedEmail: maskEmail(user.email),
     });
   } catch (error) {
     sendUserError(res, "Could not send transaction PIN reset code", error);
@@ -258,7 +229,8 @@ export const requestTransactionPinResetCode = async (req, res) => {
 
 export const resetMyTransactionPin = async (req, res) => {
   try {
-    const resetCode = req.body.resetCode || req.body.code || req.body.otp;
+    const resetCode =
+      req.body.resetCode || req.body.resetToken || req.body.code || req.body.otp;
     const { newTransactionPin, confirmTransactionPin } = req.body;
 
     if (!resetCode || !newTransactionPin || !confirmTransactionPin) {
