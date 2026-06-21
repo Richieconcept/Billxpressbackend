@@ -273,3 +273,25 @@ export const emailVerificationTemplate = ({ username, otp }) => {
     }),
   };
 };
+
+export const transactionPinResetTemplate = ({ username, otp }) => {
+  const safeUsername = username || "there";
+
+  return {
+    subject: `Your ${BRAND.name} transaction PIN reset code`,
+    textContent: `Hi ${safeUsername}, your ${BRAND.name} transaction PIN reset code is ${otp}. This code expires in 10 minutes. If you did not request this, please contact support immediately.`,
+    htmlContent: billxpressEmailLayout({
+      title: "Reset your transaction PIN",
+      preheader: `Your ${BRAND.name} transaction PIN reset code is ${otp}`,
+      greeting: `Hi ${safeUsername},`,
+      body: `
+        <p style="margin:0 0 14px;">Use this code to reset your transaction PIN.</p>
+        <div style="margin:0;padding:14px 18px;background:#fff7ed;border:1px solid #fdba74;font-size:30px;font-weight:800;letter-spacing:5px;text-align:center;color:${BRAND.orangeDark};">
+          ${escapeHtml(otp)}
+        </div>
+      `,
+      footerNote:
+        `This code expires in 10 minutes. If you did not request a transaction PIN reset, please contact ${BRAND.name} support immediately.`,
+    }),
+  };
+};

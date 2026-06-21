@@ -1,0 +1,29 @@
+meta {
+  name: 4a. Request Transaction PIN Reset Code
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users/me/transaction-pin/reset-code
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Request Transaction PIN Reset Code
+
+  Sends a 5-digit reset code to the logged-in user's email address.
+
+  The frontend should not ask for the old transaction PIN. It should also not ask the logged-in user to type their email again; the backend uses the email on the user's account.
+
+  Codes expire after 10 minutes. A user can request another code once every 60 seconds, with a maximum of 3 requests per 10 minutes.
+}

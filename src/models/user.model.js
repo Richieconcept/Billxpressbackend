@@ -87,6 +87,24 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    transactionPinResetOtp: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    transactionPinResetOtpExpires: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+
+    transactionPinResetOtpLastSentAt: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+
     referredBy: {
       type: String, // referral code of another user
       default: null,

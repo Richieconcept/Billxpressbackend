@@ -1,6 +1,13 @@
 import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
+import {
+  canResendEmailVerificationOtp,
+  createEmailVerificationOtp,
+  hashEmailVerificationOtp,
+} from "../utils/emailVerification.js";
+import { transactionPinResetTemplate } from "../utils/emailTemplates.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 const USER_EDITABLE_FIELDS = ["firstName", "lastName", "username", "phone"];
 
@@ -183,6 +190,135 @@ export const changeMyTransactionPin = async (req, res) => {
     });
   } catch (error) {
     sendUserError(res, "Could not change transaction PIN", error);
+  }
+};
+
+export const requestTransactionPinResetCode = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select(
+      "+transactionPinResetOtp +transactionPinResetOtpExpires +transactionPinResetOtpLastSentAt"
+    );
+
+    const resendStatus = canResendEmailVerificationOtp(
+      user.transactionPinResetOtpLastSentAt
+    );
+
+    if (!resendStatus.allowed) {
+      return res.status(429).json({
+        message: "Please wait before requesting another code",
+        retryAfterSeconds: resendStatus.retryAfterSeconds,
+      });
+    }
+
+    const previousOtp = user.transactionPinResetOtp;
+    const previousOtpExpires = user.transactionPinResetOtpExpires;
+    const previousOtpLastSentAt = user.transactionPinResetOtpLastSentAt;
+    const verification = createEmailVerificationOtp();
+
+    user.transactionPinResetOtp = verification.hashedOtp;
+    user.transactionPinResetOtpExpires = verification.expires;
+    user.transactionPinResetOtpLastSentAt = new Date();
+
+    try {
+      await user.save();
+    } catch (error) {
+      user.transactionPinResetOtp = previousOtp;
+      user.transactionPinResetOtpExpires = previousOtpExpires;
+      user.transactionPinResetOtpLastSentAt = previousOtpLastSentAt;
+      throw error;
+    }
+
+    const template = transactionPinResetTemplate({
+      username: user.username,
+      otp: verification.otp,
+    });
+
+    try {
+      await sendEmail({
+        to: user.email,
+        name: user.username,
+        tags: ["transaction-pin-reset"],
+        ...template,
+      });
+    } catch (error) {
+      user.transactionPinResetOtp = previousOtp;
+      user.transactionPinResetOtpExpires = previousOtpExpires;
+      user.transactionPinResetOtpLastSentAt = previousOtpLastSentAt;
+      await user.save();
+      throw error;
+    }
+
+    res.json({
+      message: "Transaction PIN reset code sent successfully",
+    });
+  } catch (error) {
+    sendUserError(res, "Could not send transaction PIN reset code", error);
+  }
+};
+
+export const resetMyTransactionPin = async (req, res) => {
+  try {
+    const resetCode = req.body.resetCode || req.body.code || req.body.otp;
+    const { newTransactionPin, confirmTransactionPin } = req.body;
+
+    if (!resetCode || !newTransactionPin || !confirmTransactionPin) {
+      return res.status(400).json({
+        message:
+          "Reset code, new transaction PIN, and confirm transaction PIN are required",
+      });
+    }
+
+    if (!/^\d{5}$/.test(String(resetCode))) {
+      return res.status(400).json({
+        message: "Reset code must be 5 digits",
+      });
+    }
+
+    if (!/^\d{4}$/.test(newTransactionPin)) {
+      return res.status(400).json({
+        message: "New transaction PIN must be 4 digits",
+      });
+    }
+
+    if (newTransactionPin !== confirmTransactionPin) {
+      return res.status(400).json({
+        message: "Transaction PINs do not match",
+      });
+    }
+
+    const user = await User.findById(req.user._id).select(
+      "+transactionPin +transactionPinResetOtp +transactionPinResetOtpExpires +transactionPinResetOtpLastSentAt"
+    );
+
+    if (
+      !user.transactionPinResetOtp ||
+      !user.transactionPinResetOtpExpires ||
+      user.transactionPinResetOtpExpires < Date.now()
+    ) {
+      return res.status(400).json({
+        message: "Reset code is invalid or has expired",
+      });
+    }
+
+    const hashedResetCode = hashEmailVerificationOtp(resetCode);
+
+    if (hashedResetCode !== user.transactionPinResetOtp) {
+      return res.status(400).json({
+        message: "Reset code is invalid or has expired",
+      });
+    }
+
+    user.transactionPin = await bcrypt.hash(newTransactionPin, 10);
+    user.transactionPinResetOtp = null;
+    user.transactionPinResetOtpExpires = null;
+    user.transactionPinResetOtpLastSentAt = null;
+    await user.save();
+
+    res.json({
+      message: "Transaction PIN reset successfully",
+    });
+  } catch (error) {
+    sendUserError(res, "Could not reset transaction PIN", error);
   }
 };
 

@@ -1,0 +1,38 @@
+meta {
+  name: 4b. Reset My Transaction PIN
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/users/me/transaction-pin/reset
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "resetCode": "12345",
+    "newTransactionPin": "5678",
+    "confirmTransactionPin": "5678"
+  }
+}
+
+docs {
+  # Reset My Transaction PIN
+
+  Resets the logged-in user's 4-digit transaction PIN using the code sent to their email.
+
+  This endpoint does not require the old transaction PIN.
+
+  `resetCode` can also be sent as `code` or `otp` if the mobile app already uses one of those field names.
+}
