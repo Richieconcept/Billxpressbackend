@@ -2,10 +2,12 @@ import express from "express";
 import {
   changeMyPassword,
   deactivateMyAccount,
+  getMyKycStatus,
   getMyProfile,
   requestTransactionPinResetCode,
   resetMyTransactionPin,
   updateMyProfile,
+  upgradeMyMapleradTier1,
 } from "../controllers/user.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { rateLimit } from "../middlewares/rateLimit.middleware.js";
@@ -27,6 +29,8 @@ const transactionPinResetLimiter = rateLimit({
 router.use(protect);
 
 router.get("/me", getMyProfile);
+router.get("/me/kyc", getMyKycStatus);
+router.post("/me/kyc/maplerad-tier1", upgradeMyMapleradTier1);
 router.patch("/me", updateMyProfile);
 router.patch("/me/password", changeMyPassword);
 router.post(

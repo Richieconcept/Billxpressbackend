@@ -1,0 +1,94 @@
+meta {
+  name: 13. Upgrade My Maplerad Tier 1
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users/me/kyc/maplerad-tier1
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "dob": "20-10-1988",
+    "identificationNumber": "12345678901",
+    "phoneNumber": "08123456789",
+    "address": {
+      "street": "12 Example Street",
+      "city": "Ikeja",
+      "state": "Lagos",
+      "country": "NG",
+      "postalCode": "100001"
+    },
+    "photo": "https://example.com/selfie.jpg"
+  }
+}
+
+docs {
+  # Upgrade My Maplerad Tier 1
+
+  Upgrades the logged-in user to BillXpress `tier_2` by creating/upgrading their Maplerad customer to Maplerad Tier 1, then creates a dedicated NGN virtual account.
+
+  ## Endpoint
+
+  `POST /api/v1/users/me/kyc/maplerad-tier1`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Body Fields
+
+  `dob`
+  Required. Date of birth in `DD-MM-YYYY` format.
+
+  `identificationNumber`
+  Required. BVN or supported identification number.
+
+  `phoneNumber`
+  Optional when the user's existing phone is valid.
+
+  `address`
+  Required. Must include `street`, `city`, `state`, `country`, and `postalCode`.
+
+  `photo`
+  Optional. Selfie/photo URL if available.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "message": "Tier upgrade completed successfully",
+    "user": {
+      "authTier": "tier_2",
+      "kycLevel": 1
+    },
+    "mapleradCustomer": {
+      "customerId": "...",
+      "tier": 1,
+      "status": "COMPLETED"
+    },
+    "virtualAccount": {
+      "provider": "maplerad",
+      "bankName": "Wema Bank",
+      "accountNumber": "9003001001",
+      "accountName": "JOHN DOE"
+    }
+  }
+  ```
+}

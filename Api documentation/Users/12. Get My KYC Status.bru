@@ -1,0 +1,49 @@
+meta {
+  name: 12. Get My KYC Status
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/api/v1/users/me/kyc
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Get My KYC Status
+
+  Returns the logged-in user's current BillXpress tier and Maplerad customer status.
+
+  ## Endpoint
+
+  `GET /api/v1/users/me/kyc`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Expected Response
+
+  ```json
+  {
+    "user": {
+      "authTier": "tier_1",
+      "kycLevel": 0
+    },
+    "mapleradCustomer": null
+  }
+  ```
+}

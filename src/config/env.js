@@ -9,7 +9,6 @@ const monnifyEnv = ["MONNIFY_API_KEY", "MONNIFY_SECRET_KEY", "MONNIFY_CONTRACT_C
 const mapleradEnv = [
   "MAPLERAD_SECRET_KEY",
   "MAPLERAD_WEBHOOK_SECRET",
-  "MAPLERAD_DYNAMIC_ACCOUNT_BANK_CODE",
 ];
 
 export const validateEnv = () => {

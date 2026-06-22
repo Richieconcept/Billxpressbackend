@@ -19,18 +19,32 @@ const formatPocketFiAccountName = (accountName) => {
   return `${normalizedAccountName} (BillXpress)`;
 };
 
+const formatAccountName = ({ provider, accountName }) => {
+  if (provider === "pocketfi") {
+    return formatPocketFiAccountName(accountName);
+  }
+
+  return accountName;
+};
+
 export const serializeVirtualAccount = async (virtualAccount) => ({
   id: virtualAccount._id,
   provider: virtualAccount.provider,
   bankName: virtualAccount.bankName,
   accountNumber: virtualAccount.accountNumber,
-  accountName: formatPocketFiAccountName(virtualAccount.accountName),
+  accountName: formatAccountName({
+    provider: virtualAccount.provider,
+    accountName: virtualAccount.accountName,
+  }),
   accounts:
     virtualAccount.accounts?.map((account) => ({
       provider: account.provider || virtualAccount.provider,
       bankName: account.bankName,
       accountNumber: account.accountNumber,
-      accountName: formatPocketFiAccountName(account.accountName),
+      accountName: formatAccountName({
+        provider: account.provider || virtualAccount.provider,
+        accountName: account.accountName,
+      }),
       status: account.status,
       createdAt: account.createdAt,
     })) || [],
@@ -191,4 +205,73 @@ export const getOrCreateVirtualAccountForUser = async (user) => {
     created: !existingVirtualAccount,
     providerErrors: errors,
   };
+};
+
+export const addMapleradVirtualAccountForUser = async ({
+  user,
+  account,
+  providerResponse,
+}) => {
+  const existingVirtualAccount = await VirtualAccount.findOne({
+    user: user._id,
+  });
+  const virtualAccount =
+    existingVirtualAccount ||
+    new VirtualAccount({
+      user: user._id,
+      businessId: "maplerad",
+    });
+  const normalizedAccount = {
+    provider: "maplerad",
+    providerAccountId: account.providerAccountId,
+    bankName: account.bankName,
+    accountNumber: account.accountNumber,
+    accountName: account.accountName,
+    status: account.status === "pending" ? "inactive" : "active",
+    providerResponse,
+    createdAt: new Date(),
+  };
+  const legacyPrimaryAccount =
+    virtualAccount.provider &&
+    virtualAccount.provider !== "maplerad" &&
+    virtualAccount.bankName &&
+    virtualAccount.accountNumber &&
+    virtualAccount.accountName
+      ? {
+          provider: virtualAccount.provider,
+          bankName: virtualAccount.bankName,
+          accountNumber: virtualAccount.accountNumber,
+          accountName: virtualAccount.accountName,
+          status: virtualAccount.status || "active",
+          providerResponse: virtualAccount.providerResponse || {},
+          createdAt: virtualAccount.createdAt || new Date(),
+        }
+      : null;
+  const currentAccounts = [
+    ...(virtualAccount.accounts || []),
+    ...(legacyPrimaryAccount ? [legacyPrimaryAccount] : []),
+  ];
+  const accounts = [
+    ...currentAccounts.filter(
+      (existingAccount) =>
+        !(
+          existingAccount.provider === "maplerad" ||
+          existingAccount.accountNumber === normalizedAccount.accountNumber
+        )
+    ),
+    normalizedAccount,
+  ];
+
+  virtualAccount.provider = "maplerad";
+  virtualAccount.businessId = "maplerad";
+  virtualAccount.bankName = normalizedAccount.bankName;
+  virtualAccount.accountNumber = normalizedAccount.accountNumber;
+  virtualAccount.accountName = normalizedAccount.accountName;
+  virtualAccount.displayName = undefined;
+  virtualAccount.providerResponse = providerResponse;
+  virtualAccount.accounts = accounts;
+  virtualAccount.status = normalizedAccount.status;
+  await virtualAccount.save();
+
+  return virtualAccount;
 };

@@ -8,6 +8,12 @@ import {
 import { transactionPinResetTemplate } from "../utils/emailTemplates.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import {
+  getMapleradKycStatusForUser,
+  serializeMapleradCustomer,
+  upgradeUserToMapleradTier1,
+} from "../services/mapleradCustomer.service.js";
+import { serializeVirtualAccount } from "../services/virtualAccount.service.js";
 
 const USER_EDITABLE_FIELDS = ["firstName", "lastName", "username", "phone"];
 
@@ -63,6 +69,34 @@ export const getMyProfile = async (req, res) => {
   res.json({
     user: sanitizeUser(req.user),
   });
+};
+
+export const getMyKycStatus = async (req, res) => {
+  try {
+    const { customer } = await getMapleradKycStatusForUser(req.user._id);
+
+    res.json({
+      user: sanitizeUser(req.user),
+      mapleradCustomer: serializeMapleradCustomer(customer),
+    });
+  } catch (error) {
+    sendUserError(res, "Could not fetch KYC status", error);
+  }
+};
+
+export const upgradeMyMapleradTier1 = async (req, res) => {
+  try {
+    const result = await upgradeUserToMapleradTier1(req.user._id, req.body);
+
+    res.status(201).json({
+      message: "Tier upgrade completed successfully",
+      user: sanitizeUser(result.user),
+      mapleradCustomer: serializeMapleradCustomer(result.customer),
+      virtualAccount: await serializeVirtualAccount(result.virtualAccount),
+    });
+  } catch (error) {
+    sendUserError(res, "Could not complete tier upgrade", error);
+  }
 };
 
 export const updateMyProfile = async (req, res) => {

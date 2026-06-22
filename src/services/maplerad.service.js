@@ -90,6 +90,92 @@ export const getMapleradInstitutions = async ({
   };
 };
 
+export const createMapleradCustomer = async ({
+  firstName,
+  lastName,
+  email,
+  country = "NG",
+}) =>
+  requestMaplerad("/customers", {
+    method: "POST",
+    body: {
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      country,
+    },
+  });
+
+export const upgradeMapleradCustomerTier1 = async ({
+  customerId,
+  dob,
+  identification_number,
+  phone,
+  address,
+  photo,
+}) => {
+  const body = {
+    customer_id: customerId,
+    dob,
+    identification_number,
+    phone,
+    address,
+  };
+
+  if (photo) {
+    body.photo = photo;
+  }
+
+  return requestMaplerad("/customers/upgrade/tier1", {
+    method: "PATCH",
+    body,
+  });
+};
+
+export const createMapleradVirtualAccount = async ({
+  customerId,
+  currency = "NGN",
+}) => {
+  const preferredBank = String(
+    process.env.MAPLERAD_VIRTUAL_ACCOUNT_BANK_CODE || ""
+  ).trim();
+  const body = {
+    customer_id: customerId,
+    currency,
+  };
+
+  if (preferredBank) {
+    body.preferred_bank = preferredBank;
+  }
+
+  const response = await requestMaplerad("/collections/virtual-account", {
+    method: "POST",
+    body,
+  });
+  const account = response.data || response;
+  const accountNumber = pickFirst(account.account_number, account.accountNumber);
+  const accountName = pickFirst(account.account_name, account.accountName);
+  const bankName = pickFirst(account.bank_name, account.bankName);
+
+  if (!accountNumber || !accountName || !bankName) {
+    const error = new Error("Maplerad did not return virtual account details");
+    error.statusCode = 502;
+    error.providerResponse = response;
+    throw error;
+  }
+
+  return {
+    account: {
+      providerAccountId: account.id,
+      bankName,
+      accountNumber,
+      accountName,
+      status: String(account.status || "active").toLowerCase(),
+    },
+    providerResponse: response,
+  };
+};
+
 export const createMapleradDynamicAccount = async ({
   amountInMinorUnit,
   accountName,
