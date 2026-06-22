@@ -1,0 +1,68 @@
+meta {
+  name: 92. Maplerad Webhook
+  type: http
+  seq: 92
+}
+
+post {
+  url: {{baseUrl}}/api/v1/webhooks/maplerad
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  svix-id: {{mapleradSvixId}}
+  svix-timestamp: {{mapleradSvixTimestamp}}
+  svix-signature: {{mapleradSvixSignature}}
+}
+
+body:json {
+  {
+    "event": "account.transaction",
+    "id": "provider-transaction-id",
+    "amount": 200000,
+    "account_id": "maplerad-account-id",
+    "account_number": "9003001001",
+    "status": "SUCCESS"
+  }
+}
+
+docs {
+  # Internal - Maplerad Webhook
+
+  Maplerad calls this endpoint for one-time funding, dedicated account funding, transfer status, and future card/account events.
+
+  This is internal backend/provider traffic. The frontend should not call this endpoint.
+
+  ## Endpoint
+
+  `POST /api/v1/webhooks/maplerad`
+
+  ## Dedicated Account Funding
+
+  When Maplerad sends `account.transaction`, the backend now:
+
+  - verifies the Svix signature
+  - matches the Maplerad account ID or account number to a saved virtual account
+  - checks duplicate provider reference
+  - credits the user's main wallet
+  - creates transaction history
+  - sends a wallet funding notification
+
+  ## Required Headers
+
+  Maplerad/Svix sends:
+
+  ```txt
+  svix-id
+  svix-timestamp
+  svix-signature
+  ```
+
+  The backend verifies these using:
+
+  ```txt
+  MAPLERAD_WEBHOOK_SECRET
+  ```
+}

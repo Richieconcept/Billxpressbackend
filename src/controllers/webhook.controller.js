@@ -257,6 +257,131 @@ const mapleradAmountToMinorUnit = (amount, expectedAmount) => {
   return amountAsMajorUnit >= expectedAmount ? amountAsMajorUnit : amountAsMinorUnit;
 };
 
+const mapleradWebhookAmountToMinorUnit = (amount) => {
+  const numericAmount = Number(amount);
+
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    return 0;
+  }
+
+  if (Number.isInteger(numericAmount)) {
+    return numericAmount;
+  }
+
+  return Math.round(numericAmount * 100);
+};
+
+const creditMapleradDedicatedAccountFunding = async ({
+  payload,
+  accountId,
+  accountNumber,
+  amount,
+  providerReference,
+  paymentReference,
+  webhookEvent,
+}) => {
+  const matchConditions = [
+    ...(accountNumber ? [{ accountNumber: String(accountNumber) }] : []),
+    ...(accountNumber
+      ? [{ "accounts.accountNumber": String(accountNumber) }]
+      : []),
+    ...(accountId ? [{ "accounts.providerAccountId": String(accountId) }] : []),
+  ];
+
+  if (matchConditions.length === 0) {
+    throw new Error("Webhook payload is missing account details");
+  }
+
+  const virtualAccount = await VirtualAccount.findOne({
+    provider: "maplerad",
+    $or: matchConditions,
+  });
+
+  if (!virtualAccount) {
+    throw new Error("Could not match webhook to a Maplerad virtual account");
+  }
+
+  const finalProviderReference =
+    providerReference || paymentReference || `${accountId || accountNumber}_${amount}`;
+  const existingTransaction = await Transaction.findOne({
+    provider: "maplerad",
+    providerReference: finalProviderReference,
+  });
+
+  if (existingTransaction) {
+    webhookEvent.processed = true;
+    await webhookEvent.save();
+
+    return {
+      message: "Webhook already processed",
+    };
+  }
+
+  const amountInMinorUnit = mapleradWebhookAmountToMinorUnit(amount);
+
+  if (amountInMinorUnit <= 0) {
+    throw new Error("Webhook payload is missing funding amount");
+  }
+
+  const feeResult = await calculateFundingFee(amountInMinorUnit, "maplerad");
+  const creditResult = await creditWallet({
+    userId: virtualAccount.user,
+    amountInMinorUnit: feeResult.amountToReceive,
+    walletType: "main",
+    type: "funding",
+    reference: generateTransactionReference("MLA"),
+    provider: "maplerad",
+    providerReference: finalProviderReference,
+    narration: "Wallet funding via Maplerad dedicated account",
+    metadata: {
+      ...payload,
+      accountId,
+      accountNumber,
+      fee: feeResult.fee,
+      grossAmount: amountInMinorUnit,
+      amountCredited: feeResult.amountToReceive,
+      feePaidBy: "platform",
+    },
+  });
+
+  await createNotificationBestEffort({
+    userId: virtualAccount.user,
+    title: "Wallet funded successfully",
+    message: `Your wallet has been credited with NGN ${fromMinorUnit(
+      feeResult.amountToReceive
+    )}.`,
+    type: "wallet_funding_success",
+    channel: "both",
+    priority: "normal",
+    data: {
+      provider: "maplerad",
+      fundingType: "dedicated_account",
+      amount: fromMinorUnit(feeResult.amountToReceive),
+      grossAmount: fromMinorUnit(amountInMinorUnit),
+      fee: fromMinorUnit(feeResult.fee),
+      userReceivesFullAmount: true,
+      reference: creditResult.transaction.reference,
+      providerReference: finalProviderReference,
+      accountNumber,
+    },
+  });
+
+  await processFirstDepositReferralRewardBestEffort({
+    referredUserId: virtualAccount.user,
+    qualifyingAmountInMinorUnit: amountInMinorUnit,
+    fundingTransaction: creditResult.transaction,
+    provider: "maplerad",
+    providerReference: finalProviderReference,
+  });
+
+  webhookEvent.processed = true;
+  await webhookEvent.save();
+
+  return {
+    message: "Webhook processed successfully",
+  };
+};
+
 export const handlePocketFiWebhook = async (req, res) => {
   const rawPayload = getRawPayload(req);
   const signature = getPocketFiSignature(req);
@@ -630,6 +755,20 @@ export const handleMapleradWebhook = async (req, res) => {
     });
 
     if (!intent) {
+      if (event === "account.transaction") {
+        const result = await creditMapleradDedicatedAccountFunding({
+          payload,
+          accountId,
+          accountNumber,
+          amount,
+          providerReference,
+          paymentReference,
+          webhookEvent,
+        });
+
+        return res.json(result);
+      }
+
       throw new Error("Could not match webhook to a funding intent");
     }
 
