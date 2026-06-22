@@ -37,17 +37,19 @@ export const serializeVirtualAccount = async (virtualAccount) => ({
     accountName: virtualAccount.accountName,
   }),
   accounts:
-    virtualAccount.accounts?.map((account) => ({
-      provider: account.provider || virtualAccount.provider,
-      bankName: account.bankName,
-      accountNumber: account.accountNumber,
-      accountName: formatAccountName({
-        provider: account.provider || virtualAccount.provider,
-        accountName: account.accountName,
-      }),
-      status: account.status,
-      createdAt: account.createdAt,
-    })) || [],
+    virtualAccount.provider === "maplerad"
+      ? []
+      : virtualAccount.accounts?.map((account) => ({
+          provider: account.provider || virtualAccount.provider,
+          bankName: account.bankName,
+          accountNumber: account.accountNumber,
+          accountName: formatAccountName({
+            provider: account.provider || virtualAccount.provider,
+            accountName: account.accountName,
+          }),
+          status: account.status,
+          createdAt: account.createdAt,
+        })) || [],
   providerErrors: virtualAccount.providerErrors || [],
   feePolicy: await serializeFundingFee("pocketfi"),
   status: virtualAccount.status,
