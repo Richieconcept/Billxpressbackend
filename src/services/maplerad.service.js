@@ -94,21 +94,21 @@ export const createMapleradDynamicAccount = async ({
   amountInMinorUnit,
   accountName,
 }) => {
-  const preferredBank = process.env.MAPLERAD_DYNAMIC_ACCOUNT_BANK_CODE;
+  const preferredBank = String(
+    process.env.MAPLERAD_DYNAMIC_ACCOUNT_BANK_CODE || ""
+  ).trim();
+  const body = {
+    account_name: accountName,
+    amount: amountInMinorUnit,
+  };
 
-  if (!preferredBank) {
-    const error = new Error("MAPLERAD_DYNAMIC_ACCOUNT_BANK_CODE is not configured");
-    error.statusCode = 503;
-    throw error;
+  if (preferredBank) {
+    body.preferred_bank = preferredBank;
   }
 
   const response = await requestMaplerad("/collections/dynamic-account", {
     method: "POST",
-    body: {
-      account_name: accountName,
-      amount: amountInMinorUnit,
-      preferred_bank: preferredBank,
-    },
+    body,
   });
   const account = response.data || response;
   const accountNumber = pickFirst(
