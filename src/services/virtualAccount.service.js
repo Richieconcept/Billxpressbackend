@@ -38,7 +38,16 @@ export const serializeVirtualAccount = async (virtualAccount) => ({
   }),
   accounts:
     virtualAccount.provider === "maplerad"
-      ? []
+      ? [
+          {
+            provider: virtualAccount.provider,
+            bankName: virtualAccount.bankName,
+            accountNumber: virtualAccount.accountNumber,
+            accountName: virtualAccount.accountName,
+            status: virtualAccount.status,
+            createdAt: virtualAccount.updatedAt || virtualAccount.createdAt,
+          },
+        ]
       : virtualAccount.accounts?.map((account) => ({
           provider: account.provider || virtualAccount.provider,
           bankName: account.bankName,
