@@ -8,6 +8,7 @@ import {
   getVirtualAccount,
   getWallet,
   redeemReferralBalance,
+  resolveTransferAccount,
 } from "../controllers/wallet.controller.js";
 import { authorizeRoles, protect } from "../middlewares/auth.middleware.js";
 
@@ -19,6 +20,7 @@ router.get("/virtual-account", protect, getVirtualAccount);
 router.post("/virtual-account", protect, createVirtualAccount);
 router.post("/funding-intents", protect, createFundingIntent);
 router.post("/funding-intents/:fundingIntentId/confirm", protect, confirmFundingIntent);
+router.post("/transfers/resolve-account", protect, resolveTransferAccount);
 router.post("/referral/redeem", protect, redeemReferralBalance);
 router.post(
   "/admin/referral-credit",

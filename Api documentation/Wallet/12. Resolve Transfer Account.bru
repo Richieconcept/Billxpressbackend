@@ -1,0 +1,85 @@
+meta {
+  name: 12. Resolve Transfer Account
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/v1/wallet/transfers/resolve-account
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "bankCode": "058",
+    "accountNumber": "0123456789"
+  }
+}
+
+docs {
+  # Resolve Transfer Account
+
+  Use this endpoint before sending money to a Nigerian bank account.
+
+  The frontend sends the selected bank code and account number. The backend uses Paystack privately to fetch the account name.
+
+  ## Endpoint
+
+  `POST /api/v1/wallet/transfers/resolve-account`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Request Body
+
+  ```json
+  {
+    "bankCode": "058",
+    "accountNumber": "0123456789"
+  }
+  ```
+
+  ## Important
+
+  `bankCode` must be the Paystack bank code for account-name lookup.
+
+  Maplerad bank codes are different and should be used later when the actual transfer endpoint is implemented.
+
+  ## Success Response
+
+  ```json
+  {
+    "message": "Account resolved successfully",
+    "account": {
+      "accountNumber": "0123456789",
+      "accountName": "JOHN DOE",
+      "bankCode": "058",
+      "provider": "paystack"
+    }
+  }
+  ```
+
+  ## Frontend Flow
+
+  - user selects bank
+  - user enters 10 digit account number
+  - call this endpoint
+  - show `account.accountName`
+  - user confirms and enters PIN
+  - backend sends the final transfer through Maplerad later
+}

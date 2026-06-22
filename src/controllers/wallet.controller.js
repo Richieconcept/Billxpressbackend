@@ -22,6 +22,7 @@ import {
   verifyTransactionPin,
 } from "../services/wallet.service.js";
 import { createNotificationBestEffort } from "../services/notification.service.js";
+import { resolvePaystackBankAccount } from "../services/paystack.service.js";
 
 const sendWalletError = (res, publicMessage, error) => {
   res.status(error.statusCode || 500).json({
@@ -154,6 +155,22 @@ export const confirmFundingIntent = async (req, res) => {
     res.json(response);
   } catch (error) {
     sendWalletError(res, "Could not confirm funding payment", error);
+  }
+};
+
+export const resolveTransferAccount = async (req, res) => {
+  try {
+    const account = await resolvePaystackBankAccount({
+      accountNumber: req.body?.accountNumber,
+      bankCode: req.body?.bankCode,
+    });
+
+    res.json({
+      message: "Account resolved successfully",
+      account,
+    });
+  } catch (error) {
+    sendWalletError(res, "Could not resolve account name", error);
   }
 };
 
