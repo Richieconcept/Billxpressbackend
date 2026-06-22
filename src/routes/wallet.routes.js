@@ -6,6 +6,7 @@ import {
   createVirtualAccount,
   adminCreditReferralBalance,
   getTransactions,
+  getTransferBankList,
   getVirtualAccount,
   getWallet,
   redeemReferralBalance,
@@ -21,6 +22,7 @@ router.get("/virtual-account", protect, getVirtualAccount);
 router.post("/virtual-account", protect, createVirtualAccount);
 router.post("/funding-intents", protect, createFundingIntent);
 router.post("/funding-intents/:fundingIntentId/confirm", protect, confirmFundingIntent);
+router.get("/transfers/banks", protect, getTransferBankList);
 router.post("/transfers/resolve-account", protect, resolveTransferAccount);
 router.post("/transfers", protect, createBankTransfer);
 router.post("/referral/redeem", protect, redeemReferralBalance);

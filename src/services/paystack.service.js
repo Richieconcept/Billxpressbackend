@@ -39,6 +39,29 @@ const requestPaystack = async (path, { method = "GET", body, headers = {} } = {}
   return data;
 };
 
+export const getPaystackBanks = async ({
+  country = "nigeria",
+  currency = "NGN",
+  perPage = 200,
+} = {}) => {
+  const params = new URLSearchParams({
+    country,
+    currency,
+    perPage: String(perPage),
+  });
+  const response = await requestPaystack(`/bank?${params.toString()}`);
+  const banks = Array.isArray(response.data) ? response.data : [];
+
+  return banks.map((bank) => ({
+    name: bank.name,
+    code: bank.code,
+    slug: bank.slug,
+    type: bank.type,
+    active: bank.active !== false,
+    raw: bank,
+  }));
+};
+
 export const resolvePaystackBankAccount = async ({ accountNumber, bankCode }) => {
   const normalizedAccountNumber = String(accountNumber || "").trim();
   const normalizedBankCode = String(bankCode || "").trim();

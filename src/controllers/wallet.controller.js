@@ -28,6 +28,7 @@ import {
   serializeBankTransferResult,
   serializeFailedBankTransfer,
 } from "../services/bankTransfer.service.js";
+import { getTransferBanks } from "../services/transferBank.service.js";
 
 const sendWalletError = (res, publicMessage, error) => {
   res.status(error.statusCode || 500).json({
@@ -176,6 +177,22 @@ export const resolveTransferAccount = async (req, res) => {
     });
   } catch (error) {
     sendWalletError(res, "Could not resolve account name", error);
+  }
+};
+
+export const getTransferBankList = async (req, res) => {
+  try {
+    const result = await getTransferBanks({
+      includeUnmapped: req.query?.includeUnmapped === "true",
+    });
+
+    res.json({
+      banks: result.banks,
+      meta: result.meta,
+      cached: result.cached,
+    });
+  } catch (error) {
+    sendWalletError(res, "Could not fetch transfer banks", error);
   }
 };
 

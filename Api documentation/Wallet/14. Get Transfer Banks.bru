@@ -1,0 +1,79 @@
+meta {
+  name: 14. Get Transfer Banks
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/api/v1/wallet/transfers/banks
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Get Transfer Banks
+
+  Use this endpoint to show the bank picker for sending money.
+
+  ## Endpoint
+
+  `GET /api/v1/wallet/transfers/banks`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Success Response
+
+  ```json
+  {
+    "banks": [
+      {
+        "name": "OPay",
+        "slug": "opay",
+        "paystackBankCode": "999992",
+        "mapleradBankCode": "123",
+        "availableForTransfer": true,
+        "paystackName": "OPay Digital Services Limited",
+        "mapleradName": "OPay"
+      }
+    ],
+    "meta": {
+      "paystackCount": 100,
+      "mapleradCount": 50,
+      "mappedCount": 30,
+      "unmappedCount": 70,
+      "cacheTtlMs": 3600000
+    },
+    "cached": false
+  }
+  ```
+
+  ## Frontend Flow
+
+  - call this endpoint when opening the send money screen
+  - user selects a bank from `banks`
+  - call resolve account with `bank.paystackBankCode`
+  - show returned account name
+  - call send transfer with both `paystackBankCode` and `mapleradBankCode`
+
+  ## Debugging
+
+  To see banks that could not be matched between Paystack and Maplerad:
+
+  `GET /api/v1/wallet/transfers/banks?includeUnmapped=true`
+
+  Normal frontend screens should use the default endpoint without `includeUnmapped`.
+}
