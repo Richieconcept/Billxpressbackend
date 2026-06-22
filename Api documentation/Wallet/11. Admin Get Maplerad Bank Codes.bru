@@ -1,0 +1,74 @@
+meta {
+  name: 11. Admin Get Maplerad Bank Codes
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/funding/maplerad/institutions?type=DYNAMIC&country=NG
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Get Maplerad Bank Codes
+
+  Admin uses this endpoint to fetch Maplerad institution codes without exposing the Maplerad secret key to the frontend.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/funding/maplerad/institutions?type=DYNAMIC&country=NG`
+
+  ## Authentication
+
+  Admin JWT required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Query Fields
+
+  `type`
+  Use `DYNAMIC` for one-time funding accounts.
+
+  Other useful values:
+
+  - `VIRTUAL` for permanent virtual-account preferred banks
+  - `NUBAN` for Nigerian bank transfer institutions
+
+  `country`
+  Defaults to `NG`.
+
+  ## Expected Response
+
+  ```json
+  {
+    "country": "NG",
+    "type": "DYNAMIC",
+    "institutions": [
+      {
+        "name": "VFD Bank",
+        "code": "1241"
+      }
+    ],
+    "page": 1,
+    "pageSize": 100,
+    "total": 1
+  }
+  ```
+
+  Use one of the returned `code` values as:
+
+  ```txt
+  MAPLERAD_DYNAMIC_ACCOUNT_BANK_CODE=1241
+  ```
+}

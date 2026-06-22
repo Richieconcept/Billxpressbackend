@@ -42,6 +42,54 @@ const requestMaplerad = async (path, { method = "GET", body, headers = {} } = {}
 const pickFirst = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "");
 
+export const getMapleradInstitutions = async ({
+  country = "NG",
+  type = "DYNAMIC",
+  page = 1,
+  pageSize = 100,
+} = {}) => {
+  const normalizedType = String(type || "DYNAMIC").trim().toUpperCase();
+  const supportedTypes = [
+    "NUBAN",
+    "MOMO",
+    "WALLET",
+    "VIRTUAL",
+    "DYNAMIC",
+    "CBK",
+    "BOG",
+    "MOMOCOLLECTION",
+  ];
+
+  if (!supportedTypes.includes(normalizedType)) {
+    const error = new Error("Maplerad institution type is not supported");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const params = new URLSearchParams({
+    country: String(country || "NG").trim().toUpperCase(),
+    type: normalizedType,
+    page: String(page || 1),
+    page_size: String(pageSize || 100),
+  });
+  const response = await requestMaplerad(`/institutions?${params.toString()}`);
+  const institutions = Array.isArray(response.data) ? response.data : [];
+
+  return {
+    country: params.get("country"),
+    type: normalizedType,
+    institutions: institutions.map((institution) => ({
+      name: institution.name,
+      code: institution.code,
+      raw: institution,
+    })),
+    page: response.page,
+    pageSize: response.page_size,
+    total: response.total,
+    providerResponse: response,
+  };
+};
+
 export const createMapleradDynamicAccount = async ({
   amountInMinorUnit,
   accountName,

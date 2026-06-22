@@ -22,6 +22,7 @@ import {
   updateAdminSocialGrowthSettings,
 } from "../controllers/socialGrowth.controller.js";
 import {
+  getAdminMapleradInstitutions,
   getAdminFundingFeeSettings,
   updateAdminFundingFeeSetting,
 } from "../controllers/fundingFee.controller.js";
@@ -104,6 +105,12 @@ router.get(
   protect,
   authorizeRoles("admin"),
   getAdminFundingFeeSettings
+);
+router.get(
+  "/funding/maplerad/institutions",
+  protect,
+  authorizeRoles("admin"),
+  getAdminMapleradInstitutions
 );
 router.patch(
   "/funding/settings",
