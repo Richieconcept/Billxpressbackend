@@ -46,7 +46,7 @@ docs {
 
   ## What This Does
 
-  The backend checks the payment status from Monnify. If Monnify confirms the transfer, the backend credits the user's wallet and creates the transaction history.
+  The backend checks the funding intent status and returns whether the wallet has been credited.
 
   The frontend must not credit the wallet by itself.
 
@@ -88,7 +88,6 @@ docs {
       "type": "funding",
       "direction": "credit",
       "amount": 2000,
-      "provider": "monnify",
       "status": "successful"
     }
   }

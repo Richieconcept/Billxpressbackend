@@ -11,18 +11,31 @@ import {
   createMonnifyTransferIntent,
   getMonnifyTransactionStatus,
 } from "./monnify.service.js";
+import { createMapleradDynamicAccount } from "./maplerad.service.js";
 import {
   calculateFundingFee,
+  getOneTimeFundingProvider,
   serializeFundingFee,
 } from "./fundingFee.service.js";
 import { createNotificationBestEffort } from "./notification.service.js";
 import { processFirstDepositReferralRewardBestEffort } from "./referral.service.js";
 
 const getFundingExpiryDate = () => {
-  const minutes = Number(process.env.MONNIFY_FUNDING_EXPIRES_MINUTES || 15);
+  const minutes = Number(process.env.ONE_TIME_FUNDING_EXPIRES_MINUTES || 15);
   const safeMinutes = Number.isFinite(minutes) && minutes > 0 ? minutes : 15;
 
   return new Date(Date.now() + safeMinutes * 60 * 1000);
+};
+
+const getMinimumFundingAmount = (provider) => {
+  const prefix = provider.toUpperCase();
+  const amount = Number(
+    process.env[`${prefix}_MIN_FUNDING_AMOUNT`] ||
+      process.env.ONE_TIME_MIN_FUNDING_AMOUNT ||
+      100
+  );
+
+  return Number.isFinite(amount) && amount > 0 ? amount : 100;
 };
 
 export const serializeFundingIntent = async (intent) => ({
@@ -44,12 +57,11 @@ export const serializeFundingIntent = async (intent) => ({
 
 export const createMonnifyFundingIntent = async (user, amount) => {
   const amountInMinorUnit = toMinorUnit(amount);
-  const minimumAmount = toMinorUnit(process.env.MONNIFY_MIN_FUNDING_AMOUNT || 100);
+  const minimumFundingAmount = getMinimumFundingAmount("monnify");
+  const minimumAmount = toMinorUnit(minimumFundingAmount);
 
   if (amountInMinorUnit < minimumAmount) {
-    const error = new Error(
-      `Minimum funding amount is ${process.env.MONNIFY_MIN_FUNDING_AMOUNT || 100}`
-    );
+    const error = new Error(`Minimum funding amount is ${minimumFundingAmount}`);
     error.statusCode = 400;
     throw error;
   }
@@ -82,6 +94,57 @@ export const createMonnifyFundingIntent = async (user, amount) => {
   });
 
   return intent;
+};
+
+export const createMapleradFundingIntent = async (user, amount) => {
+  const amountInMinorUnit = toMinorUnit(amount);
+  const minimumFundingAmount = getMinimumFundingAmount("maplerad");
+  const minimumAmount = toMinorUnit(minimumFundingAmount);
+
+  if (amountInMinorUnit < minimumAmount) {
+    const error = new Error(`Minimum funding amount is ${minimumFundingAmount}`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const feeResult = await calculateFundingFee(amountInMinorUnit, "maplerad");
+  const { fee, amountToReceive } = feeResult;
+  const paymentReference = generateTransactionReference("MLFUND");
+  const providerIntent = await createMapleradDynamicAccount({
+    amountInMinorUnit,
+    accountName: `${user.firstName} ${user.lastName}`.trim() || user.username,
+  });
+
+  const intent = await FundingIntent.create({
+    user: user._id,
+    provider: "maplerad",
+    providerReference: providerIntent.providerReference,
+    paymentReference,
+    amount: amountInMinorUnit,
+    fee,
+    amountToReceive,
+    accountNumber: providerIntent.accountNumber,
+    accountName: providerIntent.accountName,
+    bankName: providerIntent.bankName,
+    bankCode: providerIntent.bankCode,
+    expiresAt: getFundingExpiryDate(),
+    providerResponse: {
+      ...providerIntent.providerResponse,
+      localPaymentReference: paymentReference,
+    },
+  });
+
+  return intent;
+};
+
+export const createOneTimeFundingIntent = async (user, amount) => {
+  const provider = await getOneTimeFundingProvider();
+
+  if (provider === "monnify") {
+    return createMonnifyFundingIntent(user, amount);
+  }
+
+  return createMapleradFundingIntent(user, amount);
 };
 
 const pickFirst = (...values) =>
@@ -265,5 +328,55 @@ export const confirmMonnifyFundingIntent = async (user, fundingIntentId) => {
     wallet: creditResult.wallet,
     transaction: creditResult.transaction,
     alreadyProcessed: false,
+  };
+};
+
+export const confirmFundingIntentStatus = async (user, fundingIntentId) => {
+  const intent = await FundingIntent.findOne({
+    _id: fundingIntentId,
+    user: user._id,
+  });
+
+  if (!intent) {
+    const error = new Error("Funding account not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (intent.provider === "monnify") {
+    return confirmMonnifyFundingIntent(user, fundingIntentId);
+  }
+
+  if (intent.status === "paid") {
+    const existingTransaction = await Transaction.findOne({
+      provider: intent.provider,
+      providerReference: intent.providerReference,
+    });
+    const wallet = await getOrCreateWallet(intent.user);
+
+    return {
+      status: "paid",
+      intent,
+      wallet,
+      transaction: existingTransaction,
+      alreadyProcessed: true,
+    };
+  }
+
+  if (intent.expiresAt < new Date()) {
+    intent.status = "expired";
+    await intent.save();
+
+    return {
+      status: "expired",
+      intent,
+      providerTransaction: null,
+    };
+  }
+
+  return {
+    status: intent.status,
+    intent,
+    providerTransaction: null,
   };
 };

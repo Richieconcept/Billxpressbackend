@@ -54,12 +54,9 @@ docs {
     "message": "Funding account created successfully",
     "fundingIntent": {
       "id": "...",
-      "provider": "monnify",
-      "providerReference": "MNF...",
-      "paymentReference": "MNFUND_...",
-      "accountNumber": "6023240261",
-      "accountName": "BillXpress Checkout",
-      "bankName": "SafeHaven MFB",
+      "accountNumber": "5010288665",
+      "accountName": "John Doe",
+      "bankName": "VFD Bank",
       "amount": 2000,
       "fee": 20,
       "amountToReceive": 2000,
@@ -87,7 +84,7 @@ docs {
   - bank name
   - account name
   - amount
-  - fee
+  - fee, if you want to show it
   - amount to receive
 
   If the user enters `N2,000` and the funding charge is `1%`, show:
@@ -104,5 +101,20 @@ docs {
 
   Use the `fundingIntent.id` from this response as `:fundingIntentId`.
 
-  The frontend should not credit the wallet itself. The backend credits the wallet after Monnify confirms the payment through the webhook or the confirmation endpoint.
+  The frontend should not credit the wallet itself. The backend credits the wallet after payment is confirmed.
+
+  ## Fields To Display
+
+  The app only needs these fields:
+
+  - `fundingIntent.id`
+  - `fundingIntent.accountNumber`
+  - `fundingIntent.accountName`
+  - `fundingIntent.bankName`
+  - `fundingIntent.amount`
+  - `fundingIntent.amountToReceive`
+  - `fundingIntent.expiresAt`
+  - `fundingIntent.status`
+
+  Ignore any extra fields returned by the backend.
 }

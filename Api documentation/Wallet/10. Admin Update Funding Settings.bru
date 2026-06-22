@@ -21,21 +21,20 @@ auth:bearer {
 
 body:json {
   {
-    "provider": "pocketfi",
-    "percent": 1,
-    "flat": 0
+    "oneTimeFundingProvider": "maplerad"
   }
 }
 
 docs {
   # Admin Update Funding Settings
 
-  Admin uses this endpoint to set the wallet funding charge for one provider.
+  Admin uses this endpoint to switch the one-time funding provider or set the wallet funding charge for one provider.
 
   Use it for:
 
   - `pocketfi` permanent virtual-account funding
   - `monnify` one-time funding account
+  - `maplerad` one-time funding account
 
   ## Endpoint
 
@@ -51,8 +50,11 @@ docs {
 
   ## Body Fields
 
+  `oneTimeFundingProvider`
+  Optional. Use `maplerad` or `monnify` to switch the provider used by `POST /api/v1/wallet/funding-intents`.
+
   `provider`
-  Required. Use either `pocketfi` or `monnify`.
+  Required when updating fees. Use `pocketfi`, `monnify`, or `maplerad`.
 
   `percent`
   Optional. Percentage funding charge. Use `1` for 1%.
@@ -61,6 +63,14 @@ docs {
   Optional. Flat naira charge. Use `0` when no flat charge is needed.
 
   ## Example Body
+
+  ```json
+  {
+    "oneTimeFundingProvider": "maplerad"
+  }
+  ```
+
+  To update PocketFi fees:
 
   ```json
   {
@@ -80,7 +90,28 @@ docs {
   }
   ```
 
+  To update Maplerad fees:
+
+  ```json
+  {
+    "provider": "maplerad",
+    "percent": 1,
+    "flat": 0
+  }
+  ```
+
   ## Expected Response
+
+  ```json
+  {
+    "message": "One-time funding provider updated successfully",
+    "providerSettings": {
+      "oneTimeFundingProvider": "maplerad"
+    }
+  }
+  ```
+
+  Fee update response:
 
   ```json
   {

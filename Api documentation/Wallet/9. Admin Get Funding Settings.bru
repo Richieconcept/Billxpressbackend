@@ -21,7 +21,7 @@ auth:bearer {
 docs {
   # Admin Get Funding Settings
 
-  Admin uses this endpoint to see the current wallet funding charge settings for PocketFi and Monnify.
+  Admin uses this endpoint to see the current wallet funding provider and charge settings for PocketFi, Monnify, and Maplerad.
 
   ## Endpoint
 
@@ -39,6 +39,9 @@ docs {
 
   ```json
   {
+    "providerSettings": {
+      "oneTimeFundingProvider": "maplerad"
+    },
     "settings": [
       {
         "provider": "pocketfi",
@@ -51,6 +54,15 @@ docs {
       },
       {
         "provider": "monnify",
+        "percent": 1,
+        "flat": 0,
+        "creditPolicy": "gross",
+        "paidBy": "platform",
+        "userReceivesFullAmount": true,
+        "message": "Funding charge is 1%. The user wallet is credited with the full transferred amount."
+      },
+      {
+        "provider": "maplerad",
         "percent": 1,
         "flat": 0,
         "creditPolicy": "gross",

@@ -2,8 +2,8 @@ import Transaction from "../models/transaction.model.js";
 import User from "../models/user.model.js";
 import VirtualAccount from "../models/virtualAccount.model.js";
 import {
-  confirmMonnifyFundingIntent,
-  createMonnifyFundingIntent,
+  confirmFundingIntentStatus,
+  createOneTimeFundingIntent,
   serializeFundingIntent,
 } from "../services/fundingIntent.service.js";
 import {
@@ -101,7 +101,7 @@ export const createVirtualAccount = async (req, res) => {
 
 export const createFundingIntent = async (req, res) => {
   try {
-    const intent = await createMonnifyFundingIntent(req.user, req.body?.amount);
+    const intent = await createOneTimeFundingIntent(req.user, req.body?.amount);
 
     res.status(201).json({
       message: "Funding account created successfully",
@@ -114,7 +114,7 @@ export const createFundingIntent = async (req, res) => {
 
 export const confirmFundingIntent = async (req, res) => {
   try {
-    const result = await confirmMonnifyFundingIntent(
+    const result = await confirmFundingIntentStatus(
       req.user,
       req.params.fundingIntentId
     );

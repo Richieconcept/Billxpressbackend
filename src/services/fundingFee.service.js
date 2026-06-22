@@ -1,5 +1,9 @@
 import { fromMinorUnit } from "./wallet.service.js";
 import FundingFeeSetting from "../models/fundingFeeSetting.model.js";
+import FundingProviderSetting from "../models/fundingProviderSetting.model.js";
+
+const SUPPORTED_FUNDING_PROVIDERS = ["pocketfi", "monnify", "maplerad"];
+const SUPPORTED_ONE_TIME_PROVIDERS = ["monnify", "maplerad"];
 
 const readNumberEnv = (name, fallback = 0) => {
   const value = Number(process.env[name]);
@@ -9,7 +13,7 @@ const readNumberEnv = (name, fallback = 0) => {
 const normalizeProvider = (provider) => {
   const normalizedProvider = String(provider || "").trim().toLowerCase();
 
-  if (!["pocketfi", "monnify"].includes(normalizedProvider)) {
+  if (!SUPPORTED_FUNDING_PROVIDERS.includes(normalizedProvider)) {
     const error = new Error("Funding provider is not supported");
     error.statusCode = 400;
     throw error;
@@ -56,12 +60,61 @@ export const getFundingFeeConfig = async (provider) => {
 };
 
 export const listFundingFeeSettings = async () => {
-  const providers = ["pocketfi", "monnify"];
+  const providers = SUPPORTED_FUNDING_PROVIDERS;
   const settings = await Promise.all(
     providers.map((provider) => getOrCreateFundingFeeSetting(provider))
   );
 
   return settings;
+};
+
+export const getOneTimeFundingProvider = async () => {
+  let setting = await FundingProviderSetting.findOne({ key: "one_time_funding" });
+
+  if (!setting) {
+    const envProvider = String(
+      process.env.ONE_TIME_FUNDING_PROVIDER || "maplerad"
+    )
+      .trim()
+      .toLowerCase();
+    setting = await FundingProviderSetting.create({
+      key: "one_time_funding",
+      provider: SUPPORTED_ONE_TIME_PROVIDERS.includes(envProvider)
+        ? envProvider
+        : "maplerad",
+    });
+  }
+
+  return setting.provider;
+};
+
+export const getFundingProviderSettings = async () => ({
+  oneTimeFundingProvider: await getOneTimeFundingProvider(),
+});
+
+export const updateOneTimeFundingProvider = async (provider, adminUserId) => {
+  const normalizedProvider = String(provider || "").trim().toLowerCase();
+
+  if (!SUPPORTED_ONE_TIME_PROVIDERS.includes(normalizedProvider)) {
+    const error = new Error("One-time funding provider is not supported");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const setting = await FundingProviderSetting.findOneAndUpdate(
+    { key: "one_time_funding" },
+    {
+      provider: normalizedProvider,
+      updatedBy: adminUserId,
+    },
+    {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+    }
+  );
+
+  return setting.provider;
 };
 
 export const updateFundingFeeSetting = async (payload, adminUserId) => {

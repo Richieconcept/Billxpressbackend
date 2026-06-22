@@ -1,6 +1,8 @@
 import {
   listFundingFeeSettings,
+  getFundingProviderSettings,
   serializeFundingFeeConfig,
+  updateOneTimeFundingProvider,
   updateFundingFeeSetting,
 } from "../services/fundingFee.service.js";
 
@@ -16,6 +18,7 @@ export const getAdminFundingFeeSettings = async (req, res) => {
     const settings = await listFundingFeeSettings();
 
     res.json({
+      providerSettings: await getFundingProviderSettings(),
       settings: settings.map((setting) => serializeFundingFeeConfig(setting)),
     });
   } catch (error) {
@@ -25,6 +28,20 @@ export const getAdminFundingFeeSettings = async (req, res) => {
 
 export const updateAdminFundingFeeSetting = async (req, res) => {
   try {
+    if (req.body?.oneTimeFundingProvider !== undefined) {
+      const oneTimeFundingProvider = await updateOneTimeFundingProvider(
+        req.body.oneTimeFundingProvider,
+        req.user._id
+      );
+
+      return res.json({
+        message: "One-time funding provider updated successfully",
+        providerSettings: {
+          oneTimeFundingProvider,
+        },
+      });
+    }
+
     const setting = await updateFundingFeeSetting(req.body, req.user._id);
 
     res.json({
