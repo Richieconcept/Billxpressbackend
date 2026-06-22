@@ -233,3 +233,67 @@ export const createMapleradDynamicAccount = async ({
     providerResponse: response,
   };
 };
+
+export const createMapleradLocalTransfer = async ({
+  amountInMinorUnit,
+  accountNumber,
+  bankCode,
+  reference,
+  reason,
+  currency = "NGN",
+}) => {
+  const normalizedAccountNumber = String(accountNumber || "").trim();
+  const normalizedBankCode = String(bankCode || "").trim();
+
+  if (!/^\d{10}$/.test(normalizedAccountNumber)) {
+    const error = new Error("A valid 10 digit account number is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!normalizedBankCode) {
+    const error = new Error("Maplerad bank code is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!Number.isInteger(amountInMinorUnit) || amountInMinorUnit <= 0) {
+    const error = new Error("Transfer amount must be greater than zero");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const requestPayload = {
+    bank_code: normalizedBankCode,
+    account_number: normalizedAccountNumber,
+    amount: amountInMinorUnit,
+    currency,
+    reference,
+  };
+
+  if (reason) {
+    requestPayload.reason = reason;
+  }
+
+  const transferPath = process.env.MAPLERAD_TRANSFER_PATH || "/transfers";
+  const response = await requestMaplerad(transferPath, {
+    method: "POST",
+    body: requestPayload,
+  });
+  const transfer = response.data || response;
+
+  return {
+    providerReference: pickFirst(
+      transfer.id,
+      transfer.reference,
+      response.id,
+      response.reference,
+      reference
+    ),
+    status: String(
+      pickFirst(transfer.status, response.status, "PENDING")
+    ).toUpperCase(),
+    requestPayload,
+    providerResponse: response,
+  };
+};

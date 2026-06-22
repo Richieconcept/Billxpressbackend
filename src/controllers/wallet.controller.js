@@ -23,6 +23,11 @@ import {
 } from "../services/wallet.service.js";
 import { createNotificationBestEffort } from "../services/notification.service.js";
 import { resolvePaystackBankAccount } from "../services/paystack.service.js";
+import {
+  sendMapleradBankTransfer,
+  serializeBankTransferResult,
+  serializeFailedBankTransfer,
+} from "../services/bankTransfer.service.js";
 
 const sendWalletError = (res, publicMessage, error) => {
   res.status(error.statusCode || 500).json({
@@ -171,6 +176,31 @@ export const resolveTransferAccount = async (req, res) => {
     });
   } catch (error) {
     sendWalletError(res, "Could not resolve account name", error);
+  }
+};
+
+export const createBankTransfer = async (req, res) => {
+  try {
+    const result = await sendMapleradBankTransfer({
+      userId: req.user._id,
+      amount: req.body?.amount,
+      accountNumber: req.body?.accountNumber,
+      accountName: req.body?.accountName,
+      paystackBankCode: req.body?.paystackBankCode,
+      mapleradBankCode: req.body?.mapleradBankCode,
+      narration: req.body?.narration,
+      transactionPin: req.body?.transactionPin,
+    });
+
+    res.status(201).json(serializeBankTransferResult(result));
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+
+    if (error.transaction || error.wallet || error.resolvedAccount) {
+      return res.status(statusCode).json(serializeFailedBankTransfer(error));
+    }
+
+    sendWalletError(res, "Could not send transfer", error);
   }
 };
 

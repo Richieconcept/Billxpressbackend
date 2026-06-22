@@ -382,6 +382,118 @@ const creditMapleradDedicatedAccountFunding = async ({
   };
 };
 
+const finalizeMapleradTransferWebhook = async ({
+  payload,
+  event,
+  providerReference,
+  paymentReference,
+  webhookEvent,
+}) => {
+  const finalProviderReference = providerReference || paymentReference;
+
+  if (!finalProviderReference) {
+    throw new Error("Webhook payload is missing transfer reference");
+  }
+
+  const transaction = await Transaction.findOne({
+    provider: "maplerad",
+    type: "transfer",
+    $or: [
+      { providerReference: finalProviderReference },
+      { reference: finalProviderReference },
+    ],
+  });
+
+  if (!transaction) {
+    throw new Error("Could not match webhook to a Maplerad transfer");
+  }
+
+  if (transaction.status === "successful" || transaction.status === "reversed") {
+    webhookEvent.processed = true;
+    await webhookEvent.save();
+
+    return {
+      message: "Webhook already processed",
+    };
+  }
+
+  if (event === "transfer.successful") {
+    transaction.status = "successful";
+    transaction.metadata = {
+      ...transaction.metadata,
+      transferWebhook: payload,
+    };
+    await transaction.save();
+    webhookEvent.processed = true;
+    await webhookEvent.save();
+
+    await createNotificationBestEffort({
+      userId: transaction.user,
+      title: "Transfer successful",
+      message: "Your bank transfer was successful.",
+      type: "bank_transfer_success",
+      channel: "both",
+      priority: "normal",
+      data: {
+        reference: transaction.reference,
+        providerReference: transaction.providerReference,
+      },
+    });
+
+    return {
+      message: "Transfer marked successful",
+    };
+  }
+
+  if (event === "transfer.failed") {
+    transaction.status = "reversed";
+    transaction.metadata = {
+      ...transaction.metadata,
+      transferWebhook: payload,
+    };
+    await transaction.save();
+
+    const refundResult = await creditWallet({
+      userId: transaction.user,
+      amountInMinorUnit: transaction.amount,
+      walletType: transaction.walletType,
+      type: "reversal",
+      reference: `${transaction.reference}_REV`,
+      provider: "maplerad",
+      narration: "Refund for failed bank transfer",
+      metadata: {
+        service: "bank_transfer",
+        originalReference: transaction.reference,
+        providerReference: transaction.providerReference,
+        transferWebhook: payload,
+      },
+    });
+
+    webhookEvent.processed = true;
+    await webhookEvent.save();
+
+    await createNotificationBestEffort({
+      userId: transaction.user,
+      title: "Transfer failed",
+      message: "Your bank transfer failed and has been refunded.",
+      type: "bank_transfer_failed",
+      channel: "both",
+      priority: "normal",
+      data: {
+        reference: transaction.reference,
+        refundReference: refundResult.transaction.reference,
+        providerReference: transaction.providerReference,
+      },
+    });
+
+    return {
+      message: "Transfer refunded",
+    };
+  }
+
+  throw new Error("Unsupported transfer webhook event");
+};
+
 export const handlePocketFiWebhook = async (req, res) => {
   const rawPayload = getRawPayload(req);
   const signature = getPocketFiSignature(req);
@@ -719,7 +831,12 @@ export const handleMapleradWebhook = async (req, res) => {
   try {
     if (
       event &&
-      !["collection.successful", "account.transaction"].includes(event)
+      ![
+        "collection.successful",
+        "account.transaction",
+        "transfer.successful",
+        "transfer.failed",
+      ].includes(event)
     ) {
       webhookEvent.processed = true;
       await webhookEvent.save();
@@ -727,6 +844,18 @@ export const handleMapleradWebhook = async (req, res) => {
       return res.json({
         message: "Webhook ignored",
       });
+    }
+
+    if (["transfer.successful", "transfer.failed"].includes(event)) {
+      const result = await finalizeMapleradTransferWebhook({
+        payload,
+        event,
+        providerReference,
+        paymentReference,
+        webhookEvent,
+      });
+
+      return res.json(result);
     }
 
     if (status && !["SUCCESS", "SUCCESSFUL", "PAID"].includes(status)) {

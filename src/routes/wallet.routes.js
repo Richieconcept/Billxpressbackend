@@ -1,6 +1,7 @@
 import express from "express";
 import {
   confirmFundingIntent,
+  createBankTransfer,
   createFundingIntent,
   createVirtualAccount,
   adminCreditReferralBalance,
@@ -21,6 +22,7 @@ router.post("/virtual-account", protect, createVirtualAccount);
 router.post("/funding-intents", protect, createFundingIntent);
 router.post("/funding-intents/:fundingIntentId/confirm", protect, confirmFundingIntent);
 router.post("/transfers/resolve-account", protect, resolveTransferAccount);
+router.post("/transfers", protect, createBankTransfer);
 router.post("/referral/redeem", protect, redeemReferralBalance);
 router.post(
   "/admin/referral-credit",

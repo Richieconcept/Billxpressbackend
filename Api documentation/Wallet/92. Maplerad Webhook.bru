@@ -50,6 +50,12 @@ docs {
   - creates transaction history
   - sends a wallet funding notification
 
+  ## Bank Transfer Status
+
+  For `transfer.successful`, the backend marks the matching pending transfer as successful.
+
+  For `transfer.failed`, the backend marks the matching pending transfer as reversed and refunds the user's wallet.
+
   ## Required Headers
 
   Maplerad/Svix sends:

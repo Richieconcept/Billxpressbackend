@@ -1,0 +1,98 @@
+meta {
+  name: 13. Send Bank Transfer
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/api/v1/wallet/transfers
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "amount": 100,
+    "accountNumber": "0123456789",
+    "accountName": "JOHN DOE",
+    "paystackBankCode": "058",
+    "mapleradBankCode": "058",
+    "narration": "BillXpress transfer",
+    "transactionPin": "1234"
+  }
+}
+
+docs {
+  # Send Bank Transfer
+
+  Use this endpoint after resolving the account name and after the user enters transaction PIN.
+
+  ## Endpoint
+
+  `POST /api/v1/wallet/transfers`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Request Body
+
+  ```json
+  {
+    "amount": 100,
+    "accountNumber": "0123456789",
+    "accountName": "JOHN DOE",
+    "paystackBankCode": "058",
+    "mapleradBankCode": "058",
+    "narration": "BillXpress transfer",
+    "transactionPin": "1234"
+  }
+  ```
+
+  ## Important
+
+  `paystackBankCode` is used by the backend to verify the account name again before debit.
+
+  `mapleradBankCode` is used by the backend to send the transfer through Maplerad.
+
+  These two codes may not always be the same. The frontend should eventually use a BillXpress bank-list endpoint that returns both codes for one selected bank.
+
+  ## Backend Flow
+
+  - verifies transaction PIN
+  - resolves the account name again with Paystack
+  - rejects the request if the account name changed
+  - debits the user's main wallet
+  - calls Maplerad transfer
+  - returns successful or processing
+  - refunds automatically if Maplerad rejects immediately
+  - later Maplerad transfer webhook can mark pending transfers successful or refunded
+
+  ## Success Response
+
+  ```json
+  {
+    "status": "pending",
+    "message": "Transfer is processing",
+    "account": {
+      "accountNumber": "0123456789",
+      "accountName": "JOHN DOE"
+    },
+    "wallet": {},
+    "transaction": {}
+  }
+  ```
+}
