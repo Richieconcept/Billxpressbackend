@@ -21,9 +21,13 @@ auth:bearer {
 
 body:json {
   {
-    "bankCode": "058",
+    "bankCode": "280",
     "accountNumber": "0123456789"
   }
+}
+
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjE2Mjc5NSwiZXhwIjoxNzgyNzY3NTk1fQ.6iqvD83IFVxspvvD67PltdNlvj-QJLRU1oYWc1Y7mpE
 }
 
 docs {
@@ -31,7 +35,7 @@ docs {
 
   Use this endpoint before sending money to a Nigerian bank account.
 
-  The frontend sends the selected bank code and account number. The backend uses Paystack privately to fetch the account name.
+  The frontend sends the selected Maplerad bank code and account number. The backend uses Maplerad to fetch the account name.
 
   ## Endpoint
 
@@ -49,16 +53,14 @@ docs {
 
   ```json
   {
-    "bankCode": "058",
+    "bankCode": "280",
     "accountNumber": "0123456789"
   }
   ```
 
   ## Important
 
-  `bankCode` must be the Paystack bank code for account-name lookup.
-
-  Maplerad bank codes are different and should be used later when the actual transfer endpoint is implemented.
+  `bankCode` must be the Maplerad bank code returned from `GET /api/v1/wallet/transfers/banks`.
 
   ## Success Response
 
@@ -68,8 +70,8 @@ docs {
     "account": {
       "accountNumber": "0123456789",
       "accountName": "JOHN DOE",
-      "bankCode": "058",
-      "provider": "paystack"
+      "bankCode": "280",
+      "provider": "maplerad"
     }
   }
   ```
@@ -78,7 +80,7 @@ docs {
 
   - user selects bank
   - user enters 10 digit account number
-  - call this endpoint
+  - call this endpoint with `bank.mapleradBankCode` or `bank.bankCode`
   - show `account.accountName`
   - user confirms and enters PIN
   - backend sends the final transfer through Maplerad later

@@ -22,7 +22,7 @@ import {
   verifyTransactionPin,
 } from "../services/wallet.service.js";
 import { createNotificationBestEffort } from "../services/notification.service.js";
-import { resolvePaystackBankAccount } from "../services/paystack.service.js";
+import { resolveMapleradInstitutionAccount } from "../services/maplerad.service.js";
 import {
   sendMapleradBankTransfer,
   serializeBankTransferResult,
@@ -166,9 +166,9 @@ export const confirmFundingIntent = async (req, res) => {
 
 export const resolveTransferAccount = async (req, res) => {
   try {
-    const account = await resolvePaystackBankAccount({
+    const account = await resolveMapleradInstitutionAccount({
       accountNumber: req.body?.accountNumber,
-      bankCode: req.body?.bankCode,
+      bankCode: req.body?.mapleradBankCode || req.body?.bankCode,
     });
 
     res.json({

@@ -18,6 +18,10 @@ auth:bearer {
   token: {{authToken}}
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjE2Mjc5NSwiZXhwIjoxNzgyNzY3NTk1fQ.6iqvD83IFVxspvvD67PltdNlvj-QJLRU1oYWc1Y7mpE
+}
+
 docs {
   # Get Transfer Banks
 
@@ -43,11 +47,14 @@ docs {
       {
         "name": "OPay",
         "slug": "opay",
-        "paystackBankCode": "999992",
+        "bankCode": "760",
         "mapleradBankCode": "123",
+        "paystackBankCode": null,
         "availableForTransfer": true,
-        "paystackName": "OPay Digital Services Limited",
-        "mapleradName": "OPay"
+        "resolverProvider": "maplerad",
+        "transferProvider": "maplerad",
+        "mapleradName": "OPay",
+        "paystackName": null
       }
     ],
     "meta": {
@@ -65,13 +72,15 @@ docs {
 
   - call this endpoint when opening the send money screen
   - user selects a bank from `banks`
-  - call resolve account with `bank.paystackBankCode`
+  - call resolve account with `bank.mapleradBankCode` or `bank.bankCode`
   - show returned account name
-  - call send transfer with both `paystackBankCode` and `mapleradBankCode`
+  - call send transfer with `mapleradBankCode`
 
   ## Debugging
 
-  To see banks that could not be matched between Paystack and Maplerad:
+  The list is powered by Maplerad NUBAN institutions. `paystackBankCode` is optional/backward-compatible and is not required for the current transfer flow.
+
+  To include any future unavailable records:
 
   `GET /api/v1/wallet/transfers/banks?includeUnmapped=true`
 

@@ -90,6 +90,65 @@ export const getMapleradInstitutions = async ({
   };
 };
 
+export const resolveMapleradInstitutionAccount = async ({
+  accountNumber,
+  bankCode,
+}) => {
+  const normalizedAccountNumber = String(accountNumber || "").trim();
+  const normalizedBankCode = String(bankCode || "").trim();
+
+  if (!/^\d{10}$/.test(normalizedAccountNumber)) {
+    const error = new Error("A valid 10 digit account number is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!normalizedBankCode) {
+    const error = new Error("Maplerad bank code is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const requestPayload = {
+    account_number: normalizedAccountNumber,
+    bank_code: normalizedBankCode,
+  };
+  const response = await requestMaplerad("/institutions/resolve", {
+    method: "POST",
+    body: requestPayload,
+  });
+  const account = response.data || response;
+  const accountName = pickFirst(
+    account.account_name,
+    account.accountName,
+    account.name,
+    account.account?.account_name,
+    account.account?.accountName
+  );
+
+  if (!accountName) {
+    const error = new Error("Could not resolve account name");
+    error.statusCode = 404;
+    error.providerResponse = response;
+    throw error;
+  }
+
+  return {
+    accountNumber: pickFirst(
+      account.account_number,
+      account.accountNumber,
+      account.account?.account_number,
+      account.account?.accountNumber,
+      normalizedAccountNumber
+    ),
+    accountName,
+    bankCode: normalizedBankCode,
+    provider: "maplerad",
+    requestPayload,
+    providerResponse: response,
+  };
+};
+
 export const createMapleradCustomer = async ({
   firstName,
   lastName,

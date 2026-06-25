@@ -1,7 +1,9 @@
 import User from "../models/user.model.js";
 import { createNotificationBestEffort } from "./notification.service.js";
-import { createMapleradLocalTransfer } from "./maplerad.service.js";
-import { resolvePaystackBankAccount } from "./paystack.service.js";
+import {
+  createMapleradLocalTransfer,
+  resolveMapleradInstitutionAccount,
+} from "./maplerad.service.js";
 import {
   creditWallet,
   debitWallet,
@@ -50,9 +52,9 @@ export const sendMapleradBankTransfer = async ({
     throw error;
   }
 
-  if (!paystackBankCode || !mapleradBankCode || !accountNumber) {
+  if (!mapleradBankCode || !accountNumber) {
     const error = new Error(
-      "Account number, Paystack bank code, and Maplerad bank code are required"
+      "Account number and Maplerad bank code are required"
     );
     error.statusCode = 400;
     throw error;
@@ -74,9 +76,9 @@ export const sendMapleradBankTransfer = async ({
 
   await verifyTransactionPin(user, transactionPin);
 
-  const resolvedAccount = await resolvePaystackBankAccount({
+  const resolvedAccount = await resolveMapleradInstitutionAccount({
     accountNumber,
-    bankCode: paystackBankCode,
+    bankCode: mapleradBankCode,
   });
 
   if (normalizeName(resolvedAccount.accountName) !== normalizedAccountName) {
@@ -99,8 +101,9 @@ export const sendMapleradBankTransfer = async ({
       service: "bank_transfer",
       accountNumber: resolvedAccount.accountNumber,
       accountName: resolvedAccount.accountName,
-      paystackBankCode: String(paystackBankCode),
+      paystackBankCode: paystackBankCode ? String(paystackBankCode) : undefined,
       mapleradBankCode: String(mapleradBankCode),
+      accountResolver: "maplerad",
       reason: transferReason,
       amount: fromMinorUnit(amountInMinorUnit),
     },

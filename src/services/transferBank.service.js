@@ -145,6 +145,41 @@ const buildTransferBankList = ({ paystackBanks, mapleradBanks }) => {
   return banks.sort((a, b) => a.name.localeCompare(b.name));
 };
 
+const buildMapleradTransferBankList = ({ paystackBanks = [], mapleradBanks }) => {
+  const paystackIndex = buildMapleradIndex(paystackBanks);
+  const seen = new Set();
+  const banks = [];
+
+  mapleradBanks.forEach((mapleradBank) => {
+    const slug = makeSlug(mapleradBank.name);
+
+    if (!slug || seen.has(slug)) {
+      return;
+    }
+
+    seen.add(slug);
+    const paystackMatch = findMapleradMatch({
+      paystackBank: mapleradBank,
+      mapleradIndex: paystackIndex,
+    });
+
+    banks.push({
+      name: mapleradBank.name,
+      slug,
+      bankCode: String(mapleradBank.code),
+      mapleradBankCode: String(mapleradBank.code),
+      paystackBankCode: paystackMatch?.code ? String(paystackMatch.code) : null,
+      availableForTransfer: true,
+      resolverProvider: "maplerad",
+      transferProvider: "maplerad",
+      mapleradName: mapleradBank.name,
+      paystackName: paystackMatch?.name || null,
+    });
+  });
+
+  return banks.sort((a, b) => a.name.localeCompare(b.name));
+};
+
 export const getTransferBanks = async ({ includeUnmapped = false } = {}) => {
   const now = Date.now();
 
@@ -160,23 +195,32 @@ export const getTransferBanks = async ({ includeUnmapped = false } = {}) => {
     };
   }
 
-  const [paystackBanks, mapleradResponse] = await Promise.all([
+  const [paystackBanksResult, mapleradResponse] = await Promise.allSettled([
     getPaystackBanks(),
     getMapleradInstitutions({ country: "NG", type: "NUBAN", pageSize: 500 }),
   ]);
-  const banks = buildTransferBankList({
+  const paystackBanks =
+    paystackBanksResult.status === "fulfilled" ? paystackBanksResult.value : [];
+
+  if (mapleradResponse.status !== "fulfilled") {
+    throw mapleradResponse.reason;
+  }
+
+  const banks = buildMapleradTransferBankList({
     paystackBanks,
-    mapleradBanks: mapleradResponse.institutions,
+    mapleradBanks: mapleradResponse.value.institutions,
   });
 
   cachedBankList = {
     banks,
     meta: {
       paystackCount: paystackBanks.length,
-      mapleradCount: mapleradResponse.institutions.length,
+      mapleradCount: mapleradResponse.value.institutions.length,
       mappedCount: banks.filter((bank) => bank.availableForTransfer).length,
       unmappedCount: banks.filter((bank) => !bank.availableForTransfer).length,
       cacheTtlMs: CACHE_TTL_MS,
+      resolverProvider: "maplerad",
+      transferProvider: "maplerad",
     },
   };
   cachedAt = now;
