@@ -16,7 +16,7 @@ const airtimeServiceSettingSchema = new mongoose.Schema(
 
     activeProvider: {
       type: String,
-      enum: ["ujaydata"],
+      enum: ["ujaydata", "vtpass"],
       default: "ujaydata",
     },
 

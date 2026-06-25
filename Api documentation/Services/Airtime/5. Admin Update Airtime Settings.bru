@@ -22,7 +22,7 @@ auth:bearer {
 body:json {
   {
     "isEnabled": true,
-    "activeProvider": "ujaydata",
+    "activeProvider": "vtpass",
     "userMarkupPercent": 0,
     "vendorMarkupPercent": 0,
     "roundingMode": "ceil",
@@ -46,7 +46,9 @@ docs {
   Use `true` to allow airtime purchases or `false` to temporarily disable airtime.
 
   `activeProvider`
-  Current supported value is `ujaydata`.
+  Supported values are `ujaydata` and `vtpass`.
+
+  Use `vtpass` to route airtime purchases through VTpass. Use `ujaydata` to switch back to the previous airtime provider.
 
   `userMarkupPercent`
   Percentage added on top of airtime value for normal users.

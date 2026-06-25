@@ -10,6 +10,7 @@ const mapleradEnv = [
   "MAPLERAD_SECRET_KEY",
   "MAPLERAD_WEBHOOK_SECRET",
 ];
+const vtpassEnv = ["VTPASS_API_KEY", "VTPASS_SECRET_KEY"];
 
 export const validateEnv = () => {
   const requiredEnv = [...baseRequiredEnv];
@@ -33,4 +34,5 @@ export const validateEnv = () => {
   warnIfMissing("PocketFi integration", pocketFiEnv);
   warnIfMissing("Monnify one-time funding", monnifyEnv);
   warnIfMissing("Maplerad one-time funding", mapleradEnv);
+  warnIfMissing("VTpass services", vtpassEnv);
 };

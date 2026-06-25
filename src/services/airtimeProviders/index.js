@@ -1,7 +1,9 @@
 import ujaydataProvider from "./ujaydata.provider.js";
+import vtpassProvider from "./vtpass.provider.js";
 
 const providers = {
   ujaydata: ujaydataProvider,
+  vtpass: vtpassProvider,
 };
 
 export const getAirtimeProvider = (providerName) => {
