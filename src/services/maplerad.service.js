@@ -42,6 +42,14 @@ const requestMaplerad = async (path, { method = "GET", body, headers = {} } = {}
 const pickFirst = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "");
 
+const isPreferredBankFailure = (error) => {
+  const message = String(
+    error?.providerResponse?.message || error?.message || ""
+  ).toLowerCase();
+
+  return message.includes("preferred bank");
+};
+
 export const getMapleradInstitutions = async ({
   country = "NG",
   type = "DYNAMIC",
@@ -251,10 +259,31 @@ export const createMapleradDynamicAccount = async ({
     body.preferred_bank = preferredBank;
   }
 
-  const response = await requestMaplerad("/collections/dynamic-account", {
-    method: "POST",
-    body,
-  });
+  let response;
+  let bankSelection = preferredBank ? "preferred" : "default";
+  let preferredBankError;
+
+  try {
+    response = await requestMaplerad("/collections/dynamic-account", {
+      method: "POST",
+      body,
+    });
+  } catch (error) {
+    if (!preferredBank || !isPreferredBankFailure(error)) {
+      throw error;
+    }
+
+    preferredBankError = error.providerResponse || { message: error.message };
+    bankSelection = "default";
+    response = await requestMaplerad("/collections/dynamic-account", {
+      method: "POST",
+      body: {
+        account_name: accountName,
+        amount: amountInMinorUnit,
+      },
+    });
+  }
+
   const account = response.data || response;
   const accountNumber = pickFirst(
     account.account_number,
@@ -289,7 +318,12 @@ export const createMapleradDynamicAccount = async ({
     accountName: returnedAccountName,
     bankName,
     bankCode: pickFirst(account.bank_code, account.bankCode, preferredBank),
-    providerResponse: response,
+    providerResponse: {
+      ...response,
+      bankSelection,
+      preferredBank,
+      preferredBankError,
+    },
   };
 };
 
