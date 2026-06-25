@@ -28,7 +28,10 @@ import {
   serializeBankTransferResult,
   serializeFailedBankTransfer,
 } from "../services/bankTransfer.service.js";
-import { getTransferBanks } from "../services/transferBank.service.js";
+import {
+  getTransferBanks,
+  suggestTransferBanks,
+} from "../services/transferBank.service.js";
 
 const sendWalletError = (res, publicMessage, error) => {
   res.status(error.statusCode || 500).json({
@@ -193,6 +196,18 @@ export const getTransferBankList = async (req, res) => {
     });
   } catch (error) {
     sendWalletError(res, "Could not fetch transfer banks", error);
+  }
+};
+
+export const suggestTransferBankList = async (req, res) => {
+  try {
+    const result = await suggestTransferBanks({
+      accountNumber: req.body?.accountNumber,
+    });
+
+    res.json(result);
+  } catch (error) {
+    sendWalletError(res, "Could not suggest transfer banks", error);
   }
 };
 

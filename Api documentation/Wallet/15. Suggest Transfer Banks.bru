@@ -1,0 +1,90 @@
+meta {
+  name: 15. Suggest Transfer Banks
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/api/v1/wallet/transfers/suggest-banks
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "accountNumber": "0123456789"
+  }
+}
+
+docs {
+  # Suggest Transfer Banks
+
+  Use this endpoint while the user is typing a 10 digit account number.
+
+  This endpoint does not resolve account name and does not call Maplerad account resolve. It only suggests likely banks from popular Nigerian banks using checksum validation.
+
+  ## Endpoint
+
+  `POST /api/v1/wallet/transfers/suggest-banks`
+
+  ## Authentication
+
+  Required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Request Body
+
+  ```json
+  {
+    "accountNumber": "0123456789"
+  }
+  ```
+
+  ## Success Response
+
+  ```json
+  {
+    "accountNumber": "0123456789",
+    "suggestions": [
+      {
+        "name": "Guaranty Trust Bank",
+        "slug": "gtbank",
+        "bankCode": "280",
+        "mapleradBankCode": "280",
+        "availableForTransfer": true,
+        "resolverProvider": "maplerad",
+        "transferProvider": "maplerad",
+        "confidence": "checksum"
+      }
+    ],
+    "meta": {
+      "method": "nuban_checksum",
+      "accountNameResolved": false,
+      "checkedBanks": 19
+    }
+  }
+  ```
+
+  ## Frontend Behavior
+
+  - call this only after the user has typed 10 digits
+  - if `suggestions` has items, show them as bank suggestions
+  - if `suggestions` is empty, show nothing and let user select bank manually
+  - after user selects a bank, call `Resolve Transfer Account` to fetch account name
+
+  ## Important
+
+  This endpoint is best-effort. Some wallets and microfinance banks may not be detectable from account number alone, so an empty suggestion list is normal.
+}
