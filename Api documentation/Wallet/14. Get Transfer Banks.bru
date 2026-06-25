@@ -48,21 +48,18 @@ docs {
         "name": "OPay",
         "slug": "opay",
         "bankCode": "760",
-        "mapleradBankCode": "123",
-        "paystackBankCode": null,
+        "mapleradBankCode": "760",
         "availableForTransfer": true,
         "resolverProvider": "maplerad",
-        "transferProvider": "maplerad",
-        "mapleradName": "OPay",
-        "paystackName": null
+        "transferProvider": "maplerad"
       }
     ],
     "meta": {
-      "paystackCount": 100,
-      "mapleradCount": 50,
-      "mappedCount": 30,
-      "unmappedCount": 70,
-      "cacheTtlMs": 3600000
+      "mapleradCount": 637,
+      "availableCount": 637,
+      "cacheTtlMs": 3600000,
+      "resolverProvider": "maplerad",
+      "transferProvider": "maplerad"
     },
     "cached": false
   }
@@ -76,13 +73,5 @@ docs {
   - show returned account name
   - call send transfer with `mapleradBankCode`
 
-  ## Debugging
-
-  The list is powered by Maplerad NUBAN institutions. `paystackBankCode` is optional/backward-compatible and is not required for the current transfer flow.
-
-  To include any future unavailable records:
-
-  `GET /api/v1/wallet/transfers/banks?includeUnmapped=true`
-
-  Normal frontend screens should use the default endpoint without `includeUnmapped`.
+  The list is powered by Maplerad NUBAN institutions.
 }

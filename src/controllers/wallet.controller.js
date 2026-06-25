@@ -203,7 +203,6 @@ export const createBankTransfer = async (req, res) => {
       amount: req.body?.amount,
       accountNumber: req.body?.accountNumber,
       accountName: req.body?.accountName,
-      paystackBankCode: req.body?.paystackBankCode,
       mapleradBankCode: req.body?.mapleradBankCode,
       narration: req.body?.narration,
       transactionPin: req.body?.transactionPin,
