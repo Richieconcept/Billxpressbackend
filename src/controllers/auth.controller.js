@@ -440,22 +440,79 @@ export const requestPasswordResetCode = async (req, res) => {
   }
 };
 
+const getPasswordResetCodeFromBody = (body = {}) =>
+  body.resetCode || body.resetToken || body.code || body.otp;
+
+const validatePasswordResetCode = async ({ email, resetCode }) => {
+  const normalizedEmail = email?.trim().toLowerCase();
+
+  if (!normalizedEmail || !resetCode) {
+    const error = new Error("Email and reset code are required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!/^\d{5}$/.test(String(resetCode))) {
+    const error = new Error("Reset code must be 5 digits");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const user = await User.findOne({ email: normalizedEmail }).select(
+    "+password +passwordResetOtp +passwordResetOtpExpires +passwordResetOtpLastSentAt"
+  );
+
+  if (
+    !user ||
+    !user.passwordResetOtp ||
+    !user.passwordResetOtpExpires ||
+    user.passwordResetOtpExpires < Date.now()
+  ) {
+    const error = new Error("Reset code is invalid or has expired");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const hashedResetCode = hashEmailVerificationOtp(resetCode);
+
+  if (hashedResetCode !== user.passwordResetOtp) {
+    const error = new Error("Reset code is invalid or has expired");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return { user, normalizedEmail };
+};
+
+export const verifyPasswordResetCode = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const resetCode = getPasswordResetCodeFromBody(req.body);
+    const { user } = await validatePasswordResetCode({ email, resetCode });
+
+    res.json({
+      message: "Password reset code verified successfully",
+      resetVerified: true,
+      maskedEmail: maskEmail(user.email),
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      message: error.statusCode
+        ? error.message
+        : "Could not verify password reset code",
+      error: process.env.NODE_ENV === "production" ? undefined : error.message,
+    });
+  }
+};
+
 export const resetPassword = async (req, res) => {
   try {
     const { email, newPassword, confirmPassword } = req.body;
-    const normalizedEmail = email?.trim().toLowerCase();
-    const resetCode =
-      req.body.resetCode || req.body.resetToken || req.body.code || req.body.otp;
+    const resetCode = getPasswordResetCodeFromBody(req.body);
 
-    if (!normalizedEmail || !resetCode || !newPassword || !confirmPassword) {
+    if (!email?.trim() || !resetCode || !newPassword || !confirmPassword) {
       return res.status(400).json({
         message: "Email, reset code, new password, and confirm password are required",
-      });
-    }
-
-    if (!/^\d{5}$/.test(String(resetCode))) {
-      return res.status(400).json({
-        message: "Reset code must be 5 digits",
       });
     }
 
@@ -471,33 +528,7 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: normalizedEmail }).select(
-      "+password +passwordResetOtp +passwordResetOtpExpires +passwordResetOtpLastSentAt"
-    );
-
-    if (!user) {
-      return res.status(400).json({
-        message: "Reset code is invalid or has expired",
-      });
-    }
-
-    if (
-      !user.passwordResetOtp ||
-      !user.passwordResetOtpExpires ||
-      user.passwordResetOtpExpires < Date.now()
-    ) {
-      return res.status(400).json({
-        message: "Reset code is invalid or has expired",
-      });
-    }
-
-    const hashedResetCode = hashEmailVerificationOtp(resetCode);
-
-    if (hashedResetCode !== user.passwordResetOtp) {
-      return res.status(400).json({
-        message: "Reset code is invalid or has expired",
-      });
-    }
+    const { user } = await validatePasswordResetCode({ email, resetCode });
 
     user.password = await bcrypt.hash(newPassword, 10);
     user.passwordResetOtp = null;

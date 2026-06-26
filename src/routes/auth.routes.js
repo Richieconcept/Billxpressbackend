@@ -8,6 +8,7 @@ import {
   resendEmailOtp,
   requestPasswordResetCode,
   resetPassword,
+  verifyPasswordResetCode,
   getMe,
 } from "../controllers/auth.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
@@ -62,6 +63,11 @@ router.post("/login", loginLimiter, loginUser);
 router.post("/refresh-session", refreshSession);
 router.post("/logout", logoutUser);
 router.post("/forgot-password", passwordResetCodeLimiter, requestPasswordResetCode);
+router.post(
+  "/verify-password-reset-code",
+  passwordResetLimiter,
+  verifyPasswordResetCode
+);
 router.patch("/reset-password", passwordResetLimiter, resetPassword);
 router.post("/verify-email-otp", verifyEmailOtpLimiter, verifyEmailOtp);
 router.post("/resend-email-otp", resendEmailOtpLimiter, resendEmailOtp);
