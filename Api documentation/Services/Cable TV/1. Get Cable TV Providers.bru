@@ -1,0 +1,33 @@
+meta {
+  name: 1. Get Cable TV Providers
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/services/cable-tv/providers
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Get Cable TV Providers
+
+  Use this endpoint to show cable TV providers.
+
+  Supported provider codes:
+
+  ```txt
+  DSTV
+  GOTV
+  STARTIMES
+  ```
+}

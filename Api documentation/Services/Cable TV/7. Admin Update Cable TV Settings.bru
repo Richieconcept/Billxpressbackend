@@ -1,0 +1,39 @@
+meta {
+  name: 7. Admin Update Cable TV Settings
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/services/cable-tv/settings
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "isEnabled": true,
+    "activeProvider": "vtpass",
+    "userMarkupPercent": 0,
+    "vendorMarkupPercent": 0,
+    "roundingMode": "ceil"
+  }
+}
+
+docs {
+  # Admin Update Cable TV Settings
+
+  `PATCH /api/v1/admin/services/cable-tv/settings`
+
+  `activeProvider`
+  Current supported value is `vtpass`.
+}

@@ -1,0 +1,35 @@
+meta {
+  name: 4. Quote Cable TV
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/services/cable-tv/quote
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "provider": "DSTV",
+    "packageCode": "dstv-padi"
+  }
+}
+
+docs {
+  # Quote Cable TV
+
+  Use this endpoint after package selection. The frontend sends only package code, not amount.
+
+  The backend fetches the real package amount from VTpass and calculates BillXpress selling price.
+}

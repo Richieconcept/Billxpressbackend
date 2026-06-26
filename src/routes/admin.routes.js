@@ -14,6 +14,10 @@ import {
   updateAdminAirtimeSettings,
 } from "../controllers/airtimeService.controller.js";
 import {
+  getAdminCableTvSettings,
+  updateAdminCableTvSettings,
+} from "../controllers/cableTvService.controller.js";
+import {
   getAdminDataSettings,
   updateAdminDataSettings,
 } from "../controllers/dataService.controller.js";
@@ -79,6 +83,18 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminAirtimeSettings
+);
+router.get(
+  "/services/cable-tv/settings",
+  protect,
+  authorizeRoles("admin"),
+  getAdminCableTvSettings
+);
+router.patch(
+  "/services/cable-tv/settings",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminCableTvSettings
 );
 router.get(
   "/services/data/settings",

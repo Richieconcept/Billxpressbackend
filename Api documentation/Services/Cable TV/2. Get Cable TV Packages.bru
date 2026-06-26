@@ -1,0 +1,32 @@
+meta {
+  name: 2. Get Cable TV Packages
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/services/cable-tv/packages?provider=DSTV
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Get Cable TV Packages
+
+  Use this endpoint after the user selects a provider.
+
+  Query:
+
+  `provider`
+  Required. Use `DSTV`, `GOTV`, or `STARTIMES`.
+
+  The backend fetches packages from VTpass and applies BillXpress markup to return `sellingPrice`.
+}

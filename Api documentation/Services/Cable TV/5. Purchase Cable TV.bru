@@ -1,0 +1,44 @@
+meta {
+  name: 5. Purchase Cable TV
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/services/cable-tv/purchase
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "provider": "DSTV",
+    "smartcardNumber": "1212121212",
+    "packageCode": "dstv-padi",
+    "subscriptionType": "change",
+    "phone": "08011111111",
+    "transactionPin": "1234"
+  }
+}
+
+docs {
+  # Purchase Cable TV
+
+  Use this endpoint after smartcard verification and user confirmation.
+
+  The backend verifies smartcard again, fetches package amount from VTpass, debits wallet, purchases through VTpass, and refunds automatically if VTpass fails.
+
+  `subscriptionType`
+  Optional for DSTV/GOTV. Use `change` or `renew`. Defaults to `change`.
+
+  For Startimes, subscription type is ignored.
+}

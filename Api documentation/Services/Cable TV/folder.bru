@@ -1,0 +1,45 @@
+meta {
+  name: Cable TV
+  seq: 5
+}
+
+docs {
+  # Cable TV Service
+
+  Cable TV endpoints are powered by the active cable TV provider. Current provider:
+
+  ```txt
+  vtpass
+  ```
+
+  ## User Flow
+
+  1. Call `Get Cable TV Providers`.
+  2. User selects provider, for example `DSTV`.
+  3. Call `Get Cable TV Packages`.
+  4. User enters smartcard/IUC number.
+  5. Call `Verify Smartcard`.
+  6. Display customer name and selected package price.
+  7. Call `Quote Cable TV`.
+  8. User enters transaction PIN.
+  9. Call `Purchase Cable TV`.
+
+  The backend gets the package amount from VTpass, debits wallet during purchase, and refunds automatically if VTpass fails.
+
+  ## Endpoints
+
+  ```txt
+  GET  /api/v1/services/cable-tv/providers
+  GET  /api/v1/services/cable-tv/packages?provider=DSTV
+  POST /api/v1/services/cable-tv/verify-smartcard
+  POST /api/v1/services/cable-tv/quote
+  POST /api/v1/services/cable-tv/purchase
+  ```
+
+  Admin settings:
+
+  ```txt
+  GET   /api/v1/admin/services/cable-tv/settings
+  PATCH /api/v1/admin/services/cable-tv/settings
+  ```
+}

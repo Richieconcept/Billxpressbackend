@@ -1,0 +1,41 @@
+meta {
+  name: 3. Verify Smartcard
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/services/cable-tv/verify-smartcard
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "provider": "DSTV",
+    "smartcardNumber": "1212121212"
+  }
+}
+
+docs {
+  # Verify Smartcard
+
+  Use this endpoint after user enters smartcard/IUC number.
+
+  Body:
+
+  `provider`
+  Required. Use `DSTV`, `GOTV`, or `STARTIMES`.
+
+  `smartcardNumber`
+  Required.
+}
