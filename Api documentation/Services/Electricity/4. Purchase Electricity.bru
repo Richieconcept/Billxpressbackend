@@ -1,0 +1,75 @@
+meta {
+  name: 4. Purchase Electricity
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/services/electricity/purchase
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "disco": "IKEDC",
+    "meterNumber": "1111111111111",
+    "meterType": "prepaid",
+    "phone": "08011111111",
+    "amount": 2000,
+    "transactionPin": "1234"
+  }
+}
+
+docs {
+  # Purchase Electricity
+
+  Use this endpoint after meter verification and user confirmation.
+
+  The backend verifies the meter again, debits the wallet, sends purchase to VTpass, and refunds automatically if VTpass fails.
+
+  ## Body
+
+  `disco`
+  Required. Example: `IKEDC`.
+
+  `meterNumber`
+  Required.
+
+  `meterType`
+  Required. `prepaid` or `postpaid`.
+
+  `phone`
+  Required. 11-digit Nigerian phone number starting with `0`.
+
+  `amount`
+  Required. Electricity value in naira.
+
+  `transactionPin`
+  Required.
+
+  ## Success Response
+
+  ```json
+  {
+    "status": "successful",
+    "message": "Electricity purchase successful",
+    "token": "...",
+    "units": "...",
+    "quote": {},
+    "wallet": {},
+    "transaction": {}
+  }
+  ```
+
+  For prepaid meters, display `token` clearly for the user.
+}

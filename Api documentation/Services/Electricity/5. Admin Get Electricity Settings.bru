@@ -1,0 +1,27 @@
+meta {
+  name: 5. Admin Get Electricity Settings
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/services/electricity/settings
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Get Electricity Settings
+
+  `GET /api/v1/admin/services/electricity/settings`
+
+  Returns active provider, available providers, markup, and min/max amount settings.
+}

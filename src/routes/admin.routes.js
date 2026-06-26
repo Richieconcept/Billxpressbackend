@@ -18,6 +18,10 @@ import {
   updateAdminDataSettings,
 } from "../controllers/dataService.controller.js";
 import {
+  getAdminElectricitySettings,
+  updateAdminElectricitySettings,
+} from "../controllers/electricityService.controller.js";
+import {
   getAdminSocialGrowthSettings,
   updateAdminSocialGrowthSettings,
 } from "../controllers/socialGrowth.controller.js";
@@ -87,6 +91,18 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminDataSettings
+);
+router.get(
+  "/services/electricity/settings",
+  protect,
+  authorizeRoles("admin"),
+  getAdminElectricitySettings
+);
+router.patch(
+  "/services/electricity/settings",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminElectricitySettings
 );
 router.get(
   "/services/social-growth/settings",

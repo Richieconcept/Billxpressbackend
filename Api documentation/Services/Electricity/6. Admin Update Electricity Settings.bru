@@ -1,0 +1,44 @@
+meta {
+  name: 6. Admin Update Electricity Settings
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/services/electricity/settings
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "isEnabled": true,
+    "activeProvider": "vtpass",
+    "userMarkupPercent": 0,
+    "vendorMarkupPercent": 0,
+    "roundingMode": "ceil",
+    "minimumAmount": 100,
+    "maximumAmount": 500000
+  }
+}
+
+docs {
+  # Admin Update Electricity Settings
+
+  `PATCH /api/v1/admin/services/electricity/settings`
+
+  `activeProvider`
+  Current supported value is `vtpass`.
+
+  `minimumAmount` and `maximumAmount`
+  Control the allowed electricity purchase amount.
+}

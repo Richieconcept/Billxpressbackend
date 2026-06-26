@@ -1,0 +1,43 @@
+meta {
+  name: Electricity
+  seq: 4
+}
+
+docs {
+  # Electricity Service
+
+  Electricity endpoints are powered by the active electricity provider. Current provider:
+
+  ```txt
+  vtpass
+  ```
+
+  ## User Flow
+
+  1. Call `Get Electricity Discos`.
+  2. User selects disco and meter type.
+  3. User enters meter number.
+  4. Call `Verify Electricity Meter`.
+  5. Display customer name/address.
+  6. Call `Quote Electricity`.
+  7. User enters transaction PIN.
+  8. Call `Purchase Electricity`.
+
+  The backend debits wallet only during purchase. If VTpass fails after debit, the backend automatically refunds.
+
+  ## Endpoints
+
+  ```txt
+  GET  /api/v1/services/electricity/discos
+  POST /api/v1/services/electricity/verify-meter
+  POST /api/v1/services/electricity/quote
+  POST /api/v1/services/electricity/purchase
+  ```
+
+  Admin settings:
+
+  ```txt
+  GET   /api/v1/admin/services/electricity/settings
+  PATCH /api/v1/admin/services/electricity/settings
+  ```
+}

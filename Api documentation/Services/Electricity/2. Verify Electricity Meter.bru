@@ -1,0 +1,60 @@
+meta {
+  name: 2. Verify Electricity Meter
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/services/electricity/verify-meter
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "disco": "IKEDC",
+    "meterNumber": "1111111111111",
+    "meterType": "prepaid"
+  }
+}
+
+docs {
+  # Verify Electricity Meter
+
+  Use this endpoint after user selects disco and meter type, then enters meter number.
+
+  ## Body
+
+  `disco`
+  Required. Use the `code` from `Get Electricity Discos`, for example `IKEDC`.
+
+  `meterNumber`
+  Required. Customer meter/account number.
+
+  `meterType`
+  Required. `prepaid` or `postpaid`.
+
+  ## Success Response
+
+  ```json
+  {
+    "message": "Meter verified successfully",
+    "meter": {
+      "provider": "vtpass",
+      "meterNumber": "1111111111111",
+      "meterType": "prepaid",
+      "customerName": "John Doe",
+      "address": "..."
+    }
+  }
+  ```
+}

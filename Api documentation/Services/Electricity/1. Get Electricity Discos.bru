@@ -1,0 +1,53 @@
+meta {
+  name: 1. Get Electricity Discos
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/services/electricity/discos
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Get Electricity Discos
+
+  Use this endpoint to show supported electricity companies and meter types.
+
+  ## Endpoint
+
+  `GET /api/v1/services/electricity/discos`
+
+  ## Response
+
+  ```json
+  {
+    "provider": "vtpass",
+    "pricing": {
+      "minimumAmount": 100,
+      "maximumAmount": 500000,
+      "appliedMarkupPercent": 0
+    },
+    "discos": [
+      {
+        "code": "IKEDC",
+        "name": "Ikeja Electric",
+        "available": true,
+        "meterTypes": [
+          { "code": "prepaid", "name": "Prepaid" },
+          { "code": "postpaid", "name": "Postpaid" }
+        ]
+      }
+    ]
+  }
+  ```
+}
