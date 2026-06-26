@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import User from "../models/user.model.js";
 import {
   canResendEmailVerificationOtp,
@@ -373,7 +374,7 @@ export const requestPasswordResetCode = async (req, res) => {
     }
 
     const user = await User.findOne({ email: normalizedEmail }).select(
-      "+passwordResetOtp +passwordResetOtpExpires +passwordResetOtpLastSentAt"
+      "+passwordResetOtp +passwordResetOtpExpires +passwordResetOtpLastSentAt +passwordResetToken +passwordResetTokenExpires"
     );
 
     if (!user) {
@@ -396,11 +397,15 @@ export const requestPasswordResetCode = async (req, res) => {
     const previousOtp = user.passwordResetOtp;
     const previousOtpExpires = user.passwordResetOtpExpires;
     const previousOtpLastSentAt = user.passwordResetOtpLastSentAt;
+    const previousResetToken = user.passwordResetToken;
+    const previousResetTokenExpires = user.passwordResetTokenExpires;
     const verification = createEmailVerificationOtp();
 
     user.passwordResetOtp = verification.hashedOtp;
     user.passwordResetOtpExpires = verification.expires;
     user.passwordResetOtpLastSentAt = new Date();
+    user.passwordResetToken = null;
+    user.passwordResetTokenExpires = null;
 
     try {
       await user.save();
@@ -408,6 +413,8 @@ export const requestPasswordResetCode = async (req, res) => {
       user.passwordResetOtp = previousOtp;
       user.passwordResetOtpExpires = previousOtpExpires;
       user.passwordResetOtpLastSentAt = previousOtpLastSentAt;
+      user.passwordResetToken = previousResetToken;
+      user.passwordResetTokenExpires = previousResetTokenExpires;
       throw error;
     }
 
@@ -427,6 +434,8 @@ export const requestPasswordResetCode = async (req, res) => {
       user.passwordResetOtp = previousOtp;
       user.passwordResetOtpExpires = previousOtpExpires;
       user.passwordResetOtpLastSentAt = previousOtpLastSentAt;
+      user.passwordResetToken = previousResetToken;
+      user.passwordResetTokenExpires = previousResetTokenExpires;
       await user.save();
       throw error;
     }
@@ -441,7 +450,28 @@ export const requestPasswordResetCode = async (req, res) => {
 };
 
 const getPasswordResetCodeFromBody = (body = {}) =>
-  body.resetCode || body.resetToken || body.code || body.otp;
+  body.resetCode ||
+  body.code ||
+  body.otp ||
+  (/^\d{5}$/.test(String(body.resetToken || "")) ? body.resetToken : null);
+
+const getPasswordResetTokenFromBody = (body = {}) =>
+  body.passwordResetToken ||
+  body.resetSessionToken ||
+  (/^\d{5}$/.test(String(body.resetToken || "")) ? null : body.resetToken);
+
+const hashPasswordResetToken = (token) =>
+  crypto.createHash("sha256").update(String(token)).digest("hex");
+
+const createPasswordResetToken = () => {
+  const token = crypto.randomBytes(32).toString("hex");
+
+  return {
+    token,
+    hashedToken: hashPasswordResetToken(token),
+    expires: new Date(Date.now() + 1000 * 60 * 10),
+  };
+};
 
 const validatePasswordResetCode = async ({ email, resetCode }) => {
   const normalizedEmail = email?.trim().toLowerCase();
@@ -459,7 +489,7 @@ const validatePasswordResetCode = async ({ email, resetCode }) => {
   }
 
   const user = await User.findOne({ email: normalizedEmail }).select(
-    "+password +passwordResetOtp +passwordResetOtpExpires +passwordResetOtpLastSentAt"
+    "+password +passwordResetOtp +passwordResetOtpExpires +passwordResetOtpLastSentAt +passwordResetToken +passwordResetTokenExpires"
   );
 
   if (
@@ -489,10 +519,18 @@ export const verifyPasswordResetCode = async (req, res) => {
     const { email } = req.body;
     const resetCode = getPasswordResetCodeFromBody(req.body);
     const { user } = await validatePasswordResetCode({ email, resetCode });
+    const resetToken = createPasswordResetToken();
+
+    user.passwordResetToken = resetToken.hashedToken;
+    user.passwordResetTokenExpires = resetToken.expires;
+    user.passwordResetOtp = null;
+    user.passwordResetOtpExpires = null;
+    await user.save();
 
     res.json({
       message: "Password reset code verified successfully",
       resetVerified: true,
+      passwordResetToken: resetToken.token,
       maskedEmail: maskEmail(user.email),
     });
   } catch (error) {
@@ -505,14 +543,54 @@ export const verifyPasswordResetCode = async (req, res) => {
   }
 };
 
+const validatePasswordResetToken = async ({ email, passwordResetToken }) => {
+  const normalizedEmail = email?.trim().toLowerCase();
+
+  if (!normalizedEmail || !passwordResetToken) {
+    const error = new Error("Email and password reset token are required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const user = await User.findOne({ email: normalizedEmail }).select(
+    "+password +passwordResetToken +passwordResetTokenExpires"
+  );
+
+  if (
+    !user ||
+    !user.passwordResetToken ||
+    !user.passwordResetTokenExpires ||
+    user.passwordResetTokenExpires < Date.now()
+  ) {
+    const error = new Error("Password reset session is invalid or has expired");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (hashPasswordResetToken(passwordResetToken) !== user.passwordResetToken) {
+    const error = new Error("Password reset session is invalid or has expired");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return { user, normalizedEmail };
+};
+
 export const resetPassword = async (req, res) => {
   try {
     const { email, newPassword, confirmPassword } = req.body;
     const resetCode = getPasswordResetCodeFromBody(req.body);
+    const passwordResetToken = getPasswordResetTokenFromBody(req.body);
 
-    if (!email?.trim() || !resetCode || !newPassword || !confirmPassword) {
+    if (
+      !email?.trim() ||
+      (!resetCode && !passwordResetToken) ||
+      !newPassword ||
+      !confirmPassword
+    ) {
       return res.status(400).json({
-        message: "Email, reset code, new password, and confirm password are required",
+        message:
+          "Email, password reset token, new password, and confirm password are required",
       });
     }
 
@@ -528,12 +606,16 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    const { user } = await validatePasswordResetCode({ email, resetCode });
+    const { user } = passwordResetToken
+      ? await validatePasswordResetToken({ email, passwordResetToken })
+      : await validatePasswordResetCode({ email, resetCode });
 
     user.password = await bcrypt.hash(newPassword, 10);
     user.passwordResetOtp = null;
     user.passwordResetOtpExpires = null;
     user.passwordResetOtpLastSentAt = null;
+    user.passwordResetToken = null;
+    user.passwordResetTokenExpires = null;
     await user.save();
 
     res.json({

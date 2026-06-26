@@ -105,6 +105,18 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    passwordResetToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    passwordResetTokenExpires: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+
     transactionPinResetOtp: {
       type: String,
       default: null,
