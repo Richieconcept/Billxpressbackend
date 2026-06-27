@@ -30,6 +30,10 @@ import {
   updateAdminSocialGrowthSettings,
 } from "../controllers/socialGrowth.controller.js";
 import {
+  getAdminCardSettings,
+  updateAdminCardSettings,
+} from "../controllers/card.controller.js";
+import {
   getAdminMapleradInstitutions,
   getAdminFundingFeeSettings,
   updateAdminFundingFeeSetting,
@@ -131,6 +135,18 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminSocialGrowthSettings
+);
+router.get(
+  "/cards/settings",
+  protect,
+  authorizeRoles("admin"),
+  getAdminCardSettings
+);
+router.patch(
+  "/cards/settings",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminCardSettings
 );
 router.get(
   "/funding/settings",

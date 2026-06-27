@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import MapleradCustomer from "../models/mapleradCustomer.model.js";
 import User from "../models/user.model.js";
 
 const AUTH_TIER_RANK = {
@@ -29,6 +30,11 @@ export const protect = async (req, res, next) => {
         return res.status(401).json({
           message: "User account is not active",
         });
+      }
+
+      if (user.emailVerified && user.authTier === "tier_1") {
+        user.authTier = "tier_2";
+        await user.save();
       }
 
       req.user = user;
@@ -67,8 +73,21 @@ export const requireVerifiedEmail = (req, res, next) => {
 };
 
 export const requireAuthTier = (minimumTier = "tier_1") => {
-  return (req, res, next) => {
-    const userTier = req.user?.authTier || "tier_1";
+  return async (req, res, next) => {
+    let userTier = req.user?.authTier || "tier_1";
+
+    if (minimumTier === "tier_3" && userTier === "tier_2") {
+      const mapleradCustomer = await MapleradCustomer.findOne({
+        user: req.user?._id,
+        tier: { $gte: 1 },
+      }).select("_id");
+
+      if (mapleradCustomer) {
+        req.user.authTier = "tier_3";
+        await req.user.save();
+        userTier = "tier_3";
+      }
+    }
 
     if ((AUTH_TIER_RANK[userTier] || 0) < (AUTH_TIER_RANK[minimumTier] || 0)) {
       return res.status(403).json({

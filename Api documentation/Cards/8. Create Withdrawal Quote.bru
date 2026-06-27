@@ -1,0 +1,26 @@
+meta {
+  name: 8. Create Withdrawal Quote
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/v1/cards/{{cardId}}/withdrawal-quote
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "amountUsd": 5
+  }
+}
+
+docs {
+  Returns the current Maplerad USD-to-NGN quote, fees, markup, and exact NGN
+  amount that will be credited to the wallet.
+}

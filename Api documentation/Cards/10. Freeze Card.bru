@@ -1,0 +1,21 @@
+meta {
+  name: 10. Freeze Card
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/cards/{{cardId}}/freeze
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "transactionPin": "1234"
+  }
+}

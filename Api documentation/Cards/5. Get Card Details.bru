@@ -1,0 +1,20 @@
+meta {
+  name: 5. Get Card Details
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/cards/{{cardId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  Fetches current card details directly from Maplerad. Treat PAN and CVV as
+  sensitive and never log or persist them on the frontend.
+}

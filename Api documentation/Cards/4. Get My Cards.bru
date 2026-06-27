@@ -1,0 +1,19 @@
+meta {
+  name: 4. Get My Cards
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/cards
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  Returns the logged-in user's cards using masked card information.
+}

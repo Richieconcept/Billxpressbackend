@@ -1,0 +1,35 @@
+meta {
+  name: 2. Create Card Quote
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/cards/creation-quote
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "amountNgn": 10000,
+    "brand": "VISA"
+  }
+}
+
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzEiLCJpYXQiOjE3ODI1Njg5MTMsImV4cCI6MTc4MzE3MzcxM30.E8OV7li3T6TeaVNxdoBvZgshwnMSAASnaiBLqK7TrSE
+}
+
+docs {
+  Creates a short-lived quote for card creation and initial USD funding.
+  Display `walletDebit`, `target.amount`, fees, and expiry to the user.
+}

@@ -1,0 +1,15 @@
+meta {
+  name: 13. Admin Get Card Settings
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/cards/settings
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}

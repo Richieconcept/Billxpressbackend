@@ -1,0 +1,21 @@
+meta {
+  name: Cards
+  seq: 7
+}
+
+docs {
+  # Virtual Dollar Cards
+
+  These endpoints require email verification and BillXpress `tier_3`.
+
+  Amount rules:
+
+  - Creation and funding quotes accept `amountNgn`.
+  - Withdrawal quotes accept `amountUsd`.
+  - Always display the returned quote totals.
+  - Never calculate exchange rates or fees on the frontend.
+}
+
+vars {
+  cardId: paste-card-id-here
+}

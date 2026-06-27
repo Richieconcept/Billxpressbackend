@@ -1,0 +1,21 @@
+meta {
+  name: 11. Unfreeze Card
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/cards/{{cardId}}/unfreeze
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "transactionPin": "1234"
+  }
+}

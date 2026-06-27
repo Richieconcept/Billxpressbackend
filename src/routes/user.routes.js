@@ -9,7 +9,11 @@ import {
   updateMyProfile,
   upgradeMyMapleradTier1,
 } from "../controllers/user.controller.js";
-import { protect } from "../middlewares/auth.middleware.js";
+import {
+  protect,
+  requireAuthTier,
+  requireVerifiedEmail,
+} from "../middlewares/auth.middleware.js";
 import { rateLimit } from "../middlewares/rateLimit.middleware.js";
 
 const router = express.Router();
@@ -30,7 +34,12 @@ router.use(protect);
 
 router.get("/me", getMyProfile);
 router.get("/me/kyc", getMyKycStatus);
-router.post("/me/kyc/maplerad-tier1", upgradeMyMapleradTier1);
+router.post(
+  "/me/kyc/maplerad-tier1",
+  requireVerifiedEmail,
+  requireAuthTier("tier_2"),
+  upgradeMyMapleradTier1
+);
 router.patch("/me", updateMyProfile);
 router.patch("/me/password", changeMyPassword);
 router.post(

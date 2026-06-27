@@ -1,0 +1,27 @@
+meta {
+  name: 9. Withdraw Card
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/v1/cards/{{cardId}}/withdraw
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "quoteId": "paste-card-quote-id",
+    "transactionPin": "1234"
+  }
+}
+
+docs {
+  Withdraws USD from the card, executes the Maplerad FX quote, and credits the
+  user's NGN wallet after configured charges.
+}

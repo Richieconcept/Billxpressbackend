@@ -1,0 +1,27 @@
+meta {
+  name: 3. Create Card
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/cards
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "quoteId": "paste-card-quote-id",
+    "transactionPin": "1234"
+  }
+}
+
+docs {
+  Uses a valid creation quote. Card creation is asynchronous and initially
+  returns `PENDING`; the Maplerad webhook changes it to `ACTIVE` or `FAILED`.
+}

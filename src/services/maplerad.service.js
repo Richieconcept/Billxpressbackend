@@ -16,7 +16,10 @@ const getMapleradConfig = () => {
   };
 };
 
-const requestMaplerad = async (path, { method = "GET", body, headers = {} } = {}) => {
+export const requestMaplerad = async (
+  path,
+  { method = "GET", body, headers = {} } = {}
+) => {
   const { baseUrl, secretKey } = getMapleradConfig();
   const response = await fetch(`${baseUrl}${path}`, {
     method,
@@ -390,3 +393,128 @@ export const createMapleradLocalTransfer = async ({
     providerResponse: response,
   };
 };
+
+export const generateMapleradFxQuote = async ({
+  sourceCurrency,
+  targetCurrency,
+  amountInMinorUnit,
+}) => {
+  if (!Number.isInteger(amountInMinorUnit) || amountInMinorUnit <= 0) {
+    const error = new Error("FX quote amount must be greater than zero");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const response = await requestMaplerad("/fx/quote", {
+    method: "POST",
+    body: {
+      source_currency: String(sourceCurrency || "").toUpperCase(),
+      target_currency: String(targetCurrency || "").toUpperCase(),
+      amount: amountInMinorUnit,
+    },
+  });
+  const quote = response.data || response;
+
+  if (
+    !quote.reference ||
+    !Number.isInteger(Number(quote.source?.amount)) ||
+    !Number.isInteger(Number(quote.target?.amount))
+  ) {
+    const error = new Error("Maplerad returned an invalid FX quote");
+    error.statusCode = 502;
+    error.providerResponse = response;
+    throw error;
+  }
+
+  return {
+    reference: quote.reference,
+    sourceCurrency: quote.source.currency,
+    sourceAmount: Number(quote.source.amount),
+    targetCurrency: quote.target.currency,
+    targetAmount: Number(quote.target.amount),
+    rate: Number(quote.rate) || 0,
+    providerResponse: response,
+  };
+};
+
+export const exchangeMapleradCurrency = async (quoteReference) =>
+  requestMaplerad("/fx", {
+    method: "POST",
+    body: {
+      quote_reference: quoteReference,
+    },
+  });
+
+export const createMapleradCard = async ({
+  customerId,
+  brand,
+  amountInMinorUnit,
+}) => {
+  const response = await requestMaplerad("/issuing", {
+    method: "POST",
+    body: {
+      customer_id: customerId,
+      currency: "USD",
+      type: "VIRTUAL",
+      auto_approve: true,
+      brand,
+      amount: amountInMinorUnit,
+      is_contactless: false,
+    },
+  });
+  const cardRequest = response.data || response;
+
+  if (!cardRequest.reference) {
+    const error = new Error("Maplerad did not return a card creation reference");
+    error.statusCode = 502;
+    error.providerResponse = response;
+    throw error;
+  }
+
+  return {
+    reference: cardRequest.reference,
+    providerResponse: response,
+  };
+};
+
+export const getMapleradCard = (cardId) =>
+  requestMaplerad(`/issuing/${encodeURIComponent(cardId)}`);
+
+export const getMapleradCardTransactions = (
+  cardId,
+  { page = 1, pageSize = 20, startDate, endDate } = {}
+) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+  });
+
+  if (startDate) params.set("start_date", startDate);
+  if (endDate) params.set("end_date", endDate);
+
+  return requestMaplerad(
+    `/issuing/${encodeURIComponent(cardId)}/transactions?${params.toString()}`
+  );
+};
+
+export const fundMapleradCard = (cardId, amountInMinorUnit) =>
+  requestMaplerad(`/issuing/${encodeURIComponent(cardId)}/fund`, {
+    method: "POST",
+    body: { amount: amountInMinorUnit },
+  });
+
+export const withdrawMapleradCard = (cardId, amountInMinorUnit) =>
+  requestMaplerad(`/issuing/${encodeURIComponent(cardId)}/withdraw`, {
+    method: "POST",
+    body: { amount: amountInMinorUnit },
+  });
+
+export const freezeMapleradCard = (cardId) =>
+  requestMaplerad(`/issuing/${encodeURIComponent(cardId)}/freeze`, {
+    method: "PATCH",
+  });
+
+export const unfreezeMapleradCard = (cardId) =>
+  requestMaplerad(`/issuing/${encodeURIComponent(cardId)}/unfreeze`, {
+    method: "PATCH",
+  });

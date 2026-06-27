@@ -148,6 +148,12 @@ export const upgradeUserToMapleradTier1 = async (userId, body) => {
     throw error;
   }
 
+  if (!user.emailVerified) {
+    const error = new Error("Please verify your email before upgrading KYC");
+    error.statusCode = 403;
+    throw error;
+  }
+
   const customer = await getOrCreateMapleradCustomerForUser(user);
   const tier1Payload = buildTier1Payload(user, body);
   const upgradeResponse = await upgradeMapleradCustomerTier1({
@@ -165,7 +171,7 @@ export const upgradeUserToMapleradTier1 = async (userId, body) => {
   };
   await customer.save();
 
-  user.authTier = "tier_2";
+  user.authTier = "tier_3";
   user.kycLevel = Math.max(Number(user.kycLevel) || 0, 1);
   await user.save();
 

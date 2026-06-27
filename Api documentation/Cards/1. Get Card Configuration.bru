@@ -1,0 +1,27 @@
+meta {
+  name: 1. Get Card Configuration
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/cards/configuration
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzEiLCJpYXQiOjE3ODI1Njg5MTMsImV4cCI6MTc4MzE3MzcxM30.E8OV7li3T6TeaVNxdoBvZgshwnMSAASnaiBLqK7TrSE
+}
+
+docs {
+  Returns available brands, limits, current fees, and exchange markups.
+}

@@ -1,0 +1,26 @@
+meta {
+  name: 6. Create Funding Quote
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/cards/{{cardId}}/funding-quote
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "amountNgn": 10000
+  }
+}
+
+docs {
+  The user chooses how much NGN to convert. The response states the exact USD
+  amount the card receives and the total NGN wallet debit.
+}

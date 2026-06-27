@@ -1,0 +1,46 @@
+meta {
+  name: 14. Admin Update Card Settings
+  type: http
+  seq: 14
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/cards/settings
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "isEnabled": true,
+    "allowedBrands": ["VISA", "MASTERCARD"],
+    "defaultBrand": "VISA",
+    "providerCreationFee": { "percent": 0, "flat": 2 },
+    "creationFee": { "percent": 0, "flat": 1000 },
+    "providerFundingFee": { "percent": 1, "flat": 0 },
+    "fundingFee": { "percent": 1, "flat": 0 },
+    "providerWithdrawalFee": { "percent": 0, "flat": 1 },
+    "withdrawalFee": { "percent": 1, "flat": 0 },
+    "fundingExchangeMarkupPercent": 1,
+    "withdrawalExchangeMarkupPercent": 1,
+    "monthlyMaintenanceFee": 1,
+    "maintenanceGracePeriodDays": 3,
+    "freezeOnMaintenanceFailure": true,
+    "minimumFundingAmount": 1000,
+    "maximumFundingAmount": 1000000,
+    "minimumWithdrawalAmount": 1,
+    "quoteTtlSeconds": 300
+  }
+}
+
+docs {
+  Provider fee `flat` values are USD. They represent Maplerad's cost.
+  BillXpress `creationFee.flat`, `fundingFee.flat`, and
+  `withdrawalFee.flat` values are NGN and represent customer charges.
+  `monthlyMaintenanceFee` is USD and is converted at the current Maplerad rate.
+  Percentage values are entered as normal percentages, for example `1` = 1%.
+}

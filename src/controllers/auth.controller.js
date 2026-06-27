@@ -678,7 +678,7 @@ export const verifyEmailOtp = async (req, res) => {
     }
 
     user.emailVerified = true;
-    user.kycLevel = Math.max(user.kycLevel || 0, 1);
+    user.authTier = "tier_2";
     user.emailVerificationOtp = null;
     user.emailVerificationOtpExpires = null;
     user.emailVerificationOtpLastSentAt = null;

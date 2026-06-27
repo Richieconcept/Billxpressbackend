@@ -1,7 +1,9 @@
 import crypto from "crypto";
 import FundingIntent from "../models/fundingIntent.model.js";
+import CardQuote from "../models/cardQuote.model.js";
 import Transaction from "../models/transaction.model.js";
 import VirtualAccount from "../models/virtualAccount.model.js";
+import VirtualDollarCard from "../models/virtualDollarCard.model.js";
 import WebhookEvent from "../models/webhookEvent.model.js";
 import {
   creditWallet,
@@ -269,6 +271,107 @@ const mapleradWebhookAmountToMinorUnit = (amount) => {
   }
 
   return Math.round(numericAmount * 100);
+};
+
+const processMapleradCardWebhook = async ({
+  payload,
+  event,
+  webhookEvent,
+}) => {
+  const providerCard = payload.card || payload.data?.card || payload.data || {};
+  const creationReference = pickFirst(
+    payload.reference,
+    payload.data?.reference
+  );
+  const providerCardId = pickFirst(
+    providerCard.id,
+    payload.card_id,
+    payload.data?.card_id
+  );
+  const card = await VirtualDollarCard.findOne({
+    $or: [
+      ...(creationReference ? [{ creationReference }] : []),
+      ...(providerCardId ? [{ providerCardId }] : []),
+    ],
+  });
+
+  if (!card) {
+    throw new Error("Could not match webhook to a virtual dollar card");
+  }
+
+  if (event === "issuing.created.successful") {
+    card.providerCardId = providerCardId;
+    card.status =
+      String(providerCard.status || "ACTIVE").toUpperCase() === "DISABLED"
+        ? "FROZEN"
+        : "ACTIVE";
+    card.name = providerCard.name || card.name;
+    card.maskedPan = providerCard.masked_pan || card.maskedPan;
+    card.balance = Number(providerCard.balance) || 0;
+    if (!card.nextMaintenanceAt) {
+      const nextMaintenanceAt = new Date();
+      nextMaintenanceAt.setUTCMonth(nextMaintenanceAt.getUTCMonth() + 1);
+      card.nextMaintenanceAt = nextMaintenanceAt;
+    }
+    card.providerResponse = payload;
+    await card.save();
+  } else if (event === "issuing.created.failed") {
+    if (card.status !== "FAILED") {
+      const quote = await CardQuote.findOne({
+        card: card._id,
+        operation: "creation",
+      });
+      const refundProviderReference = `card-creation-failed:${creationReference}`;
+      const existingRefund = await Transaction.findOne({
+        provider: "maplerad",
+        providerReference: refundProviderReference,
+      });
+
+      if (quote && !existingRefund) {
+        await creditWallet({
+          userId: card.user,
+          amountInMinorUnit: quote.walletDebit,
+          walletType: "main",
+          type: "reversal",
+          reference: generateTransactionReference("VCR"),
+          provider: "maplerad",
+          providerReference: refundProviderReference,
+          narration: "Refund for failed virtual dollar card creation",
+          metadata: {
+            service: "virtual_dollar_card",
+            operation: "creation_refund",
+            quoteId: quote._id,
+            creationReference,
+          },
+        });
+        quote.status = "failed";
+        quote.failureReason = "Maplerad card creation failed";
+        await quote.save();
+      }
+
+      card.status = "FAILED";
+      card.providerResponse = payload;
+      await card.save();
+    }
+  } else if (event === "issuing.terminated") {
+    card.status = "TERMINATED";
+    card.balance = 0;
+    card.providerResponse = payload;
+    await card.save();
+  } else if (event === "issuing.transaction") {
+    card.providerResponse = {
+      ...card.providerResponse,
+      latestTransaction: payload,
+    };
+    await card.save();
+  }
+
+  webhookEvent.processed = true;
+  await webhookEvent.save();
+
+  return {
+    message: "Card webhook processed successfully",
+  };
 };
 
 const creditMapleradDedicatedAccountFunding = async ({
@@ -836,6 +939,10 @@ export const handleMapleradWebhook = async (req, res) => {
         "account.transaction",
         "transfer.successful",
         "transfer.failed",
+        "issuing.created.successful",
+        "issuing.created.failed",
+        "issuing.transaction",
+        "issuing.terminated",
       ].includes(event)
     ) {
       webhookEvent.processed = true;
@@ -844,6 +951,16 @@ export const handleMapleradWebhook = async (req, res) => {
       return res.json({
         message: "Webhook ignored",
       });
+    }
+
+    if (event.startsWith("issuing.")) {
+      const result = await processMapleradCardWebhook({
+        payload,
+        event,
+        webhookEvent,
+      });
+
+      return res.json(result);
     }
 
     if (["transfer.successful", "transfer.failed"].includes(event)) {

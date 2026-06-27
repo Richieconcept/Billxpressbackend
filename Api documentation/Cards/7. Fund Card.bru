@@ -1,0 +1,27 @@
+meta {
+  name: 7. Fund Card
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/cards/{{cardId}}/fund
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "quoteId": "paste-card-quote-id",
+    "transactionPin": "1234"
+  }
+}
+
+docs {
+  Debits the NGN wallet, executes the Maplerad FX quote, and funds the card.
+  The wallet is refunded automatically if funding fails.
+}
