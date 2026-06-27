@@ -13,7 +13,11 @@ import {
   resolveTransferAccount,
   suggestTransferBankList,
 } from "../controllers/wallet.controller.js";
-import { authorizeRoles, protect } from "../middlewares/auth.middleware.js";
+import {
+  authorizeRoles,
+  protect,
+  requireAuthTier,
+} from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -26,7 +30,7 @@ router.post("/funding-intents/:fundingIntentId/confirm", protect, confirmFunding
 router.get("/transfers/banks", protect, getTransferBankList);
 router.post("/transfers/suggest-banks", protect, suggestTransferBankList);
 router.post("/transfers/resolve-account", protect, resolveTransferAccount);
-router.post("/transfers", protect, createBankTransfer);
+router.post("/transfers", protect, requireAuthTier("tier_2"), createBankTransfer);
 router.post("/referral/redeem", protect, redeemReferralBalance);
 router.post(
   "/admin/referral-credit",
