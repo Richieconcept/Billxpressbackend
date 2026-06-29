@@ -40,7 +40,7 @@ const dataServiceSettingSchema = new mongoose.Schema(
 
     activeProvider: {
       type: String,
-      enum: ["smeapi", "ujaydata"],
+      enum: ["smeapi", "ujaydata", "autopilot"],
       default: "smeapi",
     },
 

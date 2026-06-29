@@ -1,7 +1,9 @@
+import autopilotProvider from "./autopilot.provider.js";
 import smeapiProvider from "./smeapi.provider.js";
 import ujaydataProvider from "./ujaydata.provider.js";
 
 const providers = {
+  autopilot: autopilotProvider,
   smeapi: smeapiProvider,
   ujaydata: ujaydataProvider,
 };
