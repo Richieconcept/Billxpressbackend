@@ -8,6 +8,15 @@ let planCache = {
   plans: [],
 };
 
+const isDebugEnabled = () =>
+  String(process.env.AUTOPILOT_DEBUG || "").toLowerCase() === "true";
+
+const debugLog = (message, details = {}) => {
+  if (isDebugEnabled()) {
+    console.log(`[Autopilot] ${message}`, details);
+  }
+};
+
 const getRequiredEnv = (name) => {
   const value = String(process.env[name] || "").trim();
 
@@ -52,6 +61,8 @@ const isConfirmedFailureResponse = (response) => {
 };
 
 const requestAutopilot = async (path, payload) => {
+  debugLog("Request", { path, payload });
+
   const response = await fetch(`${getBaseUrl()}${path}`, {
     method: "POST",
     headers: {
@@ -69,6 +80,17 @@ const requestAutopilot = async (path, payload) => {
   } catch {
     data = { raw: text };
   }
+
+  debugLog("Response", {
+    path,
+    httpStatus: response.status,
+    providerStatus: data?.status,
+    providerCode: data?.code,
+    message: data?.data?.message || data?.message,
+    productCount: Array.isArray(data?.data?.product)
+      ? data.data.product.length
+      : undefined,
+  });
 
   if (!response.ok || !isSuccessfulResponse(data)) {
     const error = new Error(
@@ -119,10 +141,33 @@ const getPlanCacheTtlMs = () => {
 };
 
 const fetchPlansForType = async (network, dataType) => {
-  const response = await requestAutopilot("/v1/load/data", {
-    networkId: String(network.networkId),
-    dataType: dataType.name,
-  });
+  let response;
+
+  try {
+    response = await requestAutopilot("/v1/load/data", {
+      networkId: String(network.networkId),
+      dataType: dataType.name,
+    });
+  } catch (error) {
+    const message = String(
+      error.providerResponse?.data?.message || error.message || ""
+    );
+    const noPlansForType =
+      Number(error.providerResponse?.code) === 424 &&
+      /could not find any data\s*plans/i.test(message);
+
+    if (!noPlansForType) {
+      throw error;
+    }
+
+    console.warn("[Autopilot] Skipping data type with no plans", {
+      network: network.network,
+      networkId: network.networkId,
+      dataType: dataType.name,
+      message,
+    });
+    return [];
+  }
 
   return getProducts(response).map((plan) => ({
     provider: PROVIDER,
