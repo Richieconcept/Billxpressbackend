@@ -1,10 +1,14 @@
 import {
   getDataPlansForUser,
   getOrCreateDataServiceSetting,
+  listAdminDataPlans,
   purchaseDataForUser,
+  serializeAdminDataPlan,
   serializeDataPurchaseResult,
   serializeDataServiceSetting,
   serializeFailedDataPurchase,
+  syncDataPlans,
+  updateAdminDataPlan,
   updateDataServiceSetting,
 } from "../services/dataService.service.js";
 
@@ -18,7 +22,10 @@ const sendDataServiceError = (res, publicMessage, error) => {
 
 export const getDataPlans = async (req, res) => {
   try {
-    const result = await getDataPlansForUser(req.user);
+    const result = await getDataPlansForUser(req.user, {
+      network: req.query.network,
+      dataType: req.query.dataType || req.query.type,
+    });
 
     res.json({
       provider: result.provider,
@@ -39,6 +46,63 @@ export const getDataPlans = async (req, res) => {
     });
   } catch (error) {
     sendDataServiceError(res, "Could not fetch data plans", error);
+  }
+};
+
+const parseOptionalBoolean = (value) => {
+  if (value === undefined) return undefined;
+  return String(value).toLowerCase() === "true";
+};
+
+export const getAdminDataPlans = async (req, res) => {
+  try {
+    const plans = await listAdminDataPlans({
+      provider: req.query.provider,
+      network: req.query.network,
+      dataType: req.query.dataType || req.query.type,
+      isEnabled: parseOptionalBoolean(req.query.isEnabled),
+      providerAvailable: parseOptionalBoolean(req.query.providerAvailable),
+    });
+
+    res.json({
+      plans: plans.map(serializeAdminDataPlan),
+      count: plans.length,
+    });
+  } catch (error) {
+    sendDataServiceError(res, "Could not fetch admin data plans", error);
+  }
+};
+
+export const syncAdminDataPlans = async (req, res) => {
+  try {
+    const result = await syncDataPlans({
+      providerName: req.body?.provider,
+      adminUserId: req.user._id,
+    });
+
+    res.json({
+      message: "Data plans synchronized successfully",
+      sync: result,
+    });
+  } catch (error) {
+    sendDataServiceError(res, "Could not synchronize data plans", error);
+  }
+};
+
+export const updateAdminDataPlanById = async (req, res) => {
+  try {
+    const plan = await updateAdminDataPlan({
+      planId: req.params.planId,
+      payload: req.body || {},
+      adminUserId: req.user._id,
+    });
+
+    res.json({
+      message: "Data plan updated successfully",
+      plan: serializeAdminDataPlan(plan),
+    });
+  } catch (error) {
+    sendDataServiceError(res, "Could not update data plan", error);
   }
 };
 

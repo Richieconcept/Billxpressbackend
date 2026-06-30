@@ -1,4 +1,5 @@
 import DataServiceSetting from "../models/dataServiceSetting.model.js";
+import DataPlan from "../models/dataPlan.model.js";
 import User from "../models/user.model.js";
 import {
   creditWallet,
@@ -155,14 +156,20 @@ export const updateDataServiceSetting = async (payload, adminUserId) => {
 
 export const serializeDataPlanForUser = ({ plan, settings, user }) => {
   const pricingConfig = getPricingForUser(settings, user, plan.costPrice);
-  const pricing = calculateSellingPrice({
-    costPrice: plan.costPrice,
-    markupPercent: pricingConfig.markupPercent,
-    roundingMode: settings.roundingMode,
-  });
+  const hasCustomPrice = Number.isFinite(Number(plan.ourPrice)) && Number(plan.ourPrice) > 0;
+  const pricing = hasCustomPrice
+    ? {
+        sellingPrice: Number(plan.ourPrice),
+        profit: Math.max(0, Number(plan.ourPrice) - plan.costPrice),
+      }
+    : calculateSellingPrice({
+        costPrice: plan.costPrice,
+        markupPercent: pricingConfig.markupPercent,
+        roundingMode: settings.roundingMode,
+      });
 
   return {
-    id: plan.providerPlanId,
+    id: plan.catalogId || plan.providerPlanId,
     provider: plan.provider,
     providerPlanId: plan.providerPlanId,
     providerPlanCode: plan.providerPlanCode,
@@ -173,16 +180,244 @@ export const serializeDataPlanForUser = ({ plan, settings, user }) => {
     validity: plan.validity,
     validityDays: plan.validityDays,
     costPrice: plan.costPrice,
+    networkPrice: plan.networkPrice,
+    providerPrice: plan.providerPrice,
+    ourPrice: hasCustomPrice ? Number(plan.ourPrice) : null,
     sellingPrice: pricing.sellingPrice,
     profit: pricing.profit,
     markupPercent: pricingConfig.markupPercent,
-    pricingModel: pricingConfig.pricingModel,
+    pricingModel: hasCustomPrice ? "custom" : pricingConfig.pricingModel,
     pricingTier: pricingConfig.pricingTier,
     available: plan.available,
   };
 };
 
-export const getDataPlansForUser = async (user) => {
+const normalizePlanFilter = (value) =>
+  String(value || "")
+    .trim()
+    .toUpperCase();
+
+const buildPlanQuery = ({ provider, network, dataType, isEnabled } = {}) => {
+  const query = {};
+
+  if (provider) query.provider = String(provider).trim().toLowerCase();
+  if (network) query.network = normalizePlanFilter(network);
+  if (dataType) query.dataType = normalizePlanFilter(dataType);
+  if (isEnabled !== undefined) query.isEnabled = isEnabled;
+
+  return query;
+};
+
+const catalogDocumentToProviderPlan = (document) => ({
+  catalogId: String(document._id),
+  provider: document.provider,
+  providerPlanId: document.providerPlanId,
+  providerPlanCode: document.providerPlanCode,
+  network: document.network,
+  networkCode: document.networkCode,
+  name: document.name,
+  type: document.dataType,
+  providerDataType: document.providerDataType,
+  validity: document.validity,
+  validityDays: document.validityDays,
+  networkPrice: document.networkPrice,
+  providerPrice: document.providerPrice,
+  costPrice: Math.max(document.networkPrice || 0, document.providerPrice || 0),
+  ourPrice: document.ourPrice,
+  available: document.isEnabled && document.providerAvailable,
+  allowHostedSim: document.allowHostedSim,
+  allowWalletFallback: document.allowWalletFallback,
+  raw: document.raw,
+});
+
+export const syncDataPlans = async ({ providerName, adminUserId } = {}) => {
+  const settings = await getOrCreateDataServiceSetting();
+  const provider = getDataProvider(providerName || settings.activeProvider);
+  const plans = await provider.fetchPlans();
+  const syncedAt = new Date();
+
+  if (plans.length === 0) {
+    const error = new Error(
+      "The provider returned no data plans; the existing catalogue was left unchanged"
+    );
+    error.statusCode = 502;
+    throw error;
+  }
+
+  await DataPlan.bulkWrite(
+    plans.map((plan) => ({
+      updateOne: {
+        filter: {
+          provider: provider.name,
+          providerPlanId: String(plan.providerPlanId),
+        },
+        update: {
+          $set: {
+            providerPlanCode: String(plan.providerPlanCode || ""),
+            network: normalizePlanFilter(plan.network),
+            networkCode: String(plan.networkCode || ""),
+            name: plan.name,
+            providerDataType: String(plan.providerDataType || plan.type || ""),
+            validity: plan.validity || null,
+            validityDays: Number(plan.validityDays || 0),
+            networkPrice: Number(plan.networkPrice || 0),
+            providerPrice: Number(plan.providerPrice ?? plan.costPrice ?? 0),
+            providerAvailable: plan.available !== false,
+            raw: plan.raw || {},
+            lastSyncedAt: syncedAt,
+          },
+          $setOnInsert: {
+            dataType: normalizePlanFilter(plan.type || "OTHER"),
+            ourPrice: null,
+            isEnabled: false,
+            allowHostedSim: true,
+            allowWalletFallback: false,
+            updatedBy: adminUserId || null,
+          },
+        },
+        upsert: true,
+      },
+    }))
+  );
+
+  await DataPlan.updateMany(
+    {
+      provider: provider.name,
+      lastSyncedAt: { $ne: syncedAt },
+    },
+    { $set: { providerAvailable: false } }
+  );
+
+  return {
+    provider: provider.name,
+    received: plans.length,
+    available: await DataPlan.countDocuments({
+      provider: provider.name,
+      providerAvailable: true,
+    }),
+    disabledByProvider: await DataPlan.countDocuments({
+      provider: provider.name,
+      providerAvailable: false,
+    }),
+    syncedAt,
+  };
+};
+
+export const serializeAdminDataPlan = (plan) => ({
+  id: plan._id,
+  provider: plan.provider,
+  providerPlanId: plan.providerPlanId,
+  providerPlanCode: plan.providerPlanCode,
+  network: plan.network,
+  networkCode: plan.networkCode,
+  name: plan.name,
+  dataType: plan.dataType,
+  providerDataType: plan.providerDataType,
+  validity: plan.validity,
+  validityDays: plan.validityDays,
+  networkPrice: plan.networkPrice,
+  providerPrice: plan.providerPrice,
+  ourPrice: plan.ourPrice,
+  isEnabled: plan.isEnabled,
+  allowHostedSim: plan.allowHostedSim,
+  allowWalletFallback: plan.allowWalletFallback,
+  providerAvailable: plan.providerAvailable,
+  lastSyncedAt: plan.lastSyncedAt,
+  createdAt: plan.createdAt,
+  updatedAt: plan.updatedAt,
+});
+
+export const listAdminDataPlans = async (filters = {}) => {
+  const query = buildPlanQuery(filters);
+
+  if (filters.providerAvailable !== undefined) {
+    query.providerAvailable = filters.providerAvailable;
+  }
+
+  return DataPlan.find(query).sort({
+    network: 1,
+    dataType: 1,
+    networkPrice: 1,
+    name: 1,
+  });
+};
+
+export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
+  const allowedFields = [
+    "ourPrice",
+    "isEnabled",
+    "dataType",
+    "allowHostedSim",
+    "allowWalletFallback",
+  ];
+  const update = {};
+
+  allowedFields.forEach((field) => {
+    if (payload?.[field] !== undefined) update[field] = payload[field];
+  });
+
+  if (Object.keys(update).length === 0) {
+    const error = new Error("No valid plan fields were provided");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (update.ourPrice !== undefined) {
+    update.ourPrice =
+      update.ourPrice === null || update.ourPrice === ""
+        ? null
+        : Number(update.ourPrice);
+
+    if (
+      update.ourPrice !== null &&
+      (!Number.isFinite(update.ourPrice) || update.ourPrice <= 0)
+    ) {
+      const error = new Error("Our price must be greater than zero");
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
+  if (update.dataType !== undefined) {
+    update.dataType = normalizePlanFilter(update.dataType);
+  }
+
+  ["isEnabled", "allowHostedSim", "allowWalletFallback"].forEach((field) => {
+    if (update[field] !== undefined && typeof update[field] === "string") {
+      update[field] = update[field].toLowerCase() === "true";
+    }
+  });
+
+  const existing = await DataPlan.findById(planId);
+
+  if (!existing) {
+    const error = new Error("Data plan was not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const enabling = update.isEnabled === true;
+  const effectivePrice =
+    update.ourPrice !== undefined ? update.ourPrice : existing.ourPrice;
+
+  if (enabling && (!Number.isFinite(Number(effectivePrice)) || Number(effectivePrice) <= 0)) {
+    const error = new Error("Set our price before enabling this plan");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (enabling && !existing.providerAvailable) {
+    const error = new Error("This plan is currently unavailable from the provider");
+    error.statusCode = 409;
+    throw error;
+  }
+
+  Object.assign(existing, update, { updatedBy: adminUserId });
+  await existing.save();
+  return existing;
+};
+
+export const getDataPlansForUser = async (user, filters = {}) => {
   const settings = await getOrCreateDataServiceSetting();
 
   if (!settings.isEnabled) {
@@ -192,7 +427,19 @@ export const getDataPlansForUser = async (user) => {
   }
 
   const provider = getDataProvider(settings.activeProvider);
-  const plans = await provider.fetchPlans();
+  const plans =
+    provider.name === "smeplug"
+      ? (
+          await DataPlan.find(
+            buildPlanQuery({
+              provider: provider.name,
+              network: filters.network,
+              dataType: filters.dataType,
+              isEnabled: true,
+            })
+          ).sort({ network: 1, dataType: 1, ourPrice: 1 })
+        ).map(catalogDocumentToProviderPlan)
+      : await provider.fetchPlans();
   const filteredPlans = plans.filter(
     (plan) => plan.providerPlanId && plan.network && plan.name && plan.available
   );
@@ -212,6 +459,81 @@ const findProviderPlan = (plans, planId) =>
       String(plan.providerPlanId) === String(planId) ||
       String(plan.providerPlanCode) === String(planId)
   );
+
+const extractProviderReference = (response) =>
+  response?.transaction_id ||
+  response?.transactionId ||
+  response?.reference ||
+  response?.ident ||
+  response?.id ||
+  null;
+
+const getConfirmationWaitMs = () => {
+  const value = Number(process.env.DATA_PURCHASE_CONFIRMATION_WAIT_MS || 8000);
+
+  return Number.isFinite(value) && value >= 0 ? Math.min(value, 30000) : 8000;
+};
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const classifyProviderStatus = (response) => {
+  const text = [
+    response?.status,
+    response?.Status,
+    response?.message,
+    response?.msg,
+    response?.description,
+    response?.error,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (text.includes("successful") || /\bsuccess\b/.test(text)) {
+    return "successful";
+  }
+
+  if (
+    /\b(failed|fail|declined|rejected|cancelled|canceled)\b/.test(text) ||
+    /\b(invalid|incorrect|not available|unavailable|disabled)\b/.test(text)
+  ) {
+    return "failed";
+  }
+
+  return "unknown";
+};
+
+const confirmUnclearDataPurchase = async ({ provider, reference }) => {
+  const waitMs = getConfirmationWaitMs();
+
+  if (waitMs > 0) {
+    await delay(waitMs);
+  }
+
+  if (!reference || typeof provider.checkTransactionStatus !== "function") {
+    return {
+      status: "unknown",
+      checked: false,
+      response: null,
+    };
+  }
+
+  try {
+    const response = await provider.checkTransactionStatus(reference);
+
+    return {
+      status: classifyProviderStatus(response),
+      checked: true,
+      response,
+    };
+  } catch (error) {
+    return {
+      status: "unknown",
+      checked: true,
+      response: error.providerResponse || error.message,
+    };
+  }
+};
 
 export const purchaseDataForUser = async ({
   userId,
@@ -259,8 +581,23 @@ export const purchaseDataForUser = async ({
   }
 
   const provider = getDataProvider(settings.activeProvider);
-  const plans = await provider.fetchPlans();
-  const plan = findProviderPlan(plans, planId);
+  let plan;
+
+  if (provider.name === "smeplug") {
+    const catalogPlan = await DataPlan.findOne({
+      provider: provider.name,
+      $or: [
+        ...(String(planId).match(/^[a-f\d]{24}$/i) ? [{ _id: planId }] : []),
+        { providerPlanId: String(planId) },
+        { providerPlanCode: String(planId) },
+      ],
+    });
+
+    plan = catalogPlan ? catalogDocumentToProviderPlan(catalogPlan) : null;
+  } else {
+    const plans = await provider.fetchPlans();
+    plan = findProviderPlan(plans, planId);
+  }
 
   if (!plan || !plan.available) {
     const error = new Error("Selected data plan is not available");
@@ -332,6 +669,56 @@ export const purchaseDataForUser = async ({
       providerResponse: providerResult.raw,
     };
   } catch (error) {
+    const providerReference = extractProviderReference(error.providerResponse);
+    let confirmation = null;
+
+    if (providerReference) {
+      debitResult.transaction.providerReference = providerReference;
+    }
+
+    if (error.isFinalProviderFailure !== true) {
+      confirmation = await confirmUnclearDataPurchase({
+        provider,
+        reference: providerReference,
+      });
+
+      if (confirmation.status === "successful") {
+        debitResult.transaction.status = "successful";
+        debitResult.transaction.metadata = {
+          ...debitResult.transaction.metadata,
+          providerError: error.providerResponse || error.message,
+          providerConfirmation: confirmation,
+        };
+        await debitResult.transaction.save();
+
+        await createNotificationBestEffort({
+          userId: user._id,
+          title: "Data purchase successful",
+          message: `${pricedPlan.network} ${pricedPlan.name} data purchase for ${phone} was successful.`,
+          type: "service_purchase_success",
+          channel: "both",
+          priority: "normal",
+          data: {
+            service: "data",
+            phone,
+            amount: pricedPlan.sellingPrice,
+            reference,
+            provider: provider.name,
+            providerReference,
+          },
+        });
+
+        return {
+          status: "successful",
+          message: "Data purchase successful",
+          plan: pricedPlan,
+          wallet: debitResult.wallet,
+          transaction: debitResult.transaction,
+          providerResponse: confirmation.response,
+        };
+      }
+    }
+
     const publicFailure = getPublicProviderFailure(error, "Data purchase");
 
     debitResult.transaction.status = "reversed";
@@ -339,6 +726,7 @@ export const purchaseDataForUser = async ({
       ...debitResult.transaction.metadata,
       providerError: error.providerResponse || error.message,
       publicError: publicFailure,
+      providerConfirmation: confirmation,
     };
     await debitResult.transaction.save();
 
@@ -355,6 +743,7 @@ export const purchaseDataForUser = async ({
         originalReference: reference,
         reason: publicFailure.message,
         providerFailureCode: publicFailure.code,
+        providerConfirmation: confirmation,
       },
     });
 

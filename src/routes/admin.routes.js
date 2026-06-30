@@ -18,7 +18,10 @@ import {
   updateAdminCableTvSettings,
 } from "../controllers/cableTvService.controller.js";
 import {
+  getAdminDataPlans,
   getAdminDataSettings,
+  syncAdminDataPlans,
+  updateAdminDataPlanById,
   updateAdminDataSettings,
 } from "../controllers/dataService.controller.js";
 import {
@@ -111,6 +114,24 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminDataSettings
+);
+router.get(
+  "/services/data/plans",
+  protect,
+  authorizeRoles("admin"),
+  getAdminDataPlans
+);
+router.post(
+  "/services/data/plans/sync",
+  protect,
+  authorizeRoles("admin"),
+  syncAdminDataPlans
+);
+router.patch(
+  "/services/data/plans/:planId",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminDataPlanById
 );
 router.get(
   "/services/electricity/settings",
