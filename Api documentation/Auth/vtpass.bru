@@ -1,0 +1,15 @@
+meta {
+  name: vtpass
+  type: http
+  seq: 15
+}
+
+get {
+  url: POST https://sandbox.vtpass.com/api/pay
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

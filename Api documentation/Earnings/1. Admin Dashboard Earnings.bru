@@ -21,7 +21,7 @@ auth:bearer {
 docs {
   # Admin Dashboard Earnings
 
-  Admin dashboard endpoint for revenue, cost price, selling price, profit, loss, service breakdown, and chart series.
+  Admin dashboard endpoint for revenue, cost price, selling price, profit, loss, service breakdown, provider balances, and chart series.
 
   This endpoint is designed for the admin dashboard earnings/profit cards and charts.
 
@@ -79,6 +79,46 @@ docs {
   ```
 
   The new service will appear in the `services` breakdown without creating a new dashboard endpoint.
+
+  ## Provider Balances
+
+  `providerBalances`
+  Current external provider wallet balances for admin visibility.
+
+  The dashboard currently includes SMEAPI:
+
+  ```json
+  {
+    "providerBalances": {
+      "smeapi": {
+        "provider": "smeapi",
+        "accountName": "Concept Richie",
+        "balance": 12860.5,
+        "currency": "NGN",
+        "status": "success",
+        "available": true,
+        "checkedAt": "2026-06-15T04:58:00.000Z"
+      }
+    }
+  }
+  ```
+
+  If SMEAPI balance check fails, the dashboard endpoint still succeeds and returns:
+
+  ```json
+  {
+    "providerBalances": {
+      "smeapi": {
+        "provider": "smeapi",
+        "available": false,
+        "error": "SMEAPI request failed",
+        "checkedAt": "2026-06-15T04:58:00.000Z"
+      }
+    }
+  }
+  ```
+
+  Frontend should display `providerBalances.smeapi.balance` as the SMEAPI wallet balance when `available` is `true`. If `available` is `false`, show a small unavailable/error state instead of hiding the whole dashboard.
 
   ## Summary Fields
 
@@ -167,6 +207,17 @@ docs {
   {
     "currency": "NGN",
     "generatedAt": "2026-06-09T14:00:00.000Z",
+    "providerBalances": {
+      "smeapi": {
+        "provider": "smeapi",
+        "accountName": "Concept Richie",
+        "balance": 12860.5,
+        "currency": "NGN",
+        "status": "success",
+        "available": true,
+        "checkedAt": "2026-06-15T04:58:00.000Z"
+      }
+    },
     "summary": {
       "allTime": {
         "earned": 15000,
@@ -268,6 +319,13 @@ docs {
   ## Frontend Usage Notes
 
   Use `summary.today`, `summary.thisWeek`, and `summary.thisMonth` for the main dashboard cards.
+
+  Use `providerBalances.smeapi` for the admin card that shows our SMEAPI wallet balance:
+
+  - Show `balance` formatted as NGN when `available` is `true`.
+  - Show `accountName` as the provider account label if needed.
+  - Show `checkedAt` as the last refresh time.
+  - If `available` is `false`, show the balance as unavailable and optionally show `error` to admins only.
 
   Use `services` for per-service cards or tables:
 

@@ -16,9 +16,9 @@ headers {
 
 body:json {
   {
-    "firstName": "imo",
-    "lastName": "ben",
-    "username": "imoben",
+    "firstName": "test",
+    "lastName": "user",
+    "username": "testuser",
     "email": "{{registeredEmail}}",
     "phone": "08125128766",
     "password": "Password123",
@@ -29,86 +29,86 @@ body:json {
 }
 
 vars:pre-request {
-  registeredEmail: imobonifaceben@gmail.com
+  registeredEmail: richardben365@gmail.com
 }
 
 docs {
   # Register User
-
+  
   Creates a new BillXpress user account at `tier_1`.
-
+  
   Tier 1 registration does not require email verification and does not send an email OTP.
-
+  
   ## Endpoint
-
+  
   `POST /api/v1/auth/register`
-
+  
   ## Body Fields
-
+  
   `firstName`
   Required. The user's first name. Some downstream services require this.
-
+  
   `lastName`
   Required. The user's last name. Some downstream services require this.
-
+  
   `username`
   The user's unique username. It is saved in lowercase.
-
+  
   `email`
   The user's email address. This must be real if you want to receive the verification email.
   In the frontend, keep this email in registration state/client storage after the request succeeds.
-
+  
   `phone`
   The user's phone number. It must be unique, 11 digits, and start with `0`.
-
+  
   `password`
   Minimum 5 characters.
-
+  
   `confirmPassword`
   Must match `password`.
-
+  
   `transactionPin`
   Exactly 4 digits. This will be used later for wallet and bill payment actions.
-
+  
   `referredBy`
   Optional. Use another user's referral code if available. Leave empty if there is no referral.
-
+  
   Example with referral:
-
+  
   ```json
   {
     "referredBy": "IMO5751"
   }
   ```
-
+  
   The user who owns `IMO5751` does not earn immediately on registration. They earn only when this new user makes their first successful wallet funding.
-
+  
   ## Frontend 3-Step UI
-
+  
   The frontend should collect registration details in 3 screens, but send only one final request to this endpoint.
-
+  
   Step 1:
-
+  
   - first name
   - last name
   - username
   - phone
   - email
   - referral code
-
+  
   Step 2:
-
+  
   - password
   - confirm password
-
+  
   Step 3:
-
+  
   - transaction PIN
-
+  
   ## Expected Success Response
-
+  
   Status: `201 Created`
-
+  
   ```json
   {
     "message": "Account created successfully",
@@ -179,18 +179,18 @@ docs {
     }
   }
   ```
-
+  
   Users always register as normal users. Vendors must be approved later by an admin using `PATCH /api/v1/admin/make-vendor/:userId`.
-
+  
   After registration succeeds, the user can continue to login. The backend also attempts to create the user's Paga and Kuda funding accounts immediately.
-
+  
   If `virtualAccount` is `null`, registration still worked. The frontend can later call `Create Virtual Account` from the wallet screen.
-
+  
   If only one account is returned, show that account and continue.
-
+  
   ## Referral Note For Frontend
-
+  
   If the app has a referral input field, send the value as `referredBy`.
-
+  
   Do not calculate referral reward on the frontend. The backend automatically credits the referrer after the new user's first successful funding.
 }

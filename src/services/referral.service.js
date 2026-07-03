@@ -180,5 +180,5 @@ export const processFirstDepositReferralRewardBestEffort = async (payload) => {
 
 export const getReferralRewardSettings = () => ({
   firstDepositRewardPercent: getReferralRewardPercent(),
-  minimumRedeemAmount: Number(process.env.REFERRAL_MIN_REDEEM_AMOUNT || 100),
+  minimumRedeemAmount: 0,
 });

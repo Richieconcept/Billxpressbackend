@@ -5,6 +5,7 @@ import {
   createNotificationsForUsers,
   serializeNotification,
 } from "../services/notification.service.js";
+import { getDataProvider } from "../services/dataProviders/index.js";
 import { generateApiKey } from "../utils/generateApiKey.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
 
@@ -238,6 +239,35 @@ const summarizeByService = (transactions) => {
     .sort((a, b) => b.earned - a.earned);
 };
 
+const getProviderBalanceBestEffort = async (providerName) => {
+  try {
+    const provider = getDataProvider(providerName);
+
+    if (typeof provider.fetchBalance !== "function") {
+      return {
+        provider: providerName,
+        available: false,
+        error: "Provider balance is not supported",
+      };
+    }
+
+    const balance = await provider.fetchBalance();
+
+    return {
+      ...balance,
+      available: true,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    return {
+      provider: providerName,
+      available: false,
+      error: error.message,
+      checkedAt: new Date().toISOString(),
+    };
+  }
+};
+
 export const getAdminDashboardEarnings = async (req, res) => {
   try {
     const now = new Date();
@@ -258,10 +288,14 @@ export const getAdminDashboardEarnings = async (req, res) => {
       transactions,
       oldestSeriesStart
     );
+    const providerBalances = {
+      smeapi: await getProviderBalanceBestEffort("smeapi"),
+    };
 
     res.json({
       currency: "NGN",
       generatedAt: now.toISOString(),
+      providerBalances,
       summary: {
         allTime: summarizeTransactions(transactions),
         today: summarizeTransactions(

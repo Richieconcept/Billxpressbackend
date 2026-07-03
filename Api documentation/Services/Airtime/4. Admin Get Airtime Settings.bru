@@ -18,21 +18,25 @@ auth:bearer {
   token: {{authToken}}
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjQ4NzQ0MiwiZXhwIjoxNzgzMDkyMjQyfQ.21Oa5l_l5wnavcl28TBpxdzlrGI9hp9JKtXKGHXC_zY
+}
+
 docs {
   # Admin Get Airtime Settings
-
+  
   Admin checks airtime provider and markup settings.
-
+  
   ## Endpoint
-
+  
   `GET /api/v1/admin/services/airtime/settings`
-
+  
   ## Authentication
-
+  
   Admin JWT required.
-
+  
   ## Expected Response
-
+  
   ```json
   {
     "settings": {
@@ -57,11 +61,11 @@ docs {
     }
   }
   ```
-
+  
   ## VTpass Env
-
+  
   To switch airtime to VTpass, configure:
-
+  
   ```txt
   VTPASS_BASE_URL=https://vtpass.com/api
   VTPASS_API_KEY=...

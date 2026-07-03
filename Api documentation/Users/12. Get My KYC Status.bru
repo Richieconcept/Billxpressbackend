@@ -18,25 +18,29 @@ auth:bearer {
   token: {{authToken}}
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTQyNTg5NjlhMjY5MzJkODU3NWYxZGYiLCJyb2xlIjoidXNlciIsImF1dGhUaWVyIjoidGllcl8xIiwiaWF0IjoxNzgyNzMzMDMxLCJleHAiOjE3ODMzMzc4MzF9.M-AHfkIe9pktipNYu417NDRJUL9u_y7Hc5hmCHSHWqY
+}
+
 docs {
   # Get My KYC Status
-
+  
   Returns the logged-in user's current BillXpress tier and Maplerad customer status.
-
+  
   ## Endpoint
-
+  
   `GET /api/v1/users/me/kyc`
-
+  
   ## Authentication
-
+  
   Required.
-
+  
   ```txt
   Authorization: Bearer {{authToken}}
   ```
-
+  
   ## Expected Response
-
+  
   ```json
   {
     "user": {

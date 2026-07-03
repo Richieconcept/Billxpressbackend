@@ -18,18 +18,22 @@ auth:bearer {
   token: {{authToken}}
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTM3ZWEyMzI0M2YyYmNiNWM0ODI5YWUiLCJyb2xlIjoidXNlciIsImF1dGhUaWVyIjoidGllcl8xIiwiaWF0IjoxNzgyMDYwMDExLCJleHAiOjE3ODI2NjQ4MTF9.DG2RX61bNFrFpwuDhup5V76AJ74SRSzooJJ52FDRun0
+}
+
 docs {
   # Request Transaction PIN Reset Code
-
+  
   Sends a 5-digit reset code to the logged-in user's email address.
-
+  
   The frontend should not ask for the old transaction PIN. It should also not ask the logged-in user to type their email again; the backend uses the email on the user's account.
-
+  
   The response includes `maskedEmail`, so the app can show:
-
+  
   ```txt
   A reset code has been sent to im******en@gmail.com
   ```
-
+  
   Codes expire after 10 minutes. A user can request another code once every 60 seconds, with a maximum of 3 requests per 10 minutes.
 }

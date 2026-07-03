@@ -25,18 +25,22 @@ body:json {
   }
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjQ3OTcwMSwiZXhwIjoxNzgzMDg0NTAxfQ.HsPmKYJTneCDF4uGM1Rky8Ecw_jUtBnoACmpofFnVkc
+}
+
 docs {
   # Quote Electricity
-
+  
   Use this endpoint to calculate what the user will pay after markup.
-
+  
   ## Body
-
+  
   `amount`
   Required. Electricity value in naira.
-
+  
   ## Response
-
+  
   ```json
   {
     "quote": {

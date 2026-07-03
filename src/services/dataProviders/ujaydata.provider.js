@@ -41,6 +41,10 @@ const requestUjayData = async (path, options = {}) => {
     );
     error.statusCode = 502;
     error.providerResponse = data;
+    error.isFinalProviderFailure =
+      response.status >= 400 &&
+      response.status < 500 &&
+      isConfirmedFailureResponse(data);
     throw error;
   }
 
@@ -126,6 +130,34 @@ const isSuccessfulPurchase = (response) => {
   return status === "success" || message.includes("successful");
 };
 
+const isPendingPurchase = (response) => {
+  const text = [response?.status, response?.message, response?.msg, response?.description]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return /\b(pending|processing|queued|in progress|initiated)\b/.test(text);
+};
+
+const isConfirmedFailureResponse = (response) => {
+  const text = [
+    response?.status,
+    response?.message,
+    response?.msg,
+    response?.description,
+    response?.error,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    /\b(failed|fail|declined|rejected|cancelled|canceled)\b/.test(text) ||
+    /\b(invalid|incorrect|not available|unavailable|disabled)\b/.test(text) ||
+    /\b(insufficient|low|fund wallet|top up|out of funds|balance)\b/.test(text)
+  );
+};
+
 export const purchaseData = async ({ plan, phone, reference }) => {
   const planField = process.env.UJAYDATA_DATA_PURCHASE_PLAN_FIELD || "plan";
   const payload = {
@@ -143,6 +175,9 @@ export const purchaseData = async ({ plan, phone, reference }) => {
     const error = new Error(response?.message || "Data purchase failed");
     error.statusCode = 502;
     error.providerResponse = response;
+    error.isProviderPending = isPendingPurchase(response);
+    error.isFinalProviderFailure =
+      !error.isProviderPending && isConfirmedFailureResponse(response);
     throw error;
   }
 

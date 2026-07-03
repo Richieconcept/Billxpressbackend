@@ -35,8 +35,9 @@ docs {
   3. Run `Register User` if you need a new account.
   4. Run `Login User`. This saves the JWT into `authToken`.
   5. Run `Get Current User` to confirm the token works.
-  6. Run wallet requests such as `Get Wallet`, `Get Virtual Account`, or `Create One-Time Funding Account`.
-  7. Run service requests such as `Data Plans` and `Purchase Data`.
+  6. Run wallet requests such as `Get Wallet` and `Get Transactions`.
+  7. Run banking requests such as `Get Virtual Account`, `Create One-Time Funding Account`, or `Send Bank Transfer`.
+  8. Run service requests such as `Data Plans` and `Purchase Data`.
 
   Every protected endpoint needs:
 
@@ -82,9 +83,11 @@ docs {
 
   Email OTP verification remains available as an optional/future flow, but it is not required for tier 1 registration.
 
-  ## Wallet Funding Rule
+  ## Banking / Wallet Funding Rule
 
-  The frontend should use only BillXpress API endpoints. Do not call PocketFi or Monnify directly from the app.
+  The frontend should use only BillXpress API endpoints. Do not call PocketFi, Monnify, Maplerad, or any provider directly from the app.
+
+  These requests are documented in the `Banking` folder.
 
   Permanent funding account:
 
@@ -127,6 +130,28 @@ docs {
   ```
 
   The backend debits the wallet, calls the active provider, and refunds automatically if the provider fails.
+
+  ## Admin Dashboard Provider Balance
+
+  The admin dashboard earnings endpoint also returns provider wallet balances:
+
+  ```txt
+  GET /api/v1/admin/dashboard/earnings
+  ```
+
+  Frontend can display SMEAPI balance from:
+
+  ```txt
+  providerBalances.smeapi.balance
+  ```
+
+  Only show the balance when:
+
+  ```txt
+  providerBalances.smeapi.available === true
+  ```
+
+  If `available` is `false`, show an unavailable state while keeping the rest of the dashboard visible.
 
   ## Airtime Service Rule
 

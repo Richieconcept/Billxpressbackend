@@ -1,0 +1,65 @@
+meta {
+  name: 6. Admin List Data Plans
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/services/data/plans?provider=smeplug
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjgyNDE5NSwiZXhwIjoxNzgzNDI4OTk1fQ.1cVLyOmQtwzpu6WpbQcGA5JqfpgGqBg8eP2srPnr7x8
+}
+
+docs {
+  # Admin List Saved Provider Plans
+  
+  Returns enabled and disabled SMEAPI or SME Plug plans. Copy a plan's `id` into the `dataPlanId`
+  Bruno environment variable before running the update request.
+
+  Optional query filters:
+
+  ```txt
+  network=MTN|AIRTEL|GLO|9MOBILE
+  type=AWOOF|GIFTING|SME|CORPORATE GIFTING|SOCIAL|OTHER
+  isEnabled=true|false
+  providerAvailable=true|false
+  ```
+
+  Example:
+
+  ```txt
+  /api/v1/admin/services/data/plans?provider=smeplug&network=AIRTEL&type=AWOOF
+  ```
+
+  For SMEAPI MTN plans:
+
+  ```txt
+  /api/v1/admin/services/data/plans?provider=smeapi&network=MTN
+  ```
+
+  Admin UI should show:
+
+  - provider and network;
+  - provider plan name/type/validity;
+  - `networkPrice`, `providerPrice`, and `costPrice`;
+  - editable `ourPrice`;
+  - `isEnabled`;
+  - `providerAvailable`;
+  - `lastSyncedAt`.
+
+  `isEnabled` is BillXpress's choice. `providerAvailable` is the upstream
+  provider's current status. A plan must satisfy both before customers can see
+  it.
+}

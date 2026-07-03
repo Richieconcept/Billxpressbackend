@@ -24,6 +24,34 @@ const pricingTierSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const providerNames = ["smeapi", "ujaydata", "autopilot", "smeplug"];
+
+const networkProviderSchema = new mongoose.Schema(
+  {
+    MTN: {
+      type: String,
+      enum: providerNames,
+      default: null,
+    },
+    AIRTEL: {
+      type: String,
+      enum: providerNames,
+      default: null,
+    },
+    GLO: {
+      type: String,
+      enum: providerNames,
+      default: null,
+    },
+    "9MOBILE": {
+      type: String,
+      enum: providerNames,
+      default: null,
+    },
+  },
+  { _id: false }
+);
+
 const dataServiceSettingSchema = new mongoose.Schema(
   {
     service: {
@@ -40,8 +68,13 @@ const dataServiceSettingSchema = new mongoose.Schema(
 
     activeProvider: {
       type: String,
-      enum: ["smeapi", "ujaydata", "autopilot", "smeplug"],
+      enum: providerNames,
       default: "smeapi",
+    },
+
+    networkProviders: {
+      type: networkProviderSchema,
+      default: () => ({}),
     },
 
     userMarkupPercent: {

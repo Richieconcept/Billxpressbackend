@@ -238,16 +238,7 @@ export const createBankTransfer = async (req, res) => {
 export const redeemReferralBalance = async (req, res) => {
   try {
     const amount = toMinorUnit(req.body?.amount);
-    const minimumAmount = toMinorUnit(
-      process.env.REFERRAL_MIN_REDEEM_AMOUNT || 100
-    );
     const user = await User.findById(req.user._id).select("+transactionPin");
-
-    if (amount < minimumAmount) {
-      return res.status(400).json({
-        message: `Minimum referral redeem amount is ${process.env.REFERRAL_MIN_REDEEM_AMOUNT || 100}`,
-      });
-    }
 
     await verifyTransactionPin(user, req.body?.transactionPin);
 

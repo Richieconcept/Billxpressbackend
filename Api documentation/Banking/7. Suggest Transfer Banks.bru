@@ -1,7 +1,7 @@
 meta {
-  name: 15. Suggest Transfer Banks
+  name: 7. Suggest Transfer Banks
   type: http
-  seq: 15
+  seq: 7
 }
 
 post {
@@ -27,33 +27,33 @@ body:json {
 
 docs {
   # Suggest Transfer Banks
-
+  
   Use this endpoint while the user is typing a 10 digit account number.
-
+  
   This endpoint does not resolve account name and does not call Maplerad account resolve. It only suggests likely banks from popular Nigerian banks using checksum validation.
-
+  
   ## Endpoint
-
+  
   `POST /api/v1/wallet/transfers/suggest-banks`
-
+  
   ## Authentication
-
+  
   Required.
-
+  
   ```txt
   Authorization: Bearer {{authToken}}
   ```
-
+  
   ## Request Body
-
+  
   ```json
   {
     "accountNumber": "0123456789"
   }
   ```
-
+  
   ## Success Response
-
+  
   ```json
   {
     "accountNumber": "0123456789",
@@ -76,15 +76,15 @@ docs {
     }
   }
   ```
-
+  
   ## Frontend Behavior
-
+  
   - call this only after the user has typed 10 digits
   - if `suggestions` has items, show them as bank suggestions
   - if `suggestions` is empty, show nothing and let user select bank manually
   - after user selects a bank, call `Resolve Transfer Account` to fetch account name
-
+  
   ## Important
-
+  
   This endpoint is best-effort. Some wallets and microfinance banks may not be detectable from account number alone, so an empty suggestion list is normal.
 }

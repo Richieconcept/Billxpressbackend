@@ -21,50 +21,59 @@ auth:bearer {
 
 body:json {
   {
-    "planId": "136",
-    "phone": "08012345678",
+    "planId": "409",
+    "phone": "08125128766",
     "transactionPin": "1234"
   }
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4Mjg0MTQxOCwiZXhwIjoxNzgzNDQ2MjE4fQ.FQBeezvMHRnykuCs6GuLBNOAO1Nxrm7mTFWc62yTp0w
+}
+
 docs {
   # Purchase Data
-
+  
   Buys data for a user using their BillXpress wallet balance.
-
+  
   ## Endpoint
-
+  
   `POST /api/v1/services/data/purchase`
-
+  
   ## Authentication
-
+  
   Required.
-
+  
   ## Body Fields
-
+  
   `planId`
   Required. Use the `id` returned from `Data Plans`.
-
+  
   `phone`
   Required. Customer phone number. Must be 11 digits and start with `0`.
-
+  
   `transactionPin`
   Required. User's 4-digit transaction PIN.
-
+  
   ## What Backend Does
-
-  1. Fetches the selected plan live from active provider.
-  2. Calculates the current BillXpress selling price.
+  
+  1. Finds the saved plan and verifies that its provider is currently selected
+     for the plan's network.
+  2. Uses fixed `ourPrice` or calculates percentage fallback pricing.
   3. Verifies transaction PIN.
   4. Debits wallet.
   5. Calls provider.
   6. If provider fails, wallet is refunded automatically.
   7. Sends notification/email.
 
+  The frontend does not send a provider or network. The backend derives both
+  from the selected plan and current admin routing. This prevents users from
+  bypassing a provider switch.
+  
   ## Success Response
-
+  
   Status: `201 Created`
-
+  
   ```json
   {
     "status": "successful",
@@ -87,23 +96,23 @@ docs {
     }
   }
   ```
-
+  
   ## If User Wallet Balance Is Too Low
-
+  
   This means the user does not have enough money in their BillXpress wallet.
-
+  
   ```json
   {
     "message": "Insufficient wallet balance"
   }
   ```
-
+  
   Show the user a message like: `Your wallet balance is not enough for this purchase.`
-
+  
   ## If Provider Is Out Of Funds Or Temporarily Down
-
+  
   If provider fails after wallet debit, backend refunds the wallet and returns the failed transaction plus refund transaction.
-
+  
   ```json
   {
     "message": "Data purchase is temporarily unavailable. Please try again later. Your wallet has been refunded.",
@@ -120,8 +129,31 @@ docs {
     }
   }
   ```
-
+  
   Important: `provider_insufficient_funds` is not the user's wallet problem. It means the upstream data provider account or service cannot complete the purchase at that moment.
-
+  
   The frontend should not tell the user to fund their BillXpress wallet for this error. Show a service-unavailable message and let them try again later.
+
+  ## Other Frontend Error Handling
+
+  `400`
+  Invalid phone, missing plan/PIN, or unsupported input. Show the backend
+  message beside the relevant field.
+
+  `401`
+  Invalid session or transaction PIN. Do not retry automatically.
+
+  `404`
+  Plan is no longer available. Refresh the plan list.
+
+  `409`
+  Admin switched the network to another provider after the user loaded plans.
+  Refresh plans and ask the user to select again.
+
+  `503`
+  Data service is disabled or provider configuration is unavailable. Show a
+  temporary unavailable state.
+
+  Never automatically repeat a purchase request after a timeout. Refresh
+  transaction history first to avoid duplicate delivery.
 }

@@ -31,41 +31,45 @@ body:json {
   }
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjQwMTI5MywiZXhwIjoxNzgzMDA2MDkzfQ.jVKiEFVi2G_JwpxZE2dKG7w90FtkZ1Gbzew_zM8XmnI
+}
+
 docs {
   # Admin Update Airtime Settings
-
+  
   Admin updates airtime provider and pricing settings.
-
+  
   ## Endpoint
-
+  
   `PATCH /api/v1/admin/services/airtime/settings`
-
+  
   ## Body Fields
-
+  
   `isEnabled`
   Use `true` to allow airtime purchases or `false` to temporarily disable airtime.
-
+  
   `activeProvider`
   Supported values are `ujaydata` and `vtpass`.
-
+  
   Use `vtpass` to route airtime purchases through VTpass. Use `ujaydata` to switch back to the previous airtime provider.
-
+  
   `userMarkupPercent`
   Percentage added on top of airtime value for normal users.
-
+  
   `vendorMarkupPercent`
   Percentage added on top of airtime value for active vendors.
-
+  
   `minimumAmount`
   Minimum airtime value allowed.
-
+  
   `maximumAmount`
   Maximum airtime value allowed.
-
+  
   ## Example
-
+  
   If user buys `N100` airtime and markup is `5%`:
-
+  
   ```txt
   Airtime value: N100
   Wallet debit: N105

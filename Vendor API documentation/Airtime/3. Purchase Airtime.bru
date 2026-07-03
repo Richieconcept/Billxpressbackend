@@ -17,9 +17,13 @@ headers {
 
 body:json {
   {
-    "network": "MTN",
+    "network": "Airtel",
     "phone": "{{customerPhone}}",
     "amount": 500,
     "customerReference": "vendor-airtime-001"
   }
+}
+
+vars:pre-request {
+  customerPhone: 08125128766
 }

@@ -18,15 +18,19 @@ auth:bearer {
   token: {{authToken}}
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjQ3NDQ2MSwiZXhwIjoxNzgzMDc5MjYxfQ.Kbgp5fh5mdIKWnIn_ssbWrrX3zlYafn_Hclbe9vv2ms
+}
+
 docs {
   # Get Cable TV Packages
-
+  
   Use this endpoint after the user selects a provider.
-
+  
   Query:
-
+  
   `provider`
   Required. Use `DSTV`, `GOTV`, or `STARTIMES`.
-
+  
   The backend fetches packages from VTpass and applies BillXpress markup to return `sellingPrice`.
 }

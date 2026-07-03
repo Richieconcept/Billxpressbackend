@@ -16,6 +16,9 @@ import { getDataProvider, listDataProviders } from "./dataProviders/index.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
+const DATA_NETWORKS = ["MTN", "AIRTEL", "GLO", "9MOBILE"];
+const CATALOG_PROVIDERS = new Set(["smeapi", "smeplug"]);
+
 const normalizePricingTiers = (tiers = []) =>
   (Array.isArray(tiers) ? tiers : [])
     .map((tier) => ({
@@ -97,6 +100,11 @@ export const serializeDataServiceSetting = (settings) => ({
   service: settings.service,
   isEnabled: settings.isEnabled,
   activeProvider: settings.activeProvider,
+  networkProviders: DATA_NETWORKS.reduce((providers, network) => {
+    providers[network] =
+      settings.networkProviders?.[network] || settings.activeProvider;
+    return providers;
+  }, {}),
   availableProviders: listDataProviders(),
   userMarkupPercent: settings.userMarkupPercent,
   vendorMarkupPercent: settings.vendorMarkupPercent,
@@ -117,6 +125,7 @@ export const updateDataServiceSetting = async (payload, adminUserId) => {
   const allowedFields = [
     "isEnabled",
     "activeProvider",
+    "networkProviders",
     "userMarkupPercent",
     "vendorMarkupPercent",
     "userPricingTiers",
@@ -143,6 +152,22 @@ export const updateDataServiceSetting = async (payload, adminUserId) => {
         typeof source[field] === "string"
           ? source[field].toLowerCase() === "true"
           : source[field];
+    } else if (field === "networkProviders") {
+      if (!source[field] || typeof source[field] !== "object") {
+        const error = new Error("Network providers must be an object");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      if (!settings.networkProviders) {
+        settings.networkProviders = {};
+      }
+
+      DATA_NETWORKS.forEach((network) => {
+        if (source[field][network] !== undefined) {
+          settings.networkProviders[network] = source[field][network] || null;
+        }
+      });
     } else {
       settings[field] = source[field];
     }
@@ -196,6 +221,16 @@ const normalizePlanFilter = (value) =>
   String(value || "")
     .trim()
     .toUpperCase();
+
+const getProviderNameForNetwork = (settings, network) =>
+  settings.networkProviders?.[normalizePlanFilter(network)] ||
+  settings.activeProvider;
+
+const getNetworkProviderMap = (settings) =>
+  DATA_NETWORKS.reduce((providers, network) => {
+    providers[network] = getProviderNameForNetwork(settings, network);
+    return providers;
+  }, {});
 
 const buildPlanQuery = ({ provider, network, dataType, isEnabled } = {}) => {
   const query = {};
@@ -397,14 +432,6 @@ export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
   }
 
   const enabling = update.isEnabled === true;
-  const effectivePrice =
-    update.ourPrice !== undefined ? update.ourPrice : existing.ourPrice;
-
-  if (enabling && (!Number.isFinite(Number(effectivePrice)) || Number(effectivePrice) <= 0)) {
-    const error = new Error("Set our price before enabling this plan");
-    error.statusCode = 400;
-    throw error;
-  }
 
   if (enabling && !existing.providerAvailable) {
     const error = new Error("This plan is currently unavailable from the provider");
@@ -426,27 +453,69 @@ export const getDataPlansForUser = async (user, filters = {}) => {
     throw error;
   }
 
-  const provider = getDataProvider(settings.activeProvider);
-  const plans =
-    provider.name === "smeplug"
-      ? (
-          await DataPlan.find(
-            buildPlanQuery({
-              provider: provider.name,
-              network: filters.network,
-              dataType: filters.dataType,
-              isEnabled: true,
-            })
-          ).sort({ network: 1, dataType: 1, ourPrice: 1 })
-        ).map(catalogDocumentToProviderPlan)
-      : await provider.fetchPlans();
+  const requestedNetwork = filters.network
+    ? normalizePlanFilter(filters.network)
+    : null;
+
+  if (requestedNetwork && !DATA_NETWORKS.includes(requestedNetwork)) {
+    const error = new Error("Unsupported data network");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const networkProviders = getNetworkProviderMap(settings);
+  const selectedNetworks = requestedNetwork
+    ? [requestedNetwork]
+    : DATA_NETWORKS;
+  const plans = [];
+
+  for (const providerName of new Set(
+    selectedNetworks.map((network) => networkProviders[network])
+  )) {
+    const provider = getDataProvider(providerName);
+    const providerNetworks = selectedNetworks.filter(
+      (network) => networkProviders[network] === providerName
+    );
+
+    if (CATALOG_PROVIDERS.has(provider.name)) {
+      const documents = await DataPlan.find({
+        provider: provider.name,
+        network: { $in: providerNetworks },
+        ...(filters.dataType
+          ? { dataType: normalizePlanFilter(filters.dataType) }
+          : {}),
+        isEnabled: true,
+      }).sort({ network: 1, dataType: 1, ourPrice: 1 });
+
+      plans.push(...documents.map(catalogDocumentToProviderPlan));
+    } else {
+      const livePlans = await provider.fetchPlans();
+      plans.push(
+        ...livePlans.filter((plan) =>
+          providerNetworks.includes(normalizePlanFilter(plan.network))
+        )
+      );
+    }
+  }
+
   const filteredPlans = plans.filter(
-    (plan) => plan.providerPlanId && plan.network && plan.name && plan.available
+    (plan) =>
+      plan.providerPlanId &&
+      plan.network &&
+      plan.name &&
+      plan.available &&
+      (!filters.dataType ||
+        normalizePlanFilter(plan.type) === normalizePlanFilter(filters.dataType))
   );
 
   return {
     settings,
-    provider: provider.name,
+    provider: requestedNetwork
+      ? networkProviders[requestedNetwork]
+      : new Set(Object.values(networkProviders)).size === 1
+        ? Object.values(networkProviders)[0]
+        : "mixed",
+    networkProviders,
     plans: filteredPlans.map((plan) =>
       serializeDataPlanForUser({ plan, settings, user })
     ),
@@ -580,23 +649,71 @@ export const purchaseDataForUser = async ({
     throw error;
   }
 
-  const provider = getDataProvider(settings.activeProvider);
+  const networkProviders = getNetworkProviderMap(settings);
+  let provider;
   let plan;
 
-  if (provider.name === "smeplug") {
-    const catalogPlan = await DataPlan.findOne({
-      provider: provider.name,
+  let catalogPlan = null;
+
+  if (String(planId).match(/^[a-f\d]{24}$/i)) {
+    catalogPlan = await DataPlan.findOne({
+      _id: planId,
+      provider: { $in: Array.from(CATALOG_PROVIDERS) },
+    });
+  } else {
+    const catalogCandidates = await DataPlan.find({
+      provider: { $in: Array.from(CATALOG_PROVIDERS) },
       $or: [
-        ...(String(planId).match(/^[a-f\d]{24}$/i) ? [{ _id: planId }] : []),
         { providerPlanId: String(planId) },
         { providerPlanCode: String(planId) },
       ],
     });
 
-    plan = catalogPlan ? catalogDocumentToProviderPlan(catalogPlan) : null;
+    catalogPlan =
+      catalogCandidates.find(
+        (candidate) =>
+          networkProviders[candidate.network] === candidate.provider
+      ) || null;
+  }
+
+  if (catalogPlan) {
+    const routedProviderName = networkProviders[catalogPlan.network];
+
+    if (catalogPlan.provider !== routedProviderName) {
+      const error = new Error(
+        `Selected plan is not active for ${catalogPlan.network}; the network currently uses ${routedProviderName}`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+
+    provider = getDataProvider(catalogPlan.provider);
+    plan = catalogDocumentToProviderPlan(catalogPlan);
   } else {
-    const plans = await provider.fetchPlans();
-    plan = findProviderPlan(plans, planId);
+    for (const providerName of new Set(Object.values(networkProviders))) {
+      const candidateProvider = getDataProvider(providerName);
+
+      if (CATALOG_PROVIDERS.has(candidateProvider.name)) continue;
+
+      const plans = await candidateProvider.fetchPlans();
+      const candidatePlan = findProviderPlan(plans, planId);
+
+      if (
+        candidatePlan &&
+        networkProviders[normalizePlanFilter(candidatePlan.network)] ===
+          candidateProvider.name
+      ) {
+        provider = candidateProvider;
+        plan = candidatePlan;
+        break;
+      }
+    }
+  }
+
+  if (!provider) {
+    const error = new Error("Selected data plan is not available");
+    error.statusCode = 404;
+    throw error;
   }
 
   if (!plan || !plan.available) {

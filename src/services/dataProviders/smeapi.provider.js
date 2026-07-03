@@ -1,4 +1,10 @@
 const PROVIDER = "smeapi";
+const NETWORK_CODES = {
+  MTN: "1",
+  AIRTEL: "2",
+  GLO: "3",
+  "9MOBILE": "4",
+};
 
 const getBaseUrl = () =>
   (process.env.SMEAPI_BASE_URL || "https://smeapi.com.ng/api").replace(
@@ -45,9 +51,13 @@ const isPlanAvailable = (plan) => {
 const getCostPrice = (plan) => {
   const priceCandidates = [
     plan.apiprice,
+    plan.api_price,
     plan.vendorprice,
+    plan.vendor_price,
     plan.agentprice,
+    plan.agent_price,
     plan.userprice,
+    plan.user_price,
     plan.price,
   ]
     .map(toNumber)
@@ -124,6 +134,10 @@ const requestSmeApi = async (path, options = {}) => {
     );
     error.statusCode = 502;
     error.providerResponse = data;
+    error.isFinalProviderFailure =
+      response.status >= 400 &&
+      response.status < 500 &&
+      isConfirmedFailureResponse(data);
     throw error;
   }
 
@@ -190,41 +204,32 @@ const extractPlansFromDashboard = (html) => {
   }
 };
 
-const fetchDashboardPlans = async () => {
-  const jar = await loginToDashboard();
-  const response = await fetch(`${getDashboardBaseUrl()}/buy-data`, {
-    headers: {
-      Cookie: jar.header(),
-    },
-  });
-
-  const html = await response.text();
-
-  if (!response.ok) {
-    const error = new Error("Could not fetch SMEAPI data plans");
-    error.statusCode = 502;
-    error.providerResponse = { raw: html };
-    throw error;
-  }
-
-  return extractPlansFromDashboard(html);
-};
-
 export const fetchPlans = async () => {
-  const plans = await fetchDashboardPlans();
+  const response = await requestSmeApi("/dataplans/");
+  const plans = Array.isArray(response?.data) ? response.data : [];
 
   return plans.map((plan) => ({
     provider: PROVIDER,
-    providerPlanId: String(plan.pId || plan.planid || ""),
-    providerPlanCode: String(plan.planid || plan.pId || ""),
+    providerPlanId: String(plan.id || plan.pId || plan.planid || ""),
+    providerPlanCode: String(plan.id || plan.planid || plan.pId || ""),
     network: String(plan.network || "").toUpperCase(),
-    networkCode: String(plan.datanetwork || plan.networkid || ""),
+    networkCode: String(
+      plan.datanetwork ||
+        plan.networkid ||
+        NETWORK_CODES[String(plan.network || "").toUpperCase()] ||
+        ""
+    ),
     name: String(plan.name || ""),
     type: String(plan.type || ""),
-    validity: plan.day ? String(plan.day) : null,
-    validityDays: toNumber(String(plan.day || "").match(/\d+/)?.[0]),
+    validity: plan.days || (plan.day ? String(plan.day) : null),
+    validityDays: toNumber(
+      String(plan.days || plan.day || "").match(/\d+/)?.[0]
+    ),
+    networkPrice: toNumber(plan.user_price),
+    providerPrice: getCostPrice(plan),
     costPrice: getCostPrice(plan),
-    available: isPlanAvailable(plan),
+    available:
+      plan.networkStatus === undefined ? true : isPlanAvailable(plan),
     raw: plan,
   }));
 };
@@ -236,6 +241,41 @@ const isSuccessfulPurchase = (response) => {
   ).toLowerCase();
 
   return status === "success" || status === "successful" || message.includes("successful");
+};
+
+const isPendingPurchase = (response) => {
+  const text = [
+    response?.status,
+    response?.Status,
+    response?.message,
+    response?.msg,
+    response?.description,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return /\b(pending|processing|queued|in progress|initiated)\b/.test(text);
+};
+
+const isConfirmedFailureResponse = (response) => {
+  const text = [
+    response?.status,
+    response?.Status,
+    response?.message,
+    response?.msg,
+    response?.description,
+    response?.error,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    /\b(failed|fail|declined|rejected|cancelled|canceled)\b/.test(text) ||
+    /\b(invalid|incorrect|not available|unavailable|disabled)\b/.test(text) ||
+    /\b(insufficient|low|fund wallet|top up|out of funds|balance)\b/.test(text)
+  );
 };
 
 const buildPurchasePayloads = ({ plan, phone }) => [
@@ -270,6 +310,9 @@ export const purchaseData = async ({ plan, phone, reference }) => {
         );
         error.statusCode = 502;
         error.providerResponse = response;
+        error.isProviderPending = isPendingPurchase(response);
+        error.isFinalProviderFailure =
+          !error.isProviderPending && isConfirmedFailureResponse(response);
         throw error;
       }
 
@@ -287,6 +330,10 @@ export const purchaseData = async ({ plan, phone, reference }) => {
       };
     } catch (error) {
       lastError = error;
+
+      if (error.isFinalProviderFailure !== true) {
+        throw error;
+      }
     }
   }
 
@@ -296,9 +343,23 @@ export const purchaseData = async ({ plan, phone, reference }) => {
 export const checkTransactionStatus = async (providerReference) =>
   requestSmeApi(`/transaction/${encodeURIComponent(providerReference)}`);
 
+export const fetchBalance = async () => {
+  const response = await requestSmeApi("/user/");
+
+  return {
+    provider: PROVIDER,
+    accountName: response.name || null,
+    balance: toNumber(response.balance),
+    currency: "NGN",
+    status: response.status || null,
+    raw: response,
+  };
+};
+
 export default {
   name: PROVIDER,
   fetchPlans,
   purchaseData,
   checkTransactionStatus,
+  fetchBalance,
 };

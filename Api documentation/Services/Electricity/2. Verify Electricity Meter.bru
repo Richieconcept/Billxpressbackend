@@ -21,30 +21,34 @@ auth:bearer {
 
 body:json {
   {
-    "disco": "IKEDC",
-    "meterNumber": "1111111111111",
+    "disco": "AEDC",
+    "meterNumber": "0195110025069",
     "meterType": "prepaid"
   }
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjQ3OTcwMSwiZXhwIjoxNzgzMDg0NTAxfQ.HsPmKYJTneCDF4uGM1Rky8Ecw_jUtBnoACmpofFnVkc
+}
+
 docs {
   # Verify Electricity Meter
-
+  
   Use this endpoint after user selects disco and meter type, then enters meter number.
-
+  
   ## Body
-
+  
   `disco`
   Required. Use the `code` from `Get Electricity Discos`, for example `IKEDC`.
-
+  
   `meterNumber`
   Required. Customer meter/account number.
-
+  
   `meterType`
   Required. `prepaid` or `postpaid`.
-
+  
   ## Success Response
-
+  
   ```json
   {
     "message": "Meter verified successfully",

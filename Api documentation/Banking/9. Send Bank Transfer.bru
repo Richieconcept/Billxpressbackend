@@ -1,7 +1,7 @@
 meta {
-  name: 13. Send Bank Transfer
+  name: 9. Send Bank Transfer
   type: http
-  seq: 13
+  seq: 9
 }
 
 post {
@@ -22,9 +22,9 @@ auth:bearer {
 body:json {
   {
     "amount": 100,
-    "accountNumber": "0123456789",
-    "accountName": "JOHN DOE",
-    "mapleradBankCode": "280",
+    "accountNumber": "8125128766",
+    "accountName": "imo boniface ben",
+    "mapleradBankCode": "710",
     "narration": "BillXpress transfer",
     "transactionPin": "1234"
   }
@@ -32,23 +32,23 @@ body:json {
 
 docs {
   # Send Bank Transfer
-
+  
   Use this endpoint after resolving the account name and after the user enters transaction PIN.
-
+  
   ## Endpoint
-
+  
   `POST /api/v1/wallet/transfers`
-
+  
   ## Authentication
-
-  Required.
-
+  
+  Required. The user must have a verified email and BillXpress `tier_3`.
+  
   ```txt
   Authorization: Bearer {{authToken}}
   ```
-
+  
   ## Request Body
-
+  
   ```json
   {
     "amount": 100,
@@ -59,13 +59,13 @@ docs {
     "transactionPin": "1234"
   }
   ```
-
+  
   ## Important
-
+  
   `mapleradBankCode` is used by the backend to verify the account name again and send the transfer through Maplerad.
-
+  
   ## Backend Flow
-
+  
   - verifies transaction PIN
   - resolves the account name again with Maplerad
   - rejects the request if the account name changed
@@ -74,9 +74,9 @@ docs {
   - returns successful or processing
   - refunds automatically if Maplerad rejects immediately
   - later Maplerad transfer webhook can mark pending transfers successful or refunded
-
+  
   ## Success Response
-
+  
   ```json
   {
     "status": "pending",

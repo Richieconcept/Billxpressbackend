@@ -1,7 +1,7 @@
 meta {
-  name: 6. Create One-Time Funding Account
+  name: 3. Create One-Time Funding Account
   type: http
-  seq: 6
+  seq: 3
 }
 
 post {
@@ -27,28 +27,28 @@ body:json {
 
 docs {
   # Create One-Time Funding Account
-
+  
   Use this when the user enters an amount and wants a temporary transfer account like a checkout screen.
-
+  
   ## Endpoint
-
+  
   `POST /api/v1/wallet/funding-intents`
-
+  
   ## Authentication
-
+  
   Required.
-
+  
   ```txt
   Authorization: Bearer {{authToken}}
   ```
-
+  
   ## Body Fields
-
+  
   `amount`  
   Required. Amount the user wants to transfer, in naira.
 
   ## Expected Success Response
-
+  
   ```json
   {
     "message": "Funding account created successfully",
@@ -74,11 +74,11 @@ docs {
     }
   }
   ```
-
+  
   ## Frontend Notes
-
+  
   Show this like a checkout screen:
-
+  
   - countdown from `expiresAt`
   - account number
   - bank name
@@ -86,27 +86,27 @@ docs {
   - amount
   - fee, if you want to show it
   - amount to receive
-
+  
   If the user enters `N2,000` and the funding charge is `1%`, show:
-
+  
   - Amount entered: `N2,000`
   - Fee: `N20`
   - Amount to receive: `N2,000`
-
+  
   `amountToReceive` is the wallet credit amount. It should match the amount the user is asked to transfer.
-
+  
   When the user taps **I have transferred the money**, call:
-
+  
   `POST /api/v1/wallet/funding-intents/:fundingIntentId/confirm`
-
+  
   Use the `fundingIntent.id` from this response as `:fundingIntentId`.
-
+  
   The frontend should not credit the wallet itself. The backend credits the wallet after payment is confirmed.
-
+  
   ## Fields To Display
-
+  
   The app only needs these fields:
-
+  
   - `fundingIntent.id`
   - `fundingIntent.accountNumber`
   - `fundingIntent.accountName`
@@ -115,6 +115,6 @@ docs {
   - `fundingIntent.amountToReceive`
   - `fundingIntent.expiresAt`
   - `fundingIntent.status`
-
+  
   Ignore any extra fields returned by the backend.
 }

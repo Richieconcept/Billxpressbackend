@@ -41,6 +41,7 @@ export const getDataPlans = async (req, res) => {
           : "flat",
         roundingMode: result.settings.roundingMode,
       },
+      networkProviders: result.networkProviders,
       plans: result.plans,
       count: result.plans.length,
     });

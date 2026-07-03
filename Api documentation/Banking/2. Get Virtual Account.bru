@@ -1,7 +1,7 @@
 meta {
-  name: 4. Get Virtual Account
+  name: 2. Get Virtual Account
   type: http
-  seq: 4
+  seq: 2
 }
 
 get {
@@ -20,23 +20,23 @@ auth:bearer {
 
 docs {
   # Get Virtual Account
-
+  
   Use this endpoint to display the user's wallet funding account.
-
+  
   ## Endpoint
-
+  
   `GET /api/v1/wallet/virtual-account`
-
+  
   ## Authentication
-
+  
   Required.
-
+  
   ```txt
   Authorization: Bearer {{authToken}}
   ```
-
+  
   ## Expected Success Response
-
+  
   ```json
   {
     "virtualAccount": {
@@ -71,22 +71,22 @@ docs {
     }
   }
   ```
-
+  
   ## Common Error
-
+  
   If the user does not have a virtual account yet:
-
+  
   ```json
   {
     "message": "Virtual account has not been created"
   }
   ```
-
+  
   ## Frontend Notes
-
+  
   If this returns `404`, show a button like `Create Funding Account`, then call `Create Virtual Account`.
-
+  
   Show the list in `virtualAccount.accounts`. It may contain Paga, Kuda, or both depending on what PocketFi returns.
-
+  
   Show `feePolicy.message` on the funding screen. The important rule is: if the user transfers `N2,000`, the backend credits `N2,000` to the wallet.
 }

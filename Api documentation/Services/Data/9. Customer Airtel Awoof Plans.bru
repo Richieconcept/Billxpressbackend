@@ -1,0 +1,40 @@
+meta {
+  name: 9. Customer Airtel Awoof Plans
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/v1/services/data/plans?network=AIRTEL&type=AWOOF
+  body: none
+  auth: bearer
+}
+
+params:query {
+  network: AIRTEL
+  type: AWOOF
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjkwNjYyOSwiZXhwIjoxNzgzNTExNDI5fQ.VYZsDgcBp4-XslfNp77-42aGU99-8tcCfhJjg7fK0zI
+}
+
+docs {
+  # Customer Airtel Awoof Plans
+  
+  Returns only enabled and provider-available Airtel Awoof plans.
+
+  This is a customer endpoint. It automatically uses whichever provider admin
+  assigned to Airtel. Frontend must not send `provider=smeplug`.
+  
+  If this returns an empty array, check the admin list and confirm that at least
+  one matching plan has both `ourPrice` set and `isEnabled: true`.
+}

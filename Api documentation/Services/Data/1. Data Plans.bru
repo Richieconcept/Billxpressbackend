@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/v1/services/data/plans
+  url: {{baseUrl}}/api/v1/services/data/plans?network=MTN
   body: none
   auth: bearer
 }
@@ -18,89 +18,126 @@ auth:bearer {
   token: {{authToken}}
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjgyNDE5NSwiZXhwIjoxNzgzNDI4OTk1fQ.1cVLyOmQtwzpu6WpbQcGA5JqfpgGqBg8eP2srPnr7x8
+}
+
 docs {
   # Data Plans
-
-  Fetches live data plans from the active backend provider and returns BillXpress selling prices.
-
+  
+  Returns enabled plans from the provider assigned to each requested network,
+  with final BillXpress selling prices.
+  
   ## Endpoint
-
+  
   `GET /api/v1/services/data/plans`
 
+  Optional query parameters:
+
+  ```txt
+  network=MTN|AIRTEL|GLO|9MOBILE
+  type=SME|SME2|GIFTING|CORPORATE|CORPORATE2|AWOOF
+  ```
+
+  Examples:
+
+  ```txt
+  GET /api/v1/services/data/plans?network=MTN
+  GET /api/v1/services/data/plans?network=MTN&type=SME
+  GET /api/v1/services/data/plans?network=AIRTEL&type=AWOOF
+  ```
+
+  When `network` is omitted, the endpoint returns enabled plans for all
+  networks using each network's configured provider.
+  
   ## Authentication
-
+  
   Required.
-
+  
   ```txt
   Authorization: Bearer {{authToken}}
   ```
-
+  
   ## Important For Frontend
-
+  
   Display `sellingPrice` to the user.
-
+  
   Do not display `costPrice` as the amount to pay. `costPrice` is included only so admins/testers can understand pricing.
-
+  
   Do not calculate price on the frontend. The backend already:
-
+  
   - fetches provider cost price
   - checks whether the logged-in user is normal user or active vendor
   - applies the correct tier or fallback markup
   - rounds the final amount
   - returns `sellingPrice`
+  
+  Pricing order:
 
-  The backend fetches the live provider price on every request, then applies markup:
-
+  1. If admin set `ourPrice`, that exact fixed price is used.
+  2. Otherwise, a matching user/vendor percentage tier is used.
+  3. If no tier matches, the flat user/vendor percentage is used.
+  
   - normal user uses `userPricingTiers` when a matching tier exists
   - active vendor uses `vendorPricingTiers` when a matching tier exists
   - if no tier matches, backend falls back to `userMarkupPercent` or `vendorMarkupPercent`
-
+  
   Each plan returns the exact `markupPercent`, `pricingModel`, `sellingPrice`, and `profit` used for that user.
-
+  
   ## Fields Frontend Should Use
-
+  
   `id`
   Send this value as `planId` when buying data.
-
+  
   `network`
   Use this to group plans under MTN, GLO, AIRTEL, or 9MOBILE.
-
+  
   `name`
   Display as the bundle size, for example `500MB` or `10GB`.
-
+  
   `type`
   Display as plan type, for example `SME`, `Gifting`, or `Corporate`.
-
+  
   `validity`
   Display as the plan duration, for example `30 days`.
-
+  
   `sellingPrice`
   This is the amount the user will pay from their BillXpress wallet.
-
+  
   ## Fields Frontend Should Not Use For Payment
-
+  
   `costPrice`
   Provider cost price. Do not charge the user this amount.
-
+  
   `profit`
   BillXpress earning on this plan. This is useful for admin/testing, but should not be shown to normal users.
-
+  
   `pricingTier`
   Shows which admin tier was used. Useful for admin/testing.
-
+  
   ## Pricing Model Meaning
-
+  
   `pricingModel: "tiered"`
   A matching admin pricing tier was used.
-
+  
   `pricingModel: "flat"`
   No tier matched, so backend used `userMarkupPercent` or `vendorMarkupPercent`.
 
+  `pricingModel: "custom"`
+  Admin set a fixed `ourPrice` for this individual plan. Percentage markup is
+  not added to that plan.
+  
   ## Expected Response
-
+  
   ```json
   {
-    "provider": "smeapi",
+    "provider": "mixed",
+    "networkProviders": {
+      "MTN": "smeapi",
+      "AIRTEL": "smeplug",
+      "GLO": "smeplug",
+      "9MOBILE": "smeplug"
+    },
     "pricing": {
       "userMarkupPercent": 15,
       "vendorMarkupPercent": 10,
@@ -123,30 +160,42 @@ docs {
     },
     "plans": [
       {
-        "id": "136",
+        "id": "66f1234567890abcdef1234",
         "provider": "smeapi",
-        "providerPlanId": "136",
-        "providerPlanCode": "421",
-        "network": "GLO",
-        "networkCode": "2",
+        "providerPlanId": "1",
+        "providerPlanCode": "1",
+        "network": "MTN",
+        "networkCode": "1",
         "name": "500MB",
-        "type": "Corporate",
-        "validity": "30 days",
-        "validityDays": 30,
-        "costPrice": 199,
-        "sellingPrice": 229,
-        "profit": 30,
+        "type": "SME",
+        "validity": "7days",
+        "validityDays": 7,
+        "costPrice": 255,
+        "ourPrice": 300,
+        "sellingPrice": 300,
+        "profit": 45,
         "markupPercent": 15,
-        "pricingModel": "tiered",
-        "pricingTier": {
-          "minCost": 0,
-          "maxCost": 500,
-          "markupPercent": 15
-        },
+        "pricingModel": "custom",
+        "pricingTier": null,
         "available": true
       }
     ],
     "count": 1
   }
   ```
+
+  `provider: "mixed"` is normal when different networks use different
+  providers. Frontend should not branch purchase logic by provider.
+
+  ## Empty Plans
+
+  An empty `plans` array can mean:
+
+  - no matching plan is enabled;
+  - provider catalogue has not been synchronized;
+  - the selected provider marked its plans unavailable;
+  - admin switched the network to a provider whose plans are not configured.
+
+  Show a friendly unavailable state. Do not fall back to calling a provider
+  directly.
 }

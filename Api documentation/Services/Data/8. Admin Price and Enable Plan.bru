@@ -1,0 +1,79 @@
+meta {
+  name: 8. Admin Price and Enable Plan
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/services/data/plans/{{dataPlanId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "ourPrice": 300,
+    "isEnabled": true,
+    "dataType": "Awoof",
+    "allowHostedSim": true,
+    "allowWalletFallback": false
+  }
+}
+
+vars:pre-request {
+  dataPlanId: 6a47d4a63a0cf87f01e760d8
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4Mjg0MDYxMiwiZXhwIjoxNzgzNDQ1NDEyfQ.xwe10Ldp1MxxdGrW0mHPQ5gey9N2KfYYgD-ePqAarYc
+}
+
+docs {
+  # Set Our Price and Enable a Plan
+  
+  Set `dataPlanId` in the active Bruno environment to the plan's database `id`
+  returned by the admin list request.
+  
+  `networkPrice` and `providerPrice` come from SMEAPI or SME Plug and cannot be changed
+  here. `ourPrice`, `dataType`, availability, and delivery controls belong to
+  BillXpress and are preserved during synchronization.
+  
+  ## Fixed Price
+  
+  ```json
+  {
+    "ourPrice": 450,
+    "isEnabled": true
+  }
+  ```
+  
+  `ourPrice` becomes the exact customer selling price. No percentage is added.
+  
+  ## Percentage Fallback
+  
+  ```json
+  {
+    "ourPrice": null,
+    "isEnabled": true
+  }
+  ```
+  
+  Clearing `ourPrice` restores tier/percentage pricing. The plan can remain
+  enabled.
+  
+  The backend rejects enabling a provider-unavailable plan.
+  
+  To hide a plan:
+  
+  ```json
+  {
+    "isEnabled": false
+  }
+  ```
+}

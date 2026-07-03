@@ -27,12 +27,16 @@ body:json {
   }
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjczMTcyMywiZXhwIjoxNzgzMzM2NTIzfQ.PX23SwfuyKxwQ5u5__uf3RgvZtW3e0cYe-izWKXiOMM
+}
+
 docs {
   # Admin - Credit Referral Balance
-
+  
   This request is for admin/backend testing only.
-
+  
   This gives us a way to test `Redeem Referral Balance` before the full referral trigger is implemented.
-
+  
   The frontend user app should not call this endpoint.
 }

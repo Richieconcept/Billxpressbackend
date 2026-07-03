@@ -10,15 +10,23 @@ post {
   auth: bearer
 }
 
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
 auth:bearer {
   token: {{authToken}}
 }
 
 body:json {
   {
-    "quoteId": "paste-card-quote-id",
+    "quoteId": "6a4254e3ac984635b8262413",
     "transactionPin": "1234"
   }
+}
+
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTQyNDMwMGI2YTQ3MmViMTVlOWFlNDQiLCJyb2xlIjoidXNlciIsImF1dGhUaWVyIjoidGllcl8zIiwiaWF0IjoxNzgyNzMxODE1LCJleHAiOjE3ODMzMzY2MTV9.xITqIdPid2Qz1g3SY6xygexXXkTRx8PnZKKUKUltYHQ
 }
 
 docs {

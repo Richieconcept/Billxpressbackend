@@ -16,9 +16,13 @@ headers {
 
 body:json {
   {
-    "identifier": "testuser@example.com",
-    "password": "Password123"
+    "identifier": "imo@gmail.com",
+    "password": "Password"
   }
+}
+
+vars:pre-request {
+  baseUrl: http://localhost:5000
 }
 
 script:post-response {
@@ -41,25 +45,25 @@ script:post-response {
 
 docs {
   # Login User
-
+  
   Logs in a user with password and returns an access token plus a mobile refresh token.
-
+  
   ## Endpoint
-
+  
   `POST /api/v1/auth/login`
-
+  
   ## Body Fields
-
+  
   `identifier`  
   This can be the user's email, username, or phone number.
-
+  
   `password`  
   The user's password.
-
+  
   ## Expected Success Response
-
+  
   Status: `200 OK`
-
+  
   ```json
   {
     "message": "Login successful",
@@ -86,38 +90,38 @@ docs {
     }
   }
   ```
-
+  
   ## Auto Save Tokens
-
+  
   This Bruno request automatically saves:
-
+  
   - `accessToken` into `authToken`
   - `refreshToken` into `refreshToken`
-
+  
   After login succeeds, you can run protected requests like `Get Current User`.
-
+  
   ## Mobile PIN / Biometric Unlock Flow
-
+  
   The backend does not receive fingerprint, Face ID, or local app PIN data.
-
+  
   Mobile app flow:
-
+  
   1. User logs in with password once.
   2. App stores `refreshToken` securely on the phone.
   3. On next app open, app asks for PIN or biometric locally on the device.
   4. If local unlock succeeds, app calls `Refresh Mobile Session`.
   5. Backend returns a fresh `accessToken`.
-
+  
   The access token can expire. The refresh token is what keeps mobile login smooth.
-
+  
   There is no backend PIN-login endpoint. PIN and biometric unlock are handled by the frontend/device.
-
+  
   ## Current Tier 1 Behavior
-
+  
   Login is allowed without email verification.
-
+  
   A newly registered user object includes:
-
+  
   ```json
   {
     "emailVerified": false,
@@ -125,44 +129,44 @@ docs {
     "kycLevel": 0
   }
   ```
-
+  
   Later features like dollar card, betting, BVN-gated flows, wallet limits, or other KYC-sensitive actions can require a higher `authTier`.
-
+  
   ## Login Security Notification
-
+  
   After successful login, the backend creates a `security` notification.
-
+  
   Default behavior:
-
+  
   ```txt
   AUTH_LOGIN_NOTIFICATION_ENABLED=true
   AUTH_LOGIN_NOTIFICATION_CHANNEL=both
   ```
-
+  
   This means the backend attempts:
-
+  
   - in-app notification
   - email notification
   - push notification if the user has registered a device token
-
+  
   The frontend does not need to send a separate notification request after login.
-
+  
   If the app wants to show login popups, call:
-
+  
   ```txt
   GET /api/v1/notifications/popup
   ```
-
+  
   after login.
-
+  
   To check whether login email was sent, call:
-
+  
   ```txt
   GET /api/v1/notifications?type=security
   ```
-
+  
   Then inspect:
-
+  
   ```json
   {
     "emailDelivery": {
@@ -172,10 +176,10 @@ docs {
     }
   }
   ```
-
+  
   If `successful` is `false`, the `error` field explains why.
-
+  
   ## Rate Limit
-
+  
   Maximum 10 login attempts per 15 minutes per IP/identifier.
 }

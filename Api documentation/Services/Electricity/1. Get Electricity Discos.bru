@@ -18,17 +18,21 @@ auth:bearer {
   token: {{authToken}}
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjQ3NDQ2MSwiZXhwIjoxNzgzMDc5MjYxfQ.Kbgp5fh5mdIKWnIn_ssbWrrX3zlYafn_Hclbe9vv2ms
+}
+
 docs {
   # Get Electricity Discos
-
+  
   Use this endpoint to show supported electricity companies and meter types.
-
+  
   ## Endpoint
-
+  
   `GET /api/v1/services/electricity/discos`
-
+  
   ## Response
-
+  
   ```json
   {
     "provider": "vtpass",

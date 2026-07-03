@@ -26,35 +26,39 @@ body:json {
   }
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTQyNDMwMGI2YTQ3MmViMTVlOWFlNDQiLCJyb2xlIjoidXNlciIsImF1dGhUaWVyIjoidGllcl8zIiwiaWF0IjoxNzgyNzMxODE1LCJleHAiOjE3ODMzMzY2MTV9.xITqIdPid2Qz1g3SY6xygexXXkTRx8PnZKKUKUltYHQ
+}
+
 docs {
   # Redeem Referral Balance
-
+  
   Use this endpoint when the user wants to move referral rewards into their main wallet.
-
+  
   This is not a bank withdrawal. It is like cashback becoming spendable balance inside the app.
-
+  
   ## Endpoint
-
+  
   `POST /api/v1/wallet/referral/redeem`
-
+  
   ## Authentication
-
+  
   Required.
-
+  
   ```txt
   Authorization: Bearer {{authToken}}
   ```
-
+  
   ## Body Fields
-
+  
   `amount`  
-  Required. Amount to move from referral wallet to main wallet.
-
+  Required. Amount to move from referral wallet to main wallet. Users can redeem any positive amount they have earned.
+  
   `transactionPin`  
   Required. User's 4-digit transaction PIN.
-
+  
   ## Expected Success Response
-
+  
   ```json
   {
     "message": "Referral earnings redeemed successfully",
@@ -78,36 +82,28 @@ docs {
     ]
   }
   ```
-
+  
   ## Common Errors
-
-  Referral balance is below the minimum. Current default minimum is `NGN 100`:
-
-  ```json
-  {
-    "message": "Minimum referral redeem amount is 100"
-  }
-  ```
-
+  
   Wrong transaction PIN:
-
+  
   ```json
   {
     "message": "Invalid transaction PIN"
   }
   ```
-
+  
   Not enough referral balance:
-
+  
   ```json
   {
     "message": "Insufficient wallet balance"
   }
   ```
-
+  
   ## Frontend Notes
-
-  Only show the redeem button when `referralBalance` is at least the minimum redeem amount.
-
+  
+  Show the redeem button when `referralBalance` is greater than `0`.
+  
   Referral earnings are credited from first-deposit referral rewards. If User B funds `NGN 1,000` for the first time after registering with User A's referral code, User A earns `3%`, which is `NGN 30`.
 }

@@ -25,24 +25,28 @@ body:json {
   }
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjQwMTI5MywiZXhwIjoxNzgzMDA2MDkzfQ.jVKiEFVi2G_JwpxZE2dKG7w90FtkZ1Gbzew_zM8XmnI
+}
+
 docs {
   # Airtime Quote
-
+  
   Calculates how much the user will pay for an airtime amount.
-
+  
   ## Endpoint
-
+  
   `POST /api/v1/services/airtime/quote`
-
+  
   ## Body Fields
-
+  
   `amount`
   Required. Airtime value the user wants to buy.
-
+  
   ## Expected Response
-
+  
   If airtime markup is `0%`:
-
+  
   ```json
   {
     "quote": {
@@ -54,8 +58,8 @@ docs {
     }
   }
   ```
-
+  
   If airtime markup is `5%`, `sellingPrice` becomes `105`.
-
+  
   Frontend should display `sellingPrice` as the wallet amount to be deducted.
 }

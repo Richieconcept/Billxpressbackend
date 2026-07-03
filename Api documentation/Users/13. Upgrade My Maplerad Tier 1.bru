@@ -22,7 +22,7 @@ auth:bearer {
 body:json {
   {
     "dob": "20-10-1988",
-    "identificationNumber": "12345678901",
+    "identificationNumber": "11111111111",
     "phoneNumber": "08123456789",
     "address": {
       "street": "12 Example Street",
@@ -35,47 +35,51 @@ body:json {
   }
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTQyNTg5NjlhMjY5MzJkODU3NWYxZGYiLCJyb2xlIjoidXNlciIsImF1dGhUaWVyIjoidGllcl8xIiwiaWF0IjoxNzgyNzMzMDMxLCJleHAiOjE3ODMzMzc4MzF9.M-AHfkIe9pktipNYu417NDRJUL9u_y7Hc5hmCHSHWqY
+}
+
 docs {
   # Upgrade My Maplerad Tier 1
-
-  Upgrades the logged-in user to BillXpress `tier_2` by creating/upgrading their Maplerad customer to Maplerad Tier 1, then creates a dedicated NGN virtual account.
-
+  
+  Upgrades the logged-in user to BillXpress `tier_3` by creating/upgrading their Maplerad customer to Maplerad Tier 1, then creates a dedicated NGN virtual account.
+  
   ## Endpoint
-
+  
   `POST /api/v1/users/me/kyc/maplerad-tier1`
-
+  
   ## Authentication
-
-  Required.
-
+  
+  Required. The user's email must already be verified.
+  
   ```txt
   Authorization: Bearer {{authToken}}
   ```
-
+  
   ## Body Fields
-
+  
   `dob`
   Required. Date of birth in `DD-MM-YYYY` format.
-
+  
   `identificationNumber`
   Required. BVN or supported identification number.
-
+  
   `phoneNumber`
   Optional when the user's existing phone is valid.
-
+  
   `address`
   Required. Must include `street`, `city`, `state`, `country`, and `postalCode`.
-
+  
   `photo`
   Optional. Selfie/photo URL if available.
-
+  
   ## Expected Success Response
-
+  
   ```json
   {
     "message": "Tier upgrade completed successfully",
     "user": {
-      "authTier": "tier_2",
+      "authTier": "tier_3",
       "kycLevel": 1
     },
     "mapleradCustomer": {

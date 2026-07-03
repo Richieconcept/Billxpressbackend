@@ -21,18 +21,22 @@ auth:bearer {
 
 body:json {
   {
-    "resetCode": "12345",
-    "newTransactionPin": "5678",
-    "confirmTransactionPin": "5678"
+    "resetCode": "53634",
+    "newTransactionPin": "5566",
+    "confirmTransactionPin": "5566"
   }
+}
+
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTM3ZWEyMzI0M2YyYmNiNWM0ODI5YWUiLCJyb2xlIjoidXNlciIsImF1dGhUaWVyIjoidGllcl8xIiwiaWF0IjoxNzgyMDYwMDExLCJleHAiOjE3ODI2NjQ4MTF9.DG2RX61bNFrFpwuDhup5V76AJ74SRSzooJJ52FDRun0
 }
 
 docs {
   # Reset My Transaction PIN
-
+  
   Resets the logged-in user's 4-digit transaction PIN using the code sent to their email.
-
+  
   This endpoint does not require the old transaction PIN.
-
+  
   `resetCode` can also be sent as `resetToken`, `code`, or `otp` if the mobile app already uses one of those field names.
 }

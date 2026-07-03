@@ -6,21 +6,79 @@ meta {
 docs {
   # Data Service
 
-  Data endpoints are separated here so frontend can easily find data plan and data purchase requests.
+  BillXpress exposes one stable frontend API while the backend can route each
+  network to a different provider.
 
-  Public frontend endpoints:
+  ## Current Recommended Provider Routing
 
   ```txt
-  GET  /api/v1/services/data/plans
+  MTN     -> SMEAPI
+  AIRTEL  -> SME Plug
+  GLO     -> SME Plug
+  9MOBILE -> SME Plug
+  ```
+
+  Admin can switch any network between configured providers without requiring a
+  frontend release. For example, MTN can switch from SMEAPI to SME Plug and back
+  again. Each provider keeps its own enabled plans and BillXpress prices.
+
+  ## Frontend Endpoints
+
+  ```txt
+  GET  /api/v1/services/data/plans?network=MTN&type=SME
   POST /api/v1/services/data/purchase
   ```
 
-  Admin settings endpoints:
+  Both require the logged-in user's JWT.
+
+  The frontend must:
+
+  1. Fetch plans from BillXpress. Never call SMEAPI or SME Plug directly.
+  2. Filter by `network` and optionally `type`.
+  3. Display `sellingPrice`.
+  4. Save/send the returned plan `id`, not a hard-coded provider plan ID.
+  5. Send the selected plan `id`, recipient phone, and transaction PIN to the
+     purchase endpoint.
+  6. Refresh wallet and transaction history after success or failure.
+  7. Never debit, credit, calculate markup, or refund on the frontend.
+
+  ## Admin Endpoints
 
   ```txt
   GET   /api/v1/admin/services/data/settings
   PATCH /api/v1/admin/services/data/settings
+  POST  /api/v1/admin/services/data/plans/sync
+  GET   /api/v1/admin/services/data/plans
+  PATCH /api/v1/admin/services/data/plans/:planId
   ```
 
-  The backend fetches live plans from the active provider, applies BillXpress markup, debits wallet on purchase, and refunds automatically if provider purchase fails.
+  ## Catalogue And Pricing Rules
+
+  SMEAPI and SME Plug are catalogue-backed providers:
+
+  - synchronize each provider separately;
+  - new plans start disabled;
+  - admin can set a fixed `ourPrice` and enable a plan;
+  - when `ourPrice` exists, it is the exact customer selling price;
+  - when `ourPrice` is empty, percentage/tier pricing remains the fallback;
+  - synchronization updates provider prices and availability without deleting
+    BillXpress price, type, or enabled status;
+  - customers only receive plans that are enabled, provider-available, and
+    belong to the provider currently selected for that network.
+
+  ## Safe Provider Switching
+
+  Switching a network does not delete configuration.
+
+  Example:
+
+  1. SMEAPI MTN plans are synchronized, priced, and enabled.
+  2. SME Plug MTN plans are synchronized, priced, and enabled separately.
+  3. Admin sets `networkProviders.MTN` to `smeapi`.
+  4. Customers see SMEAPI MTN plans.
+  5. Admin changes only `networkProviders.MTN` to `smeplug`.
+  6. Customers immediately see the previously configured SME Plug MTN plans.
+  7. Switching back restores the previously configured SMEAPI MTN plans.
+
+  Frontend routes and payloads remain unchanged throughout.
 }

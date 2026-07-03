@@ -1,0 +1,61 @@
+meta {
+  name: Banking
+  seq: 3
+}
+
+docs {
+  # Banking Endpoints
+
+  This folder contains BillXpress banking features:
+
+  - permanent virtual accounts
+  - one-time funding accounts
+  - bank transfer bank lists and suggestions
+  - account name resolution
+  - sending money to bank accounts
+  - funding settings
+  - provider webhooks
+
+  ## Frontend Rule
+
+  The frontend should call only BillXpress backend endpoints. Do not call PocketFi, Monnify, Maplerad, or any provider API directly from the app.
+
+  ## Funding Flow
+
+  Permanent account:
+
+  ```txt
+  GET  /api/v1/wallet/virtual-account
+  POST /api/v1/wallet/virtual-account
+  ```
+
+  One-time funding account:
+
+  ```txt
+  POST /api/v1/wallet/funding-intents
+  POST /api/v1/wallet/funding-intents/:fundingIntentId/confirm
+  ```
+
+  ## Transfer Flow
+
+  ```txt
+  GET  /api/v1/wallet/transfers/banks
+  POST /api/v1/wallet/transfers/suggest-banks
+  POST /api/v1/wallet/transfers/resolve-account
+  POST /api/v1/wallet/transfers
+  ```
+
+  User flow:
+
+  1. User enters account number.
+  2. App may call bank suggestion endpoint.
+  3. User selects bank.
+  4. App calls resolve account endpoint.
+  5. App displays account name.
+  6. User confirms with transaction PIN.
+  7. Backend debits wallet and sends money through Maplerad.
+
+  ## Important
+
+  The backend endpoint URLs still start with `/api/v1/wallet` for now. This folder is only a documentation reorganization so frontend developers can find banking requests faster.
+}
