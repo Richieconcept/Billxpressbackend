@@ -1,11 +1,13 @@
 import DataServiceSetting from "../models/dataServiceSetting.model.js";
 import DataPlan from "../models/dataPlan.model.js";
+import Transaction from "../models/transaction.model.js";
 import User from "../models/user.model.js";
 import {
   creditWallet,
   debitWallet,
   fromMinorUnit,
   generateTransactionReference,
+  getOrCreateWallet,
   serializeTransaction,
   serializeWallet,
   toMinorUnit,
@@ -17,7 +19,7 @@ import { getPublicProviderFailure } from "./providerFailure.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
 const DATA_NETWORKS = ["MTN", "AIRTEL", "GLO", "9MOBILE"];
-const CATALOG_PROVIDERS = new Set(["smeapi", "smeplug"]);
+const CATALOG_PROVIDERS = new Set(["smeapi", "smeplug", "ujaydata"]);
 
 const normalizePricingTiers = (tiers = []) =>
   (Array.isArray(tiers) ? tiers : [])
@@ -573,18 +575,18 @@ const classifyProviderStatus = (response) => {
   }
 
   if (
+    /\b(failed|fail|declined|rejected|cancelled|canceled)\b/.test(text) ||
+    /\b(invalid|incorrect|not available|unavailable|disabled)\b/.test(text)
+  ) {
+    return "failed";
+  }
+
+  if (
     /\b(pending|processing|queued|initiated|in progress|timedout|timed out)\b/.test(
       text
     )
   ) {
     return "pending";
-  }
-
-  if (
-    /\b(failed|fail|declined|rejected|cancelled|canceled)\b/.test(text) ||
-    /\b(invalid|incorrect|not available|unavailable|disabled)\b/.test(text)
-  ) {
-    return "failed";
   }
 
   return "unknown";
@@ -932,6 +934,129 @@ export const purchaseDataForUser = async ({
     throw error;
   }
 };
+
+export const reconcileDataTransaction = async (reference) => {
+  const transaction = await Transaction.findOne({
+    $or: [{ reference }, { providerReference: reference }],
+    type: "service_payment",
+    direction: "debit",
+    "metadata.service": "data",
+  });
+
+  if (!transaction) {
+    const error = new Error("Data transaction was not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const reversalReference = `${transaction.reference}_REV`;
+  const existingReversal = await Transaction.findOne({
+    reference: reversalReference,
+    type: "reversal",
+    direction: "credit",
+  });
+
+  if (existingReversal) {
+    transaction.status = "reversed";
+    await transaction.save();
+    return {
+      status: "reversed",
+      transaction,
+      refundTransaction: existingReversal,
+      wallet: await getOrCreateWallet(transaction.user),
+    };
+  }
+
+  if (transaction.status === "successful" || transaction.status === "reversed") {
+    return { status: transaction.status, transaction };
+  }
+
+  if (!transaction.providerReference) {
+    const error = new Error("Data transaction has no provider reference");
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const provider = getDataProvider(transaction.provider);
+  const providerResponse = await provider.checkTransactionStatus(
+    transaction.providerReference
+  );
+  const providerStatus = classifyProviderStatus(providerResponse);
+
+  transaction.metadata = {
+    ...transaction.metadata,
+    providerReconciliation: {
+      status: providerStatus,
+      response: providerResponse,
+      checkedAt: new Date().toISOString(),
+    },
+  };
+
+  if (providerStatus === "successful") {
+    transaction.status = "successful";
+    await transaction.save();
+    return { status: "successful", transaction, providerResponse };
+  }
+
+  if (providerStatus === "pending" || providerStatus === "unknown") {
+    transaction.status = "pending";
+    await transaction.save();
+    return { status: "pending", transaction, providerResponse };
+  }
+
+  const refundResult = await creditWallet({
+    userId: transaction.user,
+    amountInMinorUnit: transaction.amount,
+    walletType: transaction.walletType,
+    type: "reversal",
+    reference: reversalReference,
+    provider: transaction.provider,
+    narration: `Refund for failed data purchase: ${transaction.metadata?.plan?.network || ""} ${transaction.metadata?.plan?.name || ""}`.trim(),
+    metadata: {
+      service: "data",
+      originalReference: transaction.reference,
+      providerReference: transaction.providerReference,
+      providerResponse,
+    },
+  });
+
+  transaction.status = "reversed";
+  await transaction.save();
+
+  await createNotificationBestEffort({
+    userId: transaction.user,
+    title: "Data purchase refunded",
+    message: "Your failed data purchase has been refunded to your wallet.",
+    type: "service_purchase_refunded",
+    channel: "both",
+    priority: "normal",
+    data: {
+      service: "data",
+      reference: transaction.reference,
+      refundReference: refundResult.transaction.reference,
+      provider: transaction.provider,
+    },
+  });
+
+  return {
+    status: "reversed",
+    transaction,
+    refundTransaction: refundResult.transaction,
+    wallet: refundResult.wallet,
+    providerResponse,
+  };
+};
+
+export const serializeDataReconciliationResult = (result) => ({
+  status: result.status,
+  transaction: serializeTransaction(result.transaction),
+  refundTransaction: result.refundTransaction
+    ? serializeTransaction(result.refundTransaction)
+    : undefined,
+  wallet: result.wallet ? serializeWallet(result.wallet) : undefined,
+  providerResponse:
+    process.env.NODE_ENV === "production" ? undefined : result.providerResponse,
+});
 
 export const serializeDataPurchaseResult = (result) => ({
   status: result.status,

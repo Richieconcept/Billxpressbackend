@@ -32,8 +32,9 @@ vars:pre-request {
 docs {
   # Synchronize Provider Plans
   
-  Fetches the current plan catalogue from SME Plug or SMEAPI and saves it in
-  BillXpress. Send `"provider": "smeplug"` or `"provider": "smeapi"`.
+  Fetches the current plan catalogue from SME Plug, SMEAPI, or UjayData and
+  saves it in BillXpress. Send `"provider": "smeplug"`, `"provider": "smeapi"`,
+  or `"provider": "ujaydata"`.
 
   New plans are created with `isEnabled: false` and `ourPrice: null`. A later
   synchronization updates provider/network prices but preserves our price,

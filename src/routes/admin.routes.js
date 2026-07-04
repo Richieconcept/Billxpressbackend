@@ -20,6 +20,7 @@ import {
 import {
   getAdminDataPlans,
   getAdminDataSettings,
+  reconcileAdminDataTransaction,
   syncAdminDataPlans,
   updateAdminDataPlanById,
   updateAdminDataSettings,
@@ -126,6 +127,12 @@ router.post(
   protect,
   authorizeRoles("admin"),
   syncAdminDataPlans
+);
+router.post(
+  "/services/data/transactions/:reference/reconcile",
+  protect,
+  authorizeRoles("admin"),
+  reconcileAdminDataTransaction
 );
 router.patch(
   "/services/data/plans/:planId",

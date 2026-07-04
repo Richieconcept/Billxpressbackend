@@ -3,7 +3,9 @@ import {
   getOrCreateDataServiceSetting,
   listAdminDataPlans,
   purchaseDataForUser,
+  reconcileDataTransaction,
   serializeAdminDataPlan,
+  serializeDataReconciliationResult,
   serializeDataPurchaseResult,
   serializeDataServiceSetting,
   serializeFailedDataPurchase,
@@ -104,6 +106,22 @@ export const updateAdminDataPlanById = async (req, res) => {
     });
   } catch (error) {
     sendDataServiceError(res, "Could not update data plan", error);
+  }
+};
+
+export const reconcileAdminDataTransaction = async (req, res) => {
+  try {
+    const result = await reconcileDataTransaction(req.params.reference);
+
+    res.json({
+      message:
+        result.status === "reversed"
+          ? "Failed data purchase refunded successfully"
+          : `Data transaction is ${result.status}`,
+      ...serializeDataReconciliationResult(result),
+    });
+  } catch (error) {
+    sendDataServiceError(res, "Could not reconcile data transaction", error);
   }
 };
 
