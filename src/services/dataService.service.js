@@ -19,7 +19,12 @@ import { getPublicProviderFailure } from "./providerFailure.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
 const DATA_NETWORKS = ["MTN", "AIRTEL", "GLO", "9MOBILE"];
-const CATALOG_PROVIDERS = new Set(["smeapi", "smeplug", "ujaydata"]);
+const CATALOG_PROVIDERS = new Set([
+  "smeapi",
+  "smeplug",
+  "ujaydata",
+  "ogdams",
+]);
 
 const normalizePricingTiers = (tiers = []) =>
   (Array.isArray(tiers) ? tiers : [])
@@ -533,6 +538,7 @@ const findProviderPlan = (plans, planId) =>
 
 const extractProviderReference = (response) =>
   response?.data?.reference ||
+  response?.data?.ref ||
   response?.data?.transaction_id ||
   response?.data?.transactionId ||
   response?.transaction_id ||
@@ -978,6 +984,15 @@ export const reconcileDataTransaction = async (reference) => {
   }
 
   const provider = getDataProvider(transaction.provider);
+
+  if (typeof provider.checkTransactionStatus !== "function") {
+    const error = new Error(
+      `${transaction.provider} does not provide a transaction-status endpoint`
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
   const providerResponse = await provider.checkTransactionStatus(
     transaction.providerReference
   );

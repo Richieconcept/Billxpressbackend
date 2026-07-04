@@ -1,10 +1,12 @@
 import autopilotProvider from "./autopilot.provider.js";
+import ogdamsProvider from "./ogdams.provider.js";
 import smeapiProvider from "./smeapi.provider.js";
 import smeplugProvider from "./smeplug.provider.js";
 import ujaydataProvider from "./ujaydata.provider.js";
 
 const providers = {
   autopilot: autopilotProvider,
+  ogdams: ogdamsProvider,
   smeapi: smeapiProvider,
   smeplug: smeplugProvider,
   ujaydata: ujaydataProvider,

@@ -24,7 +24,7 @@ const pricingTierSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const providerNames = ["smeapi", "ujaydata", "autopilot", "smeplug"];
+const providerNames = ["smeapi", "ujaydata", "autopilot", "smeplug", "ogdams"];
 
 const networkProviderSchema = new mongoose.Schema(
   {
