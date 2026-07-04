@@ -530,9 +530,13 @@ const findProviderPlan = (plans, planId) =>
   );
 
 const extractProviderReference = (response) =>
+  response?.data?.reference ||
+  response?.data?.transaction_id ||
+  response?.data?.transactionId ||
   response?.transaction_id ||
   response?.transactionId ||
   response?.reference ||
+  response?.ref ||
   response?.ident ||
   response?.id ||
   null;
@@ -553,6 +557,12 @@ const classifyProviderStatus = (response) => {
     response?.msg,
     response?.description,
     response?.error,
+    response?.current_status,
+    response?.response,
+    response?.data?.current_status,
+    response?.data?.status,
+    response?.data?.message,
+    response?.data?.msg,
   ]
     .filter(Boolean)
     .join(" ")
@@ -560,6 +570,14 @@ const classifyProviderStatus = (response) => {
 
   if (text.includes("successful") || /\bsuccess\b/.test(text)) {
     return "successful";
+  }
+
+  if (
+    /\b(pending|processing|queued|initiated|in progress|timedout|timed out)\b/.test(
+      text
+    )
+  ) {
+    return "pending";
   }
 
   if (
@@ -832,6 +850,29 @@ export const purchaseDataForUser = async ({
           wallet: debitResult.wallet,
           transaction: debitResult.transaction,
           providerResponse: confirmation.response,
+        };
+      }
+
+      if (
+        error.isProviderPending === true ||
+        confirmation.status === "pending"
+      ) {
+        debitResult.transaction.status = "pending";
+        debitResult.transaction.metadata = {
+          ...debitResult.transaction.metadata,
+          providerRequest: error.requestPayload,
+          providerResponse: error.providerResponse,
+          providerConfirmation: confirmation,
+        };
+        await debitResult.transaction.save();
+
+        return {
+          status: "pending",
+          message: "Data purchase is still processing",
+          plan: pricedPlan,
+          wallet: debitResult.wallet,
+          transaction: debitResult.transaction,
+          providerResponse: confirmation.response || error.providerResponse,
         };
       }
     }

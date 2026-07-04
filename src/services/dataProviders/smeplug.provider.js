@@ -197,12 +197,31 @@ export const purchaseData = async ({ plan, phone, reference }) => {
     method: "POST",
     body: payload,
   });
+  const currentStatus = String(
+    response?.data?.current_status ?? response?.current_status ?? ""
+  ).toLowerCase();
+  const message = String(
+    response?.data?.msg ?? response?.message ?? response?.msg ?? ""
+  );
+
+  if (
+    ["pending", "processing", "queued", "initiated"].includes(currentStatus) ||
+    /\b(timedout|timed out|pending|processing|queued)\b/i.test(message)
+  ) {
+    const error = new Error(message || "Data purchase is still processing");
+    error.statusCode = 202;
+    error.providerResponse = response;
+    error.requestPayload = payload;
+    error.isProviderPending = true;
+    error.isFinalProviderFailure = false;
+    throw error;
+  }
 
   return {
     provider: PROVIDER,
     providerReference:
       response?.data?.reference || response?.reference || reference,
-    message: response?.data?.msg || response?.message || "Data purchase submitted",
+    message: message || "Data purchase submitted",
     raw: response,
     requestPayload: payload,
   };

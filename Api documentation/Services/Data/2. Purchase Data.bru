@@ -21,14 +21,14 @@ auth:bearer {
 
 body:json {
   {
-    "planId": "409",
-    "phone": "08125128766",
+    "planId": "353",
+    "phone": "08152665177",
     "transactionPin": "1234"
   }
 }
 
 vars:pre-request {
-  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4Mjg0MTQxOCwiZXhwIjoxNzgzNDQ2MjE4fQ.FQBeezvMHRnykuCs6GuLBNOAO1Nxrm7mTFWc62yTp0w
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MzE1NDU4NCwiZXhwIjoxNzgzNzU5Mzg0fQ.zIn7cE2QpTibi02u8GeluozyJbl4vWVGGMCtl_7yu6I
 }
 
 docs {
@@ -65,7 +65,7 @@ docs {
   5. Calls provider.
   6. If provider fails, wallet is refunded automatically.
   7. Sends notification/email.
-
+  
   The frontend does not send a provider or network. The backend derives both
   from the selected plan and current admin routing. This prevents users from
   bypassing a provider switch.
@@ -133,27 +133,27 @@ docs {
   Important: `provider_insufficient_funds` is not the user's wallet problem. It means the upstream data provider account or service cannot complete the purchase at that moment.
   
   The frontend should not tell the user to fund their BillXpress wallet for this error. Show a service-unavailable message and let them try again later.
-
+  
   ## Other Frontend Error Handling
-
+  
   `400`
   Invalid phone, missing plan/PIN, or unsupported input. Show the backend
   message beside the relevant field.
-
+  
   `401`
   Invalid session or transaction PIN. Do not retry automatically.
-
+  
   `404`
   Plan is no longer available. Refresh the plan list.
-
+  
   `409`
   Admin switched the network to another provider after the user loaded plans.
   Refresh plans and ask the user to select again.
-
+  
   `503`
   Data service is disabled or provider configuration is unavailable. Show a
   temporary unavailable state.
-
+  
   Never automatically repeat a purchase request after a timeout. Refresh
   transaction history first to avoid duplicate delivery.
 }
