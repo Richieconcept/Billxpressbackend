@@ -160,6 +160,20 @@ export const resolveMapleradInstitutionAccount = async ({
   };
 };
 
+export const verifyMapleradTransaction = (transactionId) => {
+  const normalizedTransactionId = String(transactionId || "").trim();
+
+  if (!normalizedTransactionId) {
+    const error = new Error("Maplerad transaction ID is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return requestMaplerad(
+    `/transactions/verify/${encodeURIComponent(normalizedTransactionId)}`
+  );
+};
+
 export const createMapleradCustomer = async ({
   firstName,
   lastName,

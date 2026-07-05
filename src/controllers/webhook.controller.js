@@ -14,6 +14,7 @@ import {
 import { calculateFundingFee } from "../services/fundingFee.service.js";
 import { createNotificationBestEffort } from "../services/notification.service.js";
 import { processFirstDepositReferralRewardBestEffort } from "../services/referral.service.js";
+import { verifyMapleradTransaction } from "../services/maplerad.service.js";
 
 const getRawPayload = (req) => {
   if (Buffer.isBuffer(req.body)) {
@@ -915,23 +916,45 @@ export const handleMapleradWebhook = async (req, res) => {
   const payload = Buffer.isBuffer(req.body)
     ? JSON.parse(rawPayload || "{}")
     : req.body || {};
-  const {
-    event,
-    status,
-    providerReference,
-    paymentReference,
-    accountId,
-    accountNumber,
-    amount,
-  } = extractMapleradFundingDetails(payload);
+  const initialFundingDetails = extractMapleradFundingDetails(payload);
   const webhookEvent = await WebhookEvent.create({
     provider: "maplerad",
     signature,
-    eventReference: providerReference || paymentReference || accountId,
+    eventReference:
+      initialFundingDetails.providerReference ||
+      initialFundingDetails.paymentReference ||
+      initialFundingDetails.accountId,
     payload,
   });
 
   try {
+    let fundingDetails = initialFundingDetails;
+
+    if (
+      fundingDetails.event === "collection.successful" &&
+      fundingDetails.providerReference &&
+      !fundingDetails.accountId &&
+      !fundingDetails.accountNumber
+    ) {
+      const verification = await verifyMapleradTransaction(
+        fundingDetails.providerReference
+      );
+      fundingDetails = extractMapleradFundingDetails({
+        ...payload,
+        data: verification.data || verification,
+      });
+    }
+
+    const {
+      event,
+      status,
+      providerReference,
+      paymentReference,
+      accountId,
+      accountNumber,
+      amount,
+    } = fundingDetails;
+
     if (
       event &&
       ![
