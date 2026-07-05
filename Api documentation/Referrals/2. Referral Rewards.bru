@@ -85,7 +85,8 @@ docs {
   Percentage used to calculate the reward.
 
   `rewardAmount`
-  Amount credited to the logged-in user's referral wallet.
+  Amount credited to the logged-in user's referral wallet. This is capped at
+  NGN 300 per referred user.
 
   `status`
   `successful` means the referral reward was credited. `failed` means the backend tried but could not complete reward crediting.
@@ -93,6 +94,11 @@ docs {
   ## Frontend Notes
 
   Show this as a list of referral earnings.
+
+  A `rewardAmount` below NGN 300 is immediately redeemable. A `rewardAmount` of
+  NGN 300 may be locked until that referred user buys at least NGN 1,000 of
+  services. Use the aggregate lock fields from `GET /api/v1/referrals/summary`
+  for the redeem screen; this endpoint does not return per-row unlock status.
 
   Example row:
 

@@ -82,7 +82,9 @@ docs {
   ## Response Field Meaning
 
   `qualified`
-  `true` means this referred user has made their first successful deposit and reward has been created.
+  `true` means this referred user has made their first successful deposit and
+  the reward has been created. It does not mean a capped NGN 300 reward has
+  passed the service-purchase unlock rule.
 
   `reward`
   Referral reward record. It is `null` if the referred user has not qualified yet.
@@ -95,4 +97,8 @@ docs {
 
   - `qualified: true` -> `Reward earned`
   - `qualified: false` -> `Waiting for first deposit`
+
+  Do not use `qualified` to decide whether money can be redeemed. Use
+  `withdrawableReferralBalance`, `lockedReferralBalance`, and
+  `lockedRewardsCount` from `GET /api/v1/referrals/summary`.
 }

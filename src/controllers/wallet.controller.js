@@ -32,6 +32,10 @@ import {
   getTransferBanks,
   suggestTransferBanks,
 } from "../services/transferBank.service.js";
+import {
+  getMinimumReferralRedeemAmountInMinorUnit,
+  getReferralRedemptionEligibility,
+} from "../services/referral.service.js";
 
 const sendWalletError = (res, publicMessage, error) => {
   res.status(error.statusCode || 500).json({
@@ -241,6 +245,38 @@ export const redeemReferralBalance = async (req, res) => {
     const user = await User.findById(req.user._id).select("+transactionPin");
 
     await verifyTransactionPin(user, req.body?.transactionPin);
+
+    const minimumRedeemAmount = getMinimumReferralRedeemAmountInMinorUnit();
+    if (amount < minimumRedeemAmount) {
+      const error = new Error(
+        `The minimum referral withdrawal is NGN ${fromMinorUnit(
+          minimumRedeemAmount
+        )}.`
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const [wallet, eligibility] = await Promise.all([
+      getOrCreateWallet(user._id),
+      getReferralRedemptionEligibility(user._id),
+    ]);
+    const withdrawableAmount = Math.max(
+      wallet.referralBalance - eligibility.lockedAmountInMinorUnit,
+      0
+    );
+
+    if (amount > withdrawableAmount) {
+      const error = new Error(
+        eligibility.unqualifiedReferrals > 0
+          ? `A NGN 300 reward earned from one referred user is locked until that user buys a service worth at least NGN ${fromMinorUnit(
+              eligibility.minimumServicePurchaseInMinorUnit
+            )}. You can currently redeem NGN ${fromMinorUnit(withdrawableAmount)}.`
+          : "Insufficient referral balance"
+      );
+      error.statusCode = 400;
+      throw error;
+    }
 
     const reference = generateTransactionReference("REF");
     const debitResult = await debitWallet({

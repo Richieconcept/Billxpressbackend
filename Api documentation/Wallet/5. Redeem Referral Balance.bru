@@ -52,7 +52,9 @@ docs {
   ## Body Fields
   
   `amount`  
-  Required. Amount to move from referral wallet to main wallet. Users can redeem any positive amount they have earned.
+  Required. Amount to move from referral wallet to main wallet. Minimum is NGN
+  30 and it must not exceed `withdrawableReferralBalance` returned by Referral
+  Summary.
   
   `transactionPin`  
   Required. User's 4-digit transaction PIN.
@@ -100,10 +102,38 @@ docs {
     "message": "Insufficient wallet balance"
   }
   ```
+
+  Amount below NGN 30:
+
+  ```json
+  {
+    "message": "The minimum referral withdrawal is NGN 30."
+  }
+  ```
+
+  Requested amount includes a locked NGN 300 reward:
+
+  ```json
+  {
+    "message": "A NGN 300 reward earned from one referred user is locked until that user buys a service worth at least NGN 1000. You can currently redeem NGN 90."
+  }
+  ```
   
   ## Frontend Notes
   
-  Show the redeem button when `referralBalance` is greater than `0`.
+  Fetch `GET /api/v1/referrals/summary` before displaying the form.
+
+  Show or enable the redeem button when:
+
+  ```txt
+  withdrawableReferralBalance >= settings.minimumRedeemAmount
+  ```
+
+  Use `withdrawableReferralBalance`, not the total `referralBalance`, as the
+  maximum redeemable amount.
   
-  Referral earnings are credited from first-deposit referral rewards. If User B funds `NGN 1,000` for the first time after registering with User A's referral code, User A earns `3%`, which is `NGN 30`.
+  Referral earnings are 3% of the first successful deposit, capped at NGN 300
+  per referred user. Only a reward that reaches NGN 300 is locked. It unlocks
+  after that referred user successfully buys at least NGN 1,000 of services.
+  Smaller rewards from different users remain redeemable.
 }

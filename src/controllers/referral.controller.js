@@ -2,6 +2,7 @@ import ReferralReward from "../models/referralReward.model.js";
 import User from "../models/user.model.js";
 import Wallet from "../models/wallet.model.js";
 import {
+  getReferralRedemptionEligibility,
   getReferralRewardSettings,
   serializeReferralReward,
 } from "../services/referral.service.js";
@@ -21,19 +22,26 @@ const getReferralCodeQuery = (referralCode) =>
 export const getReferralSummary = async (req, res) => {
   try {
     const referralCode = req.user.referralCode;
-    const [wallet, referredUsersCount, successfulRewards] = await Promise.all([
+    const [wallet, referredUsersCount, successfulRewards, eligibility] =
+      await Promise.all([
       Wallet.findOne({ user: req.user._id }),
       User.countDocuments({ referredBy: getReferralCodeQuery(referralCode) }),
       ReferralReward.find({
         referrer: req.user._id,
         status: "successful",
       }),
+      getReferralRedemptionEligibility(req.user._id),
     ]);
     const totalReferralEarned = successfulRewards.reduce(
       (total, reward) => total + reward.rewardAmount,
       0
     );
     const qualifiedRewardsCount = successfulRewards.length;
+    const referralBalance = wallet?.referralBalance || 0;
+    const lockedReferralBalance = Math.min(
+      eligibility.lockedAmountInMinorUnit,
+      referralBalance
+    );
 
     res.json({
       referral: {
@@ -46,7 +54,12 @@ export const getReferralSummary = async (req, res) => {
           0
         ),
         totalReferralEarned: fromMinorUnit(totalReferralEarned),
-        referralBalance: fromMinorUnit(wallet?.referralBalance || 0),
+        referralBalance: fromMinorUnit(referralBalance),
+        withdrawableReferralBalance: fromMinorUnit(
+          Math.max(referralBalance - lockedReferralBalance, 0)
+        ),
+        lockedReferralBalance: fromMinorUnit(lockedReferralBalance),
+        lockedRewardsCount: eligibility.unqualifiedReferrals,
       },
     });
   } catch (error) {
