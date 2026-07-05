@@ -1024,7 +1024,9 @@ export const handleMapleradWebhook = async (req, res) => {
     });
 
     if (!intent) {
-      if (event === "account.transaction") {
+      if (
+        ["account.transaction", "collection.successful"].includes(event)
+      ) {
         const result = await creditMapleradDedicatedAccountFunding({
           payload,
           accountId,
