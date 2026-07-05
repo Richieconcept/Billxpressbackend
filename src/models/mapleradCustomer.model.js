@@ -49,6 +49,41 @@ const mapleradCustomerSchema = new mongoose.Schema(
       default: null,
     },
 
+    tier1AttemptStatus: {
+      type: String,
+      enum: ["idle", "processing", "failed", "successful"],
+      default: "idle",
+      index: true,
+    },
+
+    tier1LastAttemptAt: {
+      type: Date,
+      default: null,
+    },
+
+    tier1AttemptFingerprint: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    tier1FailureReason: {
+      type: String,
+      default: null,
+    },
+
+    tier1FeeTransaction: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Transaction",
+      default: null,
+    },
+
+    tier1FeeAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     providerResponse: {
       type: mongoose.Schema.Types.Mixed,
       default: {},

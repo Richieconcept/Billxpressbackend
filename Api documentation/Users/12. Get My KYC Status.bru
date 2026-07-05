@@ -47,7 +47,24 @@ docs {
       "authTier": "tier_1",
       "kycLevel": 0
     },
-    "mapleradCustomer": null
+    "mapleradCustomer": null,
+    "settings": {
+      "bvnVerificationFee": 100,
+      "currency": "NGN"
+    }
   }
+  ```
+
+  ## Frontend Notes
+
+  Show `settings.bvnVerificationFee` before the user submits KYC. The user must
+  have at least this amount in their main wallet.
+
+  Suggested confirmation text:
+
+  ```txt
+  NGN 100 will be charged only if BVN verification succeeds. A temporary debit
+  is refunded automatically if Maplerad rejects the verification. Confirm that
+  your name and date of birth exactly match your BVN record.
   ```
 }

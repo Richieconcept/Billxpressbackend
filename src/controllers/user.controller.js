@@ -73,11 +73,14 @@ export const getMyProfile = async (req, res) => {
 
 export const getMyKycStatus = async (req, res) => {
   try {
-    const { customer } = await getMapleradKycStatusForUser(req.user._id);
+    const { customer, settings } = await getMapleradKycStatusForUser(
+      req.user._id
+    );
 
     res.json({
       user: sanitizeUser(req.user),
       mapleradCustomer: serializeMapleradCustomer(customer),
+      settings,
     });
   } catch (error) {
     sendUserError(res, "Could not fetch KYC status", error);
