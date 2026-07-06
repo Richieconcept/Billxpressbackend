@@ -31,6 +31,10 @@ const cardSettingSchema = new mongoose.Schema(
       type: feeSchema,
       default: () => ({ percent: 0, flat: 0 }),
     },
+    creationFeeUsd: {
+      type: feeSchema,
+      default: () => ({ percent: 0, flat: 0 }),
+    },
     providerCreationFee: {
       type: feeSchema,
       default: () => ({ percent: 0, flat: 0 }),

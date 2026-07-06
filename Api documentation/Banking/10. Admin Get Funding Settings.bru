@@ -61,28 +61,29 @@ docs {
         "userReceivesFullAmount": true,
         "message": "Funding charge is 1%. The user wallet is credited with the full transferred amount."
       },
-      {
-        "provider": "maplerad",
-        "percent": 1,
-        "flat": 0,
-        "creditPolicy": "gross",
-        "paidBy": "platform",
-        "userReceivesFullAmount": true,
-        "message": "Funding charge is 1%. The user wallet is credited with the full transferred amount."
+        {
+          "provider": "maplerad",
+          "percent": 0.5,
+          "flat": 0,
+          "cap": 500,
+          "creditPolicy": "gross",
+          "paidBy": "platform",
+          "userReceivesFullAmount": true,
+          "message": "Funding charge is 0.5%, capped at NGN 500. The user wallet is credited with the full transferred amount."
       }
     ]
   }
   ```
 
-  ## Important Rule
+  ## Credit Rule
 
-  The user always receives the full amount they transfer.
+  Read `creditPolicy` for each provider. `gross` means the platform pays the fee and the full transfer is credited. `net` means the fee is deducted before wallet credit.
 
-  Example:
+  Maplerad pay-in example:
 
   - User transfers: `N2,000`
-  - Funding charge setting: `1%`
-  - Fee shown/accounted for: `N20`
+  - Funding charge setting: `0.5%`, capped at `N500`
+  - Fee: `N10`
   - Wallet credit: `N2,000`
 
   The frontend should display the `message` from `feePolicy` when showing funding account details.

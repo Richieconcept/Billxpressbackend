@@ -30,6 +30,11 @@ docs {
   For users, display `quote.exchangeRate`. Creation quotes also repeat it at
   `quote.summary.exchangeRate`. Its `includesMarkup` field is `true`.
 
+  Card creation charges are configured in USD and converted to NGN using that
+  same displayed customer rate. Display both
+  `quote.summary.charges.cardCreationFeeUsd` and
+  `quote.summary.charges.cardCreationFee`; never convert them in the frontend.
+
   ## Monthly Maintenance Lifecycle
 
   The backend sends email and in-app reminders approximately 7, 3, and 1 day

@@ -6,18 +6,18 @@ let cachedBankList = null;
 let cachedAt = 0;
 
 const POPULAR_BANK_SUGGESTION_RULES = [
-  { name: "OPay", slug: "opay", nubanCode: "999992", mapleradBankCode: "760" },
-  { name: "PalmPay", slug: "palmpay", nubanCode: "999991", mapleradBankCode: "789" },
-  { name: "Moniepoint MFB", slug: "moniepoint", nubanCode: "50515", mapleradBankCode: "526" },
-  { name: "Kuda", slug: "kuda", nubanCode: "50211", mapleradBankCode: "420" },
-  { name: "Access Bank", slug: "access", nubanCode: "044", mapleradBankCode: "262" },
-  { name: "Guaranty Trust Bank", slug: "gtbank", nubanCode: "058", mapleradBankCode: "280" },
+  { name: "OPay", slug: "opay", aliases: ["opay", "o pay", "paycom"], nubanCode: "999992", mapleradBankCode: "760" },
+  { name: "PalmPay", slug: "palmpay", aliases: ["palmpay", "palm pay"], nubanCode: "999991", mapleradBankCode: "789" },
+  { name: "Moniepoint MFB", slug: "moniepoint", aliases: ["moniepoint", "monie point", "teamapt"], nubanCode: "50515", mapleradBankCode: "526" },
+  { name: "Kuda", slug: "kuda", aliases: ["kuda", "kuda mfb"], nubanCode: "50211", mapleradBankCode: "420" },
+  { name: "Access Bank", slug: "access", aliases: ["access", "access diamond", "diamond"], nubanCode: "044", mapleradBankCode: "262" },
+  { name: "Guaranty Trust Bank", slug: "gtbank", aliases: ["gtbank", "gt bank", "gtb", "guaranty trust"], nubanCode: "058", mapleradBankCode: "280" },
   { name: "Zenith Bank", slug: "zenith", nubanCode: "057", mapleradBankCode: "279" },
   { name: "Wema Bank", slug: "wema", nubanCode: "035", mapleradBankCode: "261" },
-  { name: "United Bank for Africa", slug: "uba", nubanCode: "033", mapleradBankCode: "260" },
+  { name: "United Bank for Africa", slug: "uba", aliases: ["uba", "united bank for africa"], nubanCode: "033", mapleradBankCode: "260" },
   { name: "Sterling Bank", slug: "sterling", nubanCode: "232", mapleradBankCode: "833" },
-  { name: "Stanbic IBTC Bank", slug: "stanbic-ibtc", nubanCode: "221", mapleradBankCode: "832" },
-  { name: "First City Monument Bank", slug: "fcmb", nubanCode: "214", mapleradBankCode: "830" },
+  { name: "Stanbic IBTC Bank", slug: "stanbic-ibtc", aliases: ["stanbic", "stanbic ibtc", "ibtc"], nubanCode: "221", mapleradBankCode: "832" },
+  { name: "First City Monument Bank", slug: "fcmb", aliases: ["fcmb", "first city monument"], nubanCode: "214", mapleradBankCode: "830" },
   { name: "Fidelity Bank", slug: "fidelity", nubanCode: "070", mapleradBankCode: "286" },
   { name: "Ecobank Nigeria", slug: "ecobank", nubanCode: "050", mapleradBankCode: "263" },
   { name: "Polaris Bank", slug: "polaris", nubanCode: "076", mapleradBankCode: "308" },
@@ -41,6 +41,27 @@ const makeSlug = (value) =>
   normalizeBankName(value)
     .replace(/\s+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+const getRuleSearchTerms = (rule) =>
+  [...(rule.aliases || []), rule.name, rule.slug]
+    .map(normalizeBankName)
+    .filter(Boolean);
+
+const scoreBankNameMatch = (rule, query) => {
+  const normalizedQuery = normalizeBankName(query);
+
+  if (!normalizedQuery) {
+    return 0;
+  }
+
+  return getRuleSearchTerms(rule).reduce((bestScore, term) => {
+    if (term === normalizedQuery) return Math.max(bestScore, 100);
+    if (term.startsWith(normalizedQuery)) return Math.max(bestScore, 80);
+    if (term.includes(normalizedQuery)) return Math.max(bestScore, 60);
+    if (normalizedQuery.includes(term)) return Math.max(bestScore, 50);
+    return bestScore;
+  }, 0);
+};
 
 const validateTransferAccountNumber = (accountNumber) => {
   const normalizedAccountNumber = String(accountNumber || "").trim();
@@ -135,31 +156,75 @@ export const getTransferBanks = async () => {
   };
 };
 
-export const suggestTransferBanks = async ({ accountNumber }) => {
-  const normalizedAccountNumber = validateTransferAccountNumber(accountNumber);
-  const suggestions = POPULAR_BANK_SUGGESTION_RULES.filter((rule) =>
-    passesNubanCheck({
-      accountNumber: normalizedAccountNumber,
-      nubanCode: rule.nubanCode,
-    })
-  ).map((rule) => ({
-    name: rule.name,
-    slug: rule.slug,
-    bankCode: rule.mapleradBankCode,
-    mapleradBankCode: rule.mapleradBankCode,
-    availableForTransfer: true,
-    resolverProvider: "maplerad",
-    transferProvider: "maplerad",
-    confidence: "checksum",
-  }));
+export const suggestTransferBanks = async ({ accountNumber, query }) => {
+  const normalizedQuery = String(query || "").trim();
+  const rawAccountNumber = String(accountNumber || "").trim();
+  const normalizedAccountNumber =
+    rawAccountNumber.length === 10
+      ? validateTransferAccountNumber(rawAccountNumber)
+      : null;
+
+  if (!normalizedQuery && !normalizedAccountNumber) {
+    const error = new Error(
+      rawAccountNumber
+        ? "A valid 10 digit account number is required"
+        : "Bank name or a valid 10 digit account number is required"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const suggestions = POPULAR_BANK_SUGGESTION_RULES.map((rule, index) => {
+    const nameScore = scoreBankNameMatch(rule, normalizedQuery);
+    const checksumMatch = normalizedAccountNumber
+      ? passesNubanCheck({
+          accountNumber: normalizedAccountNumber,
+          nubanCode: rule.nubanCode,
+        })
+      : false;
+
+    return { rule, index, nameScore, checksumMatch };
+  })
+    .filter(({ nameScore, checksumMatch }) => nameScore > 0 || checksumMatch)
+    .sort(
+      (a, b) =>
+        b.nameScore - a.nameScore ||
+        Number(b.checksumMatch) - Number(a.checksumMatch) ||
+        a.index - b.index
+    )
+    .slice(0, 8)
+    .map(({ rule, nameScore, checksumMatch }) => ({
+      name: rule.name,
+      slug: rule.slug,
+      bankCode: rule.mapleradBankCode,
+      mapleradBankCode: rule.mapleradBankCode,
+      availableForTransfer: true,
+      resolverProvider: "maplerad",
+      transferProvider: "maplerad",
+      confidence:
+        nameScore === 100
+          ? "exact_name"
+          : nameScore > 0 && checksumMatch
+            ? "name_and_checksum"
+            : nameScore > 0
+              ? "name_search"
+              : "checksum",
+    }));
 
   return {
     accountNumber: normalizedAccountNumber,
+    query: normalizedQuery || null,
     suggestions,
     meta: {
-      method: "nuban_checksum",
+      method:
+        normalizedQuery && normalizedAccountNumber
+          ? "popular_name_and_nuban_checksum"
+          : normalizedQuery
+            ? "popular_name"
+            : "nuban_checksum",
       accountNameResolved: false,
       checkedBanks: POPULAR_BANK_SUGGESTION_RULES.length,
+      popularBanksOnly: true,
     },
   };
 };

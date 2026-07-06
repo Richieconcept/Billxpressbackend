@@ -64,7 +64,15 @@ export const serializeCardSetting = (setting) => ({
   isEnabled: setting.isEnabled,
   allowedBrands: setting.allowedBrands,
   defaultBrand: setting.defaultBrand,
-  creationFee: serializeFee(setting.creationFee),
+  creationFee: {
+    ...serializeFee(setting.creationFee),
+    currency: "NGN",
+    deprecated: true,
+  },
+  creationFeeUsd: {
+    ...serializeFee(setting.creationFeeUsd),
+    currency: "USD",
+  },
   providerCreationFee: serializeFee(setting.providerCreationFee),
   fundingFee: serializeFee(setting.fundingFee),
   providerFundingFee: serializeFee(setting.providerFundingFee),
@@ -162,6 +170,7 @@ export const updateCardSetting = async (payload, adminUserId) => {
   }
 
   updateFee(setting, "creationFee", payload.creationFee);
+  updateFee(setting, "creationFeeUsd", payload.creationFeeUsd);
   updateFee(setting, "providerCreationFee", payload.providerCreationFee);
   updateFee(setting, "fundingFee", payload.fundingFee);
   updateFee(setting, "providerFundingFee", payload.providerFundingFee);
@@ -239,6 +248,12 @@ export const serializeCardQuote = (quote) => {
   const targetAmount = fromMinorUnit(quote.targetAmount);
   const billxpressCreationFee =
     Number(pricing.billxpressCreationFee) || 0;
+  const billxpressCreationFeeUsd =
+    Number(pricing.billxpressCreationFeeUsd) || 0;
+  const providerCreationFeeUsd =
+    Number(pricing.providerCreationFeeUsd) || 0;
+  const totalCreationFeeUsd =
+    billxpressCreationFeeUsd + providerCreationFeeUsd;
   const providerCreationFee = Number(pricing.providerCreationFee) || 0;
   const billxpressFundingFee = Number(pricing.billxpressFundingFee) || 0;
   const providerFundingFee = Number(pricing.providerFundingFee) || 0;
@@ -328,6 +343,15 @@ export const serializeCardQuote = (quote) => {
             exchangeRate: serializedCustomerRate,
             charges: {
               cardCreationFee: fromMinorUnit(creationFee),
+              cardCreationFeeUsd: fromMinorUnit(
+                totalCreationFeeUsd
+              ),
+              billxpressCardCreationFeeUsd: fromMinorUnit(
+                billxpressCreationFeeUsd
+              ),
+              providerCardCreationFeeUsd: fromMinorUnit(
+                providerCreationFeeUsd
+              ),
               initialFundingFee: fromMinorUnit(fundingFee),
               exchangeMarkup: fromMinorUnit(quote.exchangeMarkup),
               total: fromMinorUnit(
@@ -397,6 +421,31 @@ const calculateProviderFeeInNgn = (providerFee, providerQuote) => {
   return Math.ceil(
     (feeInUsd * providerQuote.sourceAmount) / providerQuote.targetAmount
   );
+};
+
+const calculateUsdFeeAtCustomerRate = ({
+  feeConfig,
+  providerQuote,
+  exchangeMarkup,
+}) => {
+  const feeInUsd = calculateFee(providerQuote.targetAmount, feeConfig);
+
+  if (feeInUsd === 0 || providerQuote.targetAmount <= 0) {
+    return { feeInUsd: 0, feeInNgn: 0, customerRate: 0 };
+  }
+
+  const customerRate = Number(
+    (
+      (providerQuote.sourceAmount + exchangeMarkup) /
+      providerQuote.targetAmount
+    ).toFixed(2)
+  );
+
+  return {
+    feeInUsd,
+    feeInNgn: Math.ceil(feeInUsd * customerRate),
+    customerRate,
+  };
 };
 
 const calculateWithdrawalProviderFeeInNgn = (providerFee, providerQuote) => {
@@ -555,10 +604,16 @@ export const createCardCreationQuote = async ({
     targetCurrency: "USD",
     amountInMinorUnit,
   });
-  const billxpressCreationFee = calculateFee(
-    amountInMinorUnit,
-    setting.creationFee
+  const exchangeMarkup = Math.round(
+    (amountInMinorUnit * setting.fundingExchangeMarkupPercent) / 100
   );
+  const creationFeeResult = calculateUsdFeeAtCustomerRate({
+    feeConfig: setting.creationFeeUsd,
+    providerQuote,
+    exchangeMarkup,
+  });
+  const billxpressCreationFee = creationFeeResult.feeInNgn;
+  const billxpressCreationFeeUsd = creationFeeResult.feeInUsd;
   const billxpressFundingFee = calculateFee(
     amountInMinorUnit,
     setting.fundingFee
@@ -567,6 +622,10 @@ export const createCardCreationQuote = async ({
     setting.providerCreationFee,
     providerQuote
   );
+  const providerCreationFeeUsd = calculateFee(
+    providerQuote.targetAmount,
+    setting.providerCreationFee
+  );
   const providerFundingFee = calculateProviderFeeInNgn(
     setting.providerFundingFee,
     providerQuote
@@ -574,10 +633,6 @@ export const createCardCreationQuote = async ({
   const billxpressFee = billxpressCreationFee + billxpressFundingFee;
   const providerFee = providerCreationFee + providerFundingFee;
   const fee = billxpressFee + providerFee;
-  const exchangeMarkup = Math.round(
-    (amountInMinorUnit * setting.fundingExchangeMarkupPercent) / 100
-  );
-
   return CardQuote.create({
     user: userId,
     operation: "creation",
@@ -597,7 +652,10 @@ export const createCardCreationQuote = async ({
       providerFee,
       billxpressFee,
       billxpressCreationFee,
+      billxpressCreationFeeUsd,
+      creationFeeCustomerRate: creationFeeResult.customerRate,
       providerCreationFee,
+      providerCreationFeeUsd,
       billxpressFundingFee,
       providerFundingFee,
     },

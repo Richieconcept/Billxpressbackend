@@ -29,6 +29,10 @@ import {
   serializeFailedBankTransfer,
 } from "../services/bankTransfer.service.js";
 import {
+  getBankTransferQuote,
+  serializeBankTransferQuote,
+} from "../services/bankTransferFee.service.js";
+import {
   getTransferBanks,
   suggestTransferBanks,
 } from "../services/transferBank.service.js";
@@ -36,6 +40,10 @@ import {
   getMinimumReferralRedeemAmountInMinorUnit,
   getReferralRedemptionEligibility,
 } from "../services/referral.service.js";
+import {
+  calculateFundingFee,
+  serializeFundingFee,
+} from "../services/fundingFee.service.js";
 
 const sendWalletError = (res, publicMessage, error) => {
   res.status(error.statusCode || 500).json({
@@ -126,6 +134,35 @@ export const createFundingIntent = async (req, res) => {
   }
 };
 
+export const previewFundingFee = async (req, res) => {
+  try {
+    const amountInMinorUnit = toMinorUnit(req.body?.amount);
+
+    if (amountInMinorUnit <= 0) {
+      return res.status(400).json({
+        message: "Amount must be greater than zero",
+      });
+    }
+
+    const provider = String(req.body?.provider || "maplerad")
+      .trim()
+      .toLowerCase();
+    const result = await calculateFundingFee(amountInMinorUnit, provider);
+
+    res.json({
+      quote: {
+        provider,
+        transferAmount: fromMinorUnit(amountInMinorUnit),
+        fee: fromMinorUnit(result.fee),
+        walletCredit: fromMinorUnit(result.amountToReceive),
+        feePolicy: await serializeFundingFee(provider),
+      },
+    });
+  } catch (error) {
+    sendWalletError(res, "Could not calculate funding fee", error);
+  }
+};
+
 export const confirmFundingIntent = async (req, res) => {
   try {
     const result = await confirmFundingIntentStatus(
@@ -207,6 +244,7 @@ export const suggestTransferBankList = async (req, res) => {
   try {
     const result = await suggestTransferBanks({
       accountNumber: req.body?.accountNumber,
+      query: req.body?.query || req.body?.bankName,
     });
 
     res.json(result);
@@ -236,6 +274,15 @@ export const createBankTransfer = async (req, res) => {
     }
 
     sendWalletError(res, "Could not send transfer", error);
+  }
+};
+
+export const previewBankTransfer = async (req, res) => {
+  try {
+    const quote = await getBankTransferQuote(req.body?.amount);
+    res.json({ quote: serializeBankTransferQuote(quote) });
+  } catch (error) {
+    sendWalletError(res, "Could not calculate bank transfer fee", error);
   }
 };
 

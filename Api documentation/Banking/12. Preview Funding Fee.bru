@@ -1,0 +1,80 @@
+meta {
+  name: 12. Preview Funding Fee
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/v1/wallet/funding/quote
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "provider": "maplerad",
+    "amount": 10000
+  }
+}
+
+docs {
+  # Preview Bank-Transfer Funding Fee
+
+  Calculates the charge before the user transfers money. This endpoint does not debit or credit the wallet.
+
+  ## Endpoint
+
+  `POST /api/v1/wallet/funding/quote`
+
+  ## Authentication
+
+  User JWT required.
+
+  ## Body
+
+  ```json
+  {
+    "provider": "maplerad",
+    "amount": 10000
+  }
+  ```
+
+  `provider` is optional and defaults to `maplerad`. `amount` is required and is in naira.
+
+  ## Response
+
+  ```json
+  {
+    "quote": {
+      "provider": "maplerad",
+      "transferAmount": 10000,
+      "fee": 50,
+      "walletCredit": 10000,
+      "feePolicy": {
+        "paidBy": "platform",
+        "percent": 0.5,
+        "flat": 0,
+        "cap": 500,
+        "creditPolicy": "gross",
+        "userReceivesFullAmount": true,
+        "message": "Funding charge is 0.5%, capped at NGN 500. The user wallet is credited with the full transferred amount."
+      }
+    }
+  }
+  ```
+
+  ## Frontend Display
+
+  Show `transferAmount`, `fee`, and `walletCredit` before the user continues. Use the values returned by the API; do not calculate the fee in the app.
+
+  Maplerad charges BillXPress for pay-in, but the user receives the full transferred amount. The user-facing payout charge is handled by the bank-transfer quote endpoint.
+}

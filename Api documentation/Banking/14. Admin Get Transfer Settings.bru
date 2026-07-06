@@ -1,0 +1,36 @@
+meta {
+  name: 14. Admin Get Transfer Settings
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/transfers/settings
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Get Bank Transfer Settings
+
+  Returns the customer payout charge and the known Maplerad provider cost.
+
+  ```json
+  {
+    "setting": {
+      "provider": "maplerad",
+      "currency": "NGN",
+      "channel": "NIP",
+      "flatFee": 25,
+      "providerFee": 20
+    }
+  }
+  ```
+}

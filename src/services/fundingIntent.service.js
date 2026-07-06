@@ -262,11 +262,13 @@ export const confirmMonnifyFundingIntent = async (user, fundingIntentId) => {
   }
 
   const amountToCredit = amountPaidInMinorUnit || intent.amount;
-  intent.amountToReceive = amountToCredit;
+  const feeResult = await calculateFundingFee(amountToCredit, "monnify");
+  intent.fee = feeResult.fee;
+  intent.amountToReceive = feeResult.amountToReceive;
 
   const creditResult = await creditWallet({
     userId: intent.user,
-    amountInMinorUnit: amountToCredit,
+    amountInMinorUnit: feeResult.amountToReceive,
     walletType: "main",
     type: "funding",
     reference: generateTransactionReference("MNF"),
@@ -275,11 +277,11 @@ export const confirmMonnifyFundingIntent = async (user, fundingIntentId) => {
     narration: "Wallet funding via Monnify one-time transfer",
     metadata: {
       providerTransaction,
-      fee: intent.fee,
+      fee: feeResult.fee,
       grossAmount: intent.amount,
       amountPaid: amountPaidInMinorUnit,
-      amountCredited: amountToCredit,
-      feePaidBy: "platform",
+      amountCredited: feeResult.amountToReceive,
+      feePaidBy: feeResult.creditPolicy === "net" ? "user" : "platform",
       confirmedBy: "user_status_check",
     },
   });
@@ -296,17 +298,17 @@ export const confirmMonnifyFundingIntent = async (user, fundingIntentId) => {
     userId: intent.user,
     title: "Wallet funded successfully",
     message: `Your wallet has been credited with NGN ${fromMinorUnit(
-      amountToCredit
+      feeResult.amountToReceive
     )}.`,
     type: "wallet_funding_success",
     channel: "both",
     priority: "normal",
     data: {
       provider: "monnify",
-      amount: fromMinorUnit(amountToCredit),
+      amount: fromMinorUnit(feeResult.amountToReceive),
       grossAmount: fromMinorUnit(intent.amount),
       fee: fromMinorUnit(intent.fee),
-      userReceivesFullAmount: true,
+      userReceivesFullAmount: feeResult.creditPolicy !== "net",
       reference: creditResult.transaction.reference,
       providerReference: intent.providerReference,
       paymentReference: intent.paymentReference,

@@ -1,0 +1,48 @@
+meta {
+  name: 13. Preview Bank Transfer
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/api/v1/wallet/transfers/quote
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "amount": 1000
+  }
+}
+
+docs {
+  # Preview Bank Transfer
+
+  Call this before the transfer confirmation screen. It does not debit the wallet.
+
+  ## Response
+
+  ```json
+  {
+    "quote": {
+      "transferAmount": 1000,
+      "fee": 25,
+      "totalWalletDebit": 1025,
+      "recipientReceives": 1000,
+      "currency": "NGN"
+    }
+  }
+  ```
+
+  Display all four amounts from the API. Do not calculate the fee in the frontend.
+}

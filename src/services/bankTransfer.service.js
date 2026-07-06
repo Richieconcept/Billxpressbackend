@@ -11,9 +11,12 @@ import {
   generateTransactionReference,
   serializeTransaction,
   serializeWallet,
-  toMinorUnit,
   verifyTransactionPin,
 } from "./wallet.service.js";
+import {
+  getBankTransferQuote,
+  serializeBankTransferQuote,
+} from "./bankTransferFee.service.js";
 
 const normalizeName = (value) =>
   String(value || "")
@@ -40,7 +43,8 @@ export const sendMapleradBankTransfer = async ({
   narration,
   transactionPin,
 }) => {
-  const amountInMinorUnit = toMinorUnit(amount);
+  const quote = await getBankTransferQuote(amount);
+  const { amountInMinorUnit, feeInMinorUnit, totalDebitInMinorUnit } = quote;
   const normalizedAccountName = normalizeName(accountName);
   const transferReason =
     String(narration || "").trim() || "BillXpress wallet transfer";
@@ -90,7 +94,7 @@ export const sendMapleradBankTransfer = async ({
   const reference = generateTransactionReference("TRF");
   const debitResult = await debitWallet({
     userId: user._id,
-    amountInMinorUnit,
+    amountInMinorUnit: totalDebitInMinorUnit,
     walletType: "main",
     type: "transfer",
     reference,
@@ -104,6 +108,9 @@ export const sendMapleradBankTransfer = async ({
       accountResolver: "maplerad",
       reason: transferReason,
       amount: fromMinorUnit(amountInMinorUnit),
+      transferFee: fromMinorUnit(feeInMinorUnit),
+      totalWalletDebit: fromMinorUnit(totalDebitInMinorUnit),
+      recipientReceives: fromMinorUnit(amountInMinorUnit),
     },
   });
   debitResult.transaction.status = "pending";
@@ -155,6 +162,8 @@ export const sendMapleradBankTransfer = async ({
       priority: "normal",
       data: {
         amount: fromMinorUnit(amountInMinorUnit),
+        fee: fromMinorUnit(feeInMinorUnit),
+        totalWalletDebit: fromMinorUnit(totalDebitInMinorUnit),
         accountNumber: resolvedAccount.accountNumber,
         accountName: resolvedAccount.accountName,
         reference,
@@ -174,6 +183,7 @@ export const sendMapleradBankTransfer = async ({
         accountNumber: resolvedAccount.accountNumber,
         accountName: resolvedAccount.accountName,
       },
+      quote,
       providerResponse: transferResult.providerResponse,
     };
   } catch (error) {
@@ -186,7 +196,7 @@ export const sendMapleradBankTransfer = async ({
 
     const refundResult = await creditWallet({
       userId: user._id,
-      amountInMinorUnit,
+      amountInMinorUnit: totalDebitInMinorUnit,
       walletType: "main",
       type: "reversal",
       reference: `${reference}_REV`,
@@ -198,6 +208,8 @@ export const sendMapleradBankTransfer = async ({
         accountNumber: resolvedAccount.accountNumber,
         accountName: resolvedAccount.accountName,
         reason: error.message,
+        transferAmount: fromMinorUnit(amountInMinorUnit),
+        transferFee: fromMinorUnit(feeInMinorUnit),
       },
     });
 
@@ -230,6 +242,7 @@ export const serializeBankTransferResult = (result) => ({
   account: result.account,
   wallet: serializeWallet(result.wallet),
   transaction: serializeTransaction(result.transaction),
+  quote: serializeBankTransferQuote(result.quote),
   providerResponse:
     process.env.NODE_ENV === "production" ? undefined : result.providerResponse,
 });

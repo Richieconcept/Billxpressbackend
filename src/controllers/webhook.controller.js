@@ -444,7 +444,7 @@ const creditMapleradDedicatedAccountFunding = async ({
       fee: feeResult.fee,
       grossAmount: amountInMinorUnit,
       amountCredited: feeResult.amountToReceive,
-      feePaidBy: "platform",
+      feePaidBy: feeResult.creditPolicy === "net" ? "user" : "platform",
     },
   });
 
@@ -463,7 +463,7 @@ const creditMapleradDedicatedAccountFunding = async ({
       amount: fromMinorUnit(feeResult.amountToReceive),
       grossAmount: fromMinorUnit(amountInMinorUnit),
       fee: fromMinorUnit(feeResult.fee),
-      userReceivesFullAmount: true,
+      userReceivesFullAmount: feeResult.creditPolicy !== "net",
       reference: creditResult.transaction.reference,
       providerReference: finalProviderReference,
       accountNumber,
@@ -692,7 +692,7 @@ export const handlePocketFiWebhook = async (req, res) => {
         settlementAmount: settlementAmountInMinorUnit,
         providerSettlementFee,
         amountCredited: feeResult.amountToReceive,
-        feePaidBy: "platform",
+        feePaidBy: feeResult.creditPolicy === "net" ? "user" : "platform",
       },
     });
 
@@ -710,7 +710,7 @@ export const handlePocketFiWebhook = async (req, res) => {
         amount: fromMinorUnit(feeResult.amountToReceive),
         grossAmount: fromMinorUnit(grossAmountInMinorUnit),
         fee: fromMinorUnit(feeResult.fee),
-        userReceivesFullAmount: true,
+        userReceivesFullAmount: feeResult.creditPolicy !== "net",
         reference: creditResult.transaction.reference,
         providerReference,
       },
@@ -823,11 +823,11 @@ export const handleMonnifyWebhook = async (req, res) => {
       paidAmountInMinorUnit,
       "monnify"
     );
-    intent.amountToReceive = paidAmountInMinorUnit;
+    intent.amountToReceive = feeResult.amountToReceive;
 
     const creditResult = await creditWallet({
       userId: intent.user,
-      amountInMinorUnit: paidAmountInMinorUnit,
+      amountInMinorUnit: feeResult.amountToReceive,
       walletType: "main",
       type: "funding",
       reference: generateTransactionReference("MNF"),
@@ -839,8 +839,8 @@ export const handleMonnifyWebhook = async (req, res) => {
         fee: feeResult.fee,
         grossAmount: intent.amount,
         amountPaid: paidAmountInMinorUnit,
-        amountCredited: paidAmountInMinorUnit,
-        feePaidBy: "platform",
+        amountCredited: feeResult.amountToReceive,
+        feePaidBy: feeResult.creditPolicy === "net" ? "user" : "platform",
       },
     });
 
@@ -848,17 +848,17 @@ export const handleMonnifyWebhook = async (req, res) => {
       userId: intent.user,
       title: "Wallet funded successfully",
       message: `Your wallet has been credited with NGN ${fromMinorUnit(
-        paidAmountInMinorUnit
+        feeResult.amountToReceive
       )}.`,
       type: "wallet_funding_success",
       channel: "both",
       priority: "normal",
       data: {
         provider: "monnify",
-        amount: fromMinorUnit(paidAmountInMinorUnit),
+        amount: fromMinorUnit(feeResult.amountToReceive),
         grossAmount: fromMinorUnit(intent.amount),
         fee: fromMinorUnit(feeResult.fee),
-        userReceivesFullAmount: true,
+        userReceivesFullAmount: feeResult.creditPolicy !== "net",
         reference: creditResult.transaction.reference,
         providerReference,
         paymentReference,
@@ -1067,11 +1067,11 @@ export const handleMapleradWebhook = async (req, res) => {
 
     const amountToCredit = paidAmountInMinorUnit || intent.amount;
     const feeResult = await calculateFundingFee(amountToCredit, "maplerad");
-    intent.amountToReceive = amountToCredit;
+    intent.amountToReceive = feeResult.amountToReceive;
 
     const creditResult = await creditWallet({
       userId: intent.user,
-      amountInMinorUnit: amountToCredit,
+      amountInMinorUnit: feeResult.amountToReceive,
       walletType: "main",
       type: "funding",
       reference: generateTransactionReference("MLF"),
@@ -1083,8 +1083,8 @@ export const handleMapleradWebhook = async (req, res) => {
         fee: feeResult.fee,
         grossAmount: intent.amount,
         amountPaid: paidAmountInMinorUnit || null,
-        amountCredited: amountToCredit,
-        feePaidBy: "platform",
+        amountCredited: feeResult.amountToReceive,
+        feePaidBy: feeResult.creditPolicy === "net" ? "user" : "platform",
       },
     });
 
@@ -1092,17 +1092,17 @@ export const handleMapleradWebhook = async (req, res) => {
       userId: intent.user,
       title: "Wallet funded successfully",
       message: `Your wallet has been credited with NGN ${fromMinorUnit(
-        amountToCredit
+        feeResult.amountToReceive
       )}.`,
       type: "wallet_funding_success",
       channel: "both",
       priority: "normal",
       data: {
         provider: "maplerad",
-        amount: fromMinorUnit(amountToCredit),
+        amount: fromMinorUnit(feeResult.amountToReceive),
         grossAmount: fromMinorUnit(intent.amount),
         fee: fromMinorUnit(feeResult.fee),
-        userReceivesFullAmount: true,
+        userReceivesFullAmount: feeResult.creditPolicy !== "net",
         reference: creditResult.transaction.reference,
         providerReference: finalProviderReference,
         paymentReference: intent.paymentReference,

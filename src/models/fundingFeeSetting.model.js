@@ -23,6 +23,12 @@ const fundingFeeSettingSchema = new mongoose.Schema(
       min: 0,
     },
 
+    cap: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     creditPolicy: {
       type: String,
       enum: ["gross"],

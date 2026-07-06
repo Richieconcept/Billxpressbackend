@@ -62,6 +62,12 @@ docs {
   `flat`
   Optional. Flat naira charge. Use `0` when no flat charge is needed.
 
+  `cap`
+  Optional. Maximum fee in naira. Use `500` to cap the charge at N500. Use `0` for no cap.
+
+  `creditPolicy`
+  Optional. Only `gross` is accepted because BillXpress pays pay-in fees and users receive their full transfer.
+
   ## Example Body
 
   ```json
@@ -95,8 +101,10 @@ docs {
   ```json
   {
     "provider": "maplerad",
-    "percent": 1,
-    "flat": 0
+    "percent": 0.5,
+    "flat": 0,
+    "cap": 500,
+    "creditPolicy": "gross"
   }
   ```
 
@@ -120,6 +128,7 @@ docs {
       "provider": "pocketfi",
       "percent": 1,
       "flat": 0,
+      "cap": 0,
       "creditPolicy": "gross",
       "paidBy": "platform",
       "userReceivesFullAmount": true,
@@ -128,11 +137,9 @@ docs {
   }
   ```
 
-  ## Important Rule
+  ## Credit Policy
 
-  This setting does not reduce the wallet credit.
-
-  If the user transfers `N2,000`, the backend credits `N2,000` to the user's wallet. The `percent` and `flat` values are for funding charge display/accounting.
+  Keep Maplerad pay-in on `creditPolicy: "gross"` so the platform pays the provider fee and the full incoming transfer is credited. Payout fees are configured separately under `/api/v1/admin/transfers/settings`.
 
   The user app does not call this endpoint. Only the admin dashboard should call it.
 }

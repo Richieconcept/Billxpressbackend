@@ -24,10 +24,10 @@ const normalizeProvider = (provider) => {
 
 const getEnvFundingFeeConfig = (provider) => {
   const prefix = provider.toUpperCase();
-
   return {
     flat: Math.max(0, Math.round(readNumberEnv(`${prefix}_FUNDING_FEE_FLAT`) * 100)),
     percent: Math.max(0, readNumberEnv(`${prefix}_FUNDING_FEE_PERCENT`, 1)),
+    cap: Math.max(0, Math.round(readNumberEnv(`${prefix}_FUNDING_FEE_CAP`) * 100)),
     creditPolicy: "gross",
   };
 };
@@ -42,7 +42,8 @@ export const getOrCreateFundingFeeSetting = async (provider) => {
       provider: normalizedProvider,
       percent: envConfig.percent,
       flat: envConfig.flat,
-      creditPolicy: "gross",
+      cap: envConfig.cap,
+      creditPolicy: envConfig.creditPolicy,
     });
   }
 
@@ -55,6 +56,7 @@ export const getFundingFeeConfig = async (provider) => {
   return {
     flat: Math.max(0, Math.round(Number(setting.flat) || 0)),
     percent: Math.max(0, Number(setting.percent) || 0),
+    cap: Math.max(0, Math.round(Number(setting.cap) || 0)),
     creditPolicy: "gross",
   };
 };
@@ -145,6 +147,30 @@ export const updateFundingFeeSetting = async (payload, adminUserId) => {
     setting.flat = Math.round(flat * 100);
   }
 
+  if (payload.cap !== undefined) {
+    const cap = Number(payload.cap);
+
+    if (!Number.isFinite(cap) || cap < 0) {
+      const error = new Error("Funding fee cap must be zero or greater");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    setting.cap = Math.round(cap * 100);
+  }
+
+  if (payload.creditPolicy !== undefined) {
+    const creditPolicy = String(payload.creditPolicy).trim().toLowerCase();
+
+    if (creditPolicy !== "gross") {
+      const error = new Error(
+        "Pay-in fees are paid by the platform; credit policy must be gross"
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
   setting.creditPolicy = "gross";
   setting.updatedBy = adminUserId;
   await setting.save();
@@ -153,21 +179,26 @@ export const updateFundingFeeSetting = async (payload, adminUserId) => {
 };
 
 export const calculateFundingFee = async (amountInMinorUnit, provider) => {
-  const { flat, percent } = await getFundingFeeConfig(provider);
+  const { flat, percent, cap, creditPolicy } =
+    await getFundingFeeConfig(provider);
   const percentAmount = Math.round((amountInMinorUnit * percent) / 100);
-  const fee = Math.min(amountInMinorUnit, flat + percentAmount);
-  const amountToReceive = amountInMinorUnit;
+  const uncappedFee = flat + percentAmount;
+  const cappedFee = cap > 0 ? Math.min(uncappedFee, cap) : uncappedFee;
+  const fee = Math.min(amountInMinorUnit, cappedFee);
+  const amountToReceive =
+    creditPolicy === "net" ? amountInMinorUnit - fee : amountInMinorUnit;
 
   return {
     fee,
     amountToReceive,
     percent,
     flat,
-    creditPolicy: "gross",
+    cap,
+    creditPolicy,
   };
 };
 
-export const getFundingFeeMessage = ({ flat, percent }) => {
+export const getFundingFeeMessage = ({ flat, percent, cap, creditPolicy }) => {
   const parts = [];
 
   if (percent > 0) {
@@ -182,19 +213,28 @@ export const getFundingFeeMessage = ({ flat, percent }) => {
     return "No funding fee is currently applied.";
   }
 
-  return `Funding charge is ${parts.join(" + ")}. The user wallet is credited with the full transferred amount.`;
+  const capMessage = cap > 0 ? `, capped at NGN ${fromMinorUnit(cap)}` : "";
+  const creditMessage =
+    creditPolicy === "net"
+      ? "The charge is deducted from the transfer before the wallet is credited."
+      : "The user wallet is credited with the full transferred amount.";
+
+  return `Funding charge is ${parts.join(" + ")}${capMessage}. ${creditMessage}`;
 };
 
 export const serializeFundingFeeConfig = (setting) => ({
   provider: setting.provider,
   percent: Number(setting.percent) || 0,
   flat: fromMinorUnit(setting.flat || 0),
+  cap: fromMinorUnit(setting.cap || 0),
   creditPolicy: "gross",
   paidBy: "platform",
   userReceivesFullAmount: true,
   message: getFundingFeeMessage({
     flat: setting.flat || 0,
     percent: Number(setting.percent) || 0,
+    cap: setting.cap || 0,
+    creditPolicy: "gross",
   }),
   updatedBy: setting.updatedBy,
   createdAt: setting.createdAt,
@@ -202,14 +242,16 @@ export const serializeFundingFeeConfig = (setting) => ({
 });
 
 export const serializeFundingFee = async (provider) => {
-  const { flat, percent } = await getFundingFeeConfig(provider);
+  const { flat, percent, cap, creditPolicy } =
+    await getFundingFeeConfig(provider);
 
   return {
-    paidBy: "platform",
+    paidBy: creditPolicy === "net" ? "user" : "platform",
     percent,
     flat: fromMinorUnit(flat),
-    creditPolicy: "gross",
-    userReceivesFullAmount: true,
-    message: getFundingFeeMessage({ flat, percent }),
+    cap: fromMinorUnit(cap),
+    creditPolicy,
+    userReceivesFullAmount: creditPolicy !== "net",
+    message: getFundingFeeMessage({ flat, percent, cap, creditPolicy }),
   };
 };

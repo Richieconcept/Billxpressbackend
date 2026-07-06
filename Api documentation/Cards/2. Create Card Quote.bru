@@ -60,14 +60,17 @@ docs {
           "display": "1 USD = NGN 1455.33"
         },
         "charges": {
-          "cardCreationFee": 500,
+          "cardCreationFee": 5821.32,
+          "cardCreationFeeUsd": 4,
+          "billxpressCardCreationFeeUsd": 2,
+          "providerCardCreationFeeUsd": 2,
           "initialFundingFee": 100,
           "exchangeMarkup": 100,
-          "total": 700
+          "total": 6021.32
         },
         "totalWalletDebit": {
           "currency": "NGN",
-          "amount": 10700
+          "amount": 16021.32
         }
       },
       "status": "pending",
@@ -85,6 +88,7 @@ docs {
   - exact USD amount that will reach the card
   - readable exchange rate
   - card creation fee
+  - card creation fee in USD
   - initial funding charge
   - exchange markup
   - total charges
@@ -98,4 +102,14 @@ docs {
   customer-facing BillXpress rate. It already includes the configured exchange
   markup. Do not look for or display a raw Maplerad provider rate in the user
   app.
+
+  `summary.charges.cardCreationFeeUsd` is the configured dollar fee.
+  `summary.charges.cardCreationFee` is its NGN equivalent calculated with
+  `summary.exchangeRate.value`. The backend snapshots both values in the quote,
+  so card creation debits exactly what the user confirmed even if rates later
+  move.
+
+  `cardCreationFeeUsd` includes both BillXpress's configured creation charge
+  and the Maplerad/provider creation cost. The two USD components are also
+  returned separately for a transparent breakdown.
 }

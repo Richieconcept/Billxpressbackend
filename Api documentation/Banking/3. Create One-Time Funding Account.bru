@@ -58,15 +58,16 @@ docs {
       "accountName": "John Doe",
       "bankName": "VFD Bank",
       "amount": 2000,
-      "fee": 20,
+      "fee": 10,
       "amountToReceive": 2000,
       "feePolicy": {
         "paidBy": "platform",
-        "percent": 1,
+        "percent": 0.5,
         "flat": 0,
+        "cap": 500,
         "creditPolicy": "gross",
         "userReceivesFullAmount": true,
-        "message": "Funding charge is 1%. The user wallet is credited with the full transferred amount."
+        "message": "Funding charge is 0.5%, capped at NGN 500. The user wallet is credited with the full transferred amount."
       },
       "expiresAt": "...",
       "status": "pending",
@@ -87,11 +88,11 @@ docs {
   - fee, if you want to show it
   - amount to receive
   
-  If the user enters `N2,000` and the funding charge is `1%`, show:
+  If the user enters `N2,000` and the Maplerad funding charge is `0.5%`, show:
   
   - Amount entered: `N2,000`
-  - Fee: `N20`
-  - Amount to receive: `N2,000`
+  - Bank-transfer fee: `N10`
+  - Wallet credit: `N2,000`
   
   `amountToReceive` is the wallet credit amount. It should match the amount the user is asked to transfer.
   
@@ -112,7 +113,9 @@ docs {
   - `fundingIntent.accountName`
   - `fundingIntent.bankName`
   - `fundingIntent.amount`
+  - `fundingIntent.fee`
   - `fundingIntent.amountToReceive`
+  - `fundingIntent.feePolicy`
   - `fundingIntent.expiresAt`
   - `fundingIntent.status`
   

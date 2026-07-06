@@ -2,7 +2,9 @@ import express from "express";
 import {
   confirmFundingIntent,
   createBankTransfer,
+  previewBankTransfer,
   createFundingIntent,
+  previewFundingFee,
   createVirtualAccount,
   adminCreditReferralBalance,
   getTransactions,
@@ -27,10 +29,12 @@ router.get("/transactions", protect, getTransactions);
 router.get("/virtual-account", protect, getVirtualAccount);
 router.post("/virtual-account", protect, createVirtualAccount);
 router.post("/funding-intents", protect, createFundingIntent);
+router.post("/funding/quote", protect, previewFundingFee);
 router.post("/funding-intents/:fundingIntentId/confirm", protect, confirmFundingIntent);
 router.get("/transfers/banks", protect, getTransferBankList);
 router.post("/transfers/suggest-banks", protect, suggestTransferBankList);
 router.post("/transfers/resolve-account", protect, resolveTransferAccount);
+router.post("/transfers/quote", protect, previewBankTransfer);
 router.post(
   "/transfers",
   protect,

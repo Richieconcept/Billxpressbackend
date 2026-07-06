@@ -69,7 +69,7 @@ docs {
   - verifies transaction PIN
   - resolves the account name again with Maplerad
   - rejects the request if the account name changed
-  - debits the user's main wallet
+  - debits the transfer amount plus the configured payout fee
   - calls Maplerad transfer
   - returns successful or processing
   - refunds automatically if Maplerad rejects immediately
@@ -86,7 +86,16 @@ docs {
       "accountName": "JOHN DOE"
     },
     "wallet": {},
-    "transaction": {}
+    "transaction": {},
+    "quote": {
+      "transferAmount": 100,
+      "fee": 25,
+      "totalWalletDebit": 125,
+      "recipientReceives": 100,
+      "currency": "NGN"
+    }
   }
   ```
+
+  The amount sent to Maplerad is `transferAmount`; the beneficiary receives that full amount. The fee is added to the user's wallet debit. If the transfer fails, both the transfer amount and fee are refunded.
 }

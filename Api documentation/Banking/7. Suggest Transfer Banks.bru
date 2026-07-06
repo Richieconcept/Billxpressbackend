@@ -21,6 +21,7 @@ auth:bearer {
 
 body:json {
   {
+    "query": "opay",
     "accountNumber": "0123456789"
   }
 }
@@ -28,9 +29,9 @@ body:json {
 docs {
   # Suggest Transfer Banks
   
-  Use this endpoint while the user is typing a 10 digit account number.
+  Use this endpoint while the user is typing a bank name or after entering a 10 digit account number.
   
-  This endpoint does not resolve account name and does not call Maplerad account resolve. It only suggests likely banks from popular Nigerian banks using checksum validation.
+  It only returns curated popular Nigerian banks. Name aliases are supported, so `opay`, `o pay`, or `paycom` all rank OPay first; `gtb` ranks GTBank first; and `monie point` ranks Moniepoint first.
   
   ## Endpoint
   
@@ -48,7 +49,7 @@ docs {
   
   ```json
   {
-    "accountNumber": "0123456789"
+    "query": "opay"
   }
   ```
   
@@ -56,35 +57,39 @@ docs {
   
   ```json
   {
-    "accountNumber": "0123456789",
+    "accountNumber": null,
+    "query": "opay",
     "suggestions": [
       {
-        "name": "Guaranty Trust Bank",
-        "slug": "gtbank",
-        "bankCode": "280",
-        "mapleradBankCode": "280",
+        "name": "OPay",
+        "slug": "opay",
+        "bankCode": "760",
+        "mapleradBankCode": "760",
         "availableForTransfer": true,
         "resolverProvider": "maplerad",
         "transferProvider": "maplerad",
-        "confidence": "checksum"
+        "confidence": "exact_name"
       }
     ],
     "meta": {
-      "method": "nuban_checksum",
+      "method": "popular_name",
       "accountNameResolved": false,
-      "checkedBanks": 19
+      "checkedBanks": 19,
+      "popularBanksOnly": true
     }
   }
   ```
   
   ## Frontend Behavior
   
-  - call this only after the user has typed 10 digits
+  - while the user types a bank name, send it as `query`
+  - if the user types `opay`, automatically show OPay first
+  - after the user enters 10 account digits, optionally send both `query` and `accountNumber`
   - if `suggestions` has items, show them as bank suggestions
   - if `suggestions` is empty, show nothing and let user select bank manually
   - after user selects a bank, call `Resolve Transfer Account` to fetch account name
   
   ## Important
   
-  This endpoint is best-effort. Some wallets and microfinance banks may not be detectable from account number alone, so an empty suggestion list is normal.
+  This endpoint deliberately suggests only popular banks. The complete Maplerad bank list remains available from `GET /api/v1/wallet/transfers/banks`.
 }

@@ -54,6 +54,10 @@ import {
 } from "../controllers/adminUser.controller.js";
 import { listAdminReferralRewards } from "../controllers/referral.controller.js";
 import { authorizeRoles, protect } from "../middlewares/auth.middleware.js";
+import {
+  getAdminBankTransferSetting,
+  updateAdminBankTransferSetting,
+} from "../controllers/bankTransferSetting.controller.js";
 
 const router = express.Router();
 
@@ -207,6 +211,18 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminFundingFeeSetting
+);
+router.get(
+  "/transfers/settings",
+  protect,
+  authorizeRoles("admin"),
+  getAdminBankTransferSetting
+);
+router.patch(
+  "/transfers/settings",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminBankTransferSetting
 );
 router.patch("/make-admin/:userId", protect, authorizeRoles("admin"), makeAdmin);
 router.get(
