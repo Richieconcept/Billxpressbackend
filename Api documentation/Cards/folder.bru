@@ -14,6 +14,58 @@ docs {
   - Withdrawal quotes accept `amountUsd`.
   - Always display the returned quote totals.
   - Never calculate exchange rates or fees on the frontend.
+
+  ## Exchange Rate Visibility
+
+  User-facing card quotes return the effective BillXpress exchange rate after
+  the configured markup has been added.
+
+  Do not show Maplerad's raw provider rate to users. The raw provider rate is
+  available only from the admin endpoint:
+
+  ```txt
+  GET /api/v1/admin/cards/rates
+  ```
+
+  For users, display `quote.exchangeRate`. Creation quotes also repeat it at
+  `quote.summary.exchangeRate`. Its `includesMarkup` field is `true`.
+
+  ## Monthly Maintenance Lifecycle
+
+  The backend sends email and in-app reminders approximately 7, 3, and 1 day
+  before `nextMaintenanceAt`.
+
+  On the due date, the backend converts the configured USD maintenance fee to
+  NGN at the current provider rate and attempts to debit the user's main wallet.
+
+  If the wallet has insufficient funds:
+
+  - the card enters `PAYMENT_DUE`
+  - the user receives grace-period reminders
+  - the card remains usable until `maintenanceGraceEndsAt`
+  - after grace, the backend freezes the card through Maplerad
+
+  The card is not terminated. A maintenance-frozen card can be restored by
+  funding the wallet and calling:
+
+  ```txt
+  POST /api/v1/cards/:cardId/maintenance/pay
+  ```
+
+  After successful payment, the backend unfreezes the card automatically.
+
+  User-facing card objects include:
+
+  - `nextMaintenanceAt`
+  - `lastMaintenanceAt`
+  - `maintenancePastDue`
+  - `maintenanceGraceEndsAt`
+  - `frozenForMaintenance`
+  - `maintenanceStatus`: `CURRENT`, `PAYMENT_DUE`, or
+    `FROZEN_FOR_MAINTENANCE`
+
+  A card frozen manually by the user is not automatically unfrozen by a
+  maintenance payment.
 }
 
 vars {

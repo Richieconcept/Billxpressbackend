@@ -34,6 +34,8 @@ import {
   updateAdminSocialGrowthSettings,
 } from "../controllers/socialGrowth.controller.js";
 import {
+  getAdminCards,
+  getAdminCardRates,
   getAdminCardSettings,
   updateAdminCardSettings,
 } from "../controllers/card.controller.js";
@@ -165,10 +167,22 @@ router.patch(
   updateAdminSocialGrowthSettings
 );
 router.get(
+  "/cards",
+  protect,
+  authorizeRoles("admin"),
+  getAdminCards
+);
+router.get(
   "/cards/settings",
   protect,
   authorizeRoles("admin"),
   getAdminCardSettings
+);
+router.get(
+  "/cards/rates",
+  protect,
+  authorizeRoles("admin"),
+  getAdminCardRates
 );
 router.patch(
   "/cards/settings",

@@ -54,6 +54,17 @@ const virtualDollarCardSchema = new mongoose.Schema(
     nextMaintenanceAt: { type: Date, default: null, index: true },
     lastMaintenanceAt: { type: Date, default: null },
     maintenancePastDue: { type: Boolean, default: false, index: true },
+    maintenanceGraceEndsAt: { type: Date, default: null, index: true },
+    frozenForMaintenance: { type: Boolean, default: false, index: true },
+    maintenancePaymentProcessing: { type: Boolean, default: false },
+    maintenanceReminderKeys: {
+      type: [String],
+      default: [],
+    },
+    lastMaintenanceFailure: {
+      type: String,
+      default: null,
+    },
     providerResponse: {
       type: mongoose.Schema.Types.Mixed,
       default: {},

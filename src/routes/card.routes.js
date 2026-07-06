@@ -7,6 +7,7 @@ import {
   getCardConfiguration,
   getCards,
   getCardTransactions,
+  payCardMaintenance,
   quoteCardCreation,
   quoteCardFunding,
   quoteCardWithdrawal,
@@ -34,5 +35,10 @@ router.post("/:cardId/withdraw", ...cardAccess, withdrawCard);
 router.patch("/:cardId/freeze", ...cardAccess, freezeCard);
 router.patch("/:cardId/unfreeze", ...cardAccess, unfreezeCard);
 router.get("/:cardId/transactions", ...cardAccess, getCardTransactions);
+router.post(
+  "/:cardId/maintenance/pay",
+  ...cardAccess,
+  payCardMaintenance
+);
 
 export default router;

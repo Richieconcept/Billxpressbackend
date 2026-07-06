@@ -35,6 +35,7 @@ const notificationSchema = new mongoose.Schema(
         "referral_reward",
         "referral_redeem_success",
         "kyc_update",
+        "card_maintenance",
         "security",
         "system",
       ],

@@ -4,18 +4,25 @@ import {
   createCardWithdrawalQuote,
   createVirtualDollarCard,
   fundVirtualDollarCard,
+  getAdminCardRatePreview,
   getOrCreateCardSetting,
   getVirtualDollarCardDetails,
+  listAdminVirtualDollarCards,
   listVirtualDollarCards,
   listVirtualDollarCardTransactions,
   serializeCard,
   serializeCardOperation,
   serializeCardQuote,
   serializeCardSetting,
+  payVirtualDollarCardMaintenance,
   setVirtualDollarCardFrozen,
   updateCardSetting,
   withdrawVirtualDollarCard,
 } from "../services/card.service.js";
+import {
+  serializeTransaction,
+  serializeWallet,
+} from "../services/wallet.service.js";
 
 const sendCardError = (res, publicMessage, error) => {
   res.status(error.statusCode || 500).json({
@@ -181,12 +188,51 @@ export const getCardTransactions = async (req, res) => {
   }
 };
 
+export const payCardMaintenance = async (req, res) => {
+  try {
+    const result = await payVirtualDollarCardMaintenance({
+      userId: req.user._id,
+      cardId: req.params.cardId,
+      transactionPin: req.body?.transactionPin,
+    });
+    res.json({
+      message: result.message,
+      card: serializeCard(result.card),
+      wallet: serializeWallet(result.wallet),
+      transaction: serializeTransaction(result.transaction),
+    });
+  } catch (error) {
+    sendCardError(res, "Could not pay card maintenance fee", error);
+  }
+};
+
 export const getAdminCardSettings = async (req, res) => {
   try {
     const setting = await getOrCreateCardSetting();
     res.json({ settings: serializeCardSetting(setting) });
   } catch (error) {
     sendCardError(res, "Could not fetch card settings", error);
+  }
+};
+
+export const getAdminCards = async (req, res) => {
+  try {
+    const result = await listAdminVirtualDollarCards(req.query || {});
+    res.json(result);
+  } catch (error) {
+    sendCardError(res, "Could not fetch virtual dollar cards", error);
+  }
+};
+
+export const getAdminCardRates = async (req, res) => {
+  try {
+    const rates = await getAdminCardRatePreview({
+      amountNgn: req.query?.amountNgn || 10000,
+      amountUsd: req.query?.amountUsd || 10,
+    });
+    res.json({ rates });
+  } catch (error) {
+    sendCardError(res, "Could not fetch live card exchange rates", error);
   }
 };
 

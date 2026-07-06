@@ -23,4 +23,8 @@ body:json {
 docs {
   Returns the current Maplerad USD-to-NGN quote, fees, markup, and exact NGN
   amount that will be credited to the wallet.
+
+  Display `quote.exchangeRate`. It is the effective customer payout rate after
+  the configured withdrawal exchange markup. Do not display Maplerad's raw
+  provider rate.
 }

@@ -26,10 +26,76 @@ body:json {
 }
 
 vars:pre-request {
-  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTQyNDMwMGI2YTQ3MmViMTVlOWFlNDQiLCJyb2xlIjoidXNlciIsImF1dGhUaWVyIjoidGllcl8zIiwiaWF0IjoxNzgyNzMwNjE2LCJleHAiOjE3ODMzMzU0MTZ9.Zc66W7qXQPUOVfNGKEweDSOXNwHaxUjyTZZpkIdD4Yc
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzMiLCJpYXQiOjE3ODMzNTIzNjQsImV4cCI6MTc4Mzk1NzE2NH0.4QOrD3BHs_wugTl8ZdrDKx1gRI0tOHv5RubIM_hcxp0
 }
 
 docs {
   Creates a short-lived quote for card creation and initial USD funding.
-  Display `walletDebit`, `target.amount`, fees, and expiry to the user.
+  Display the returned `summary` on the confirmation screen. Never calculate
+  exchange rates or charges on the frontend.
+
+  ## Expected Response
+
+  ```json
+  {
+    "quote": {
+      "id": "...",
+      "operation": "creation",
+      "brand": "VISA",
+      "summary": {
+        "cardBrand": "VISA",
+        "amountEntered": {
+          "currency": "NGN",
+          "amount": 10000
+        },
+        "amountToCard": {
+          "currency": "USD",
+          "amount": 6.94
+        },
+        "exchangeRate": {
+          "baseCurrency": "USD",
+          "quoteCurrency": "NGN",
+          "value": 1455.33,
+          "includesMarkup": true,
+          "display": "1 USD = NGN 1455.33"
+        },
+        "charges": {
+          "cardCreationFee": 500,
+          "initialFundingFee": 100,
+          "exchangeMarkup": 100,
+          "total": 700
+        },
+        "totalWalletDebit": {
+          "currency": "NGN",
+          "amount": 10700
+        }
+      },
+      "status": "pending",
+      "expiresAt": "..."
+    }
+  }
+  ```
+
+  ## Frontend Confirmation Screen
+
+  Show:
+
+  - selected card brand
+  - amount entered in NGN
+  - exact USD amount that will reach the card
+  - readable exchange rate
+  - card creation fee
+  - initial funding charge
+  - exchange markup
+  - total charges
+  - final wallet debit
+  - quote expiry countdown
+
+  The values above are illustrative. Always display the actual values returned
+  by the API.
+
+  `quote.exchangeRate` and `summary.exchangeRate` contain the same
+  customer-facing BillXpress rate. It already includes the configured exchange
+  markup. Do not look for or display a raw Maplerad provider rate in the user
+  app.
 }

@@ -43,4 +43,11 @@ docs {
   `withdrawalFee.flat` values are NGN and represent customer charges.
   `monthlyMaintenanceFee` is USD and is converted at the current Maplerad rate.
   Percentage values are entered as normal percentages, for example `1` = 1%.
+
+  `maintenanceGracePeriodDays` controls how long an overdue card remains usable
+  before it is frozen.
+
+  `freezeOnMaintenanceFailure` should normally remain `true`. The backend uses
+  Maplerad freeze/unfreeze so the same card can be restored after payment. It
+  does not terminate cards for maintenance debt.
 }

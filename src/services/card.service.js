@@ -20,11 +20,13 @@ import {
   debitWallet,
   fromMinorUnit,
   generateTransactionReference,
+  getOrCreateWallet,
   serializeTransaction,
   serializeWallet,
   toMinorUnit,
   verifyTransactionPin,
 } from "./wallet.service.js";
+import { createNotificationBestEffort } from "./notification.service.js";
 
 const SUPPORTED_BRANDS = ["VISA", "MASTERCARD"];
 
@@ -219,40 +221,129 @@ export const serializeCard = (card) => ({
   nextMaintenanceAt: card.nextMaintenanceAt,
   lastMaintenanceAt: card.lastMaintenanceAt,
   maintenancePastDue: card.maintenancePastDue,
+  maintenanceGraceEndsAt: card.maintenanceGraceEndsAt,
+  frozenForMaintenance: card.frozenForMaintenance,
+  maintenanceStatus: card.frozenForMaintenance
+    ? "FROZEN_FOR_MAINTENANCE"
+    : card.maintenancePastDue
+      ? "PAYMENT_DUE"
+      : "CURRENT",
+  lastMaintenanceFailure: card.lastMaintenanceFailure,
   createdAt: card.createdAt,
   updatedAt: card.updatedAt,
 });
 
-export const serializeCardQuote = (quote) => ({
-  id: quote._id,
-  operation: quote.operation,
-  brand: quote.brand,
-  source: {
-    currency: quote.sourceCurrency,
-    amount: fromMinorUnit(quote.sourceAmount),
-  },
-  target: {
-    currency: quote.targetCurrency,
-    amount: fromMinorUnit(quote.targetAmount),
-  },
-  providerRate: quote.providerRate,
-  fee: fromMinorUnit(quote.fee),
-  feeBreakdown: {
-    providerFee: fromMinorUnit(
-      Number(quote.pricingSnapshot?.providerFee) || 0
-    ),
-    billxpressFee: fromMinorUnit(
-      Number(quote.pricingSnapshot?.billxpressFee) || 0
-    ),
-  },
-  exchangeMarkup: fromMinorUnit(quote.exchangeMarkup),
-  walletDebit:
-    quote.walletDebit > 0 ? fromMinorUnit(quote.walletDebit) : undefined,
-  walletCredit:
-    quote.walletCredit > 0 ? fromMinorUnit(quote.walletCredit) : undefined,
-  status: quote.status,
-  expiresAt: quote.expiresAt,
-});
+export const serializeCardQuote = (quote) => {
+  const pricing = quote.pricingSnapshot || {};
+  const sourceAmount = fromMinorUnit(quote.sourceAmount);
+  const targetAmount = fromMinorUnit(quote.targetAmount);
+  const billxpressCreationFee =
+    Number(pricing.billxpressCreationFee) || 0;
+  const providerCreationFee = Number(pricing.providerCreationFee) || 0;
+  const billxpressFundingFee = Number(pricing.billxpressFundingFee) || 0;
+  const providerFundingFee = Number(pricing.providerFundingFee) || 0;
+  const hasDetailedCreationFees =
+    pricing.billxpressCreationFee !== undefined ||
+    pricing.providerCreationFee !== undefined;
+  const hasDetailedFundingFees =
+    pricing.billxpressFundingFee !== undefined ||
+    pricing.providerFundingFee !== undefined;
+  const creationFee = hasDetailedCreationFees
+    ? billxpressCreationFee + providerCreationFee
+    : quote.operation === "creation"
+      ? Number(quote.fee) || 0
+      : 0;
+  const fundingFee = hasDetailedFundingFees
+    ? billxpressFundingFee + providerFundingFee
+    : quote.operation === "funding"
+      ? Number(quote.fee) || 0
+      : 0;
+  const isFundingDirection =
+    quote.sourceCurrency === "NGN" && quote.targetCurrency === "USD";
+  const isWithdrawalDirection =
+    quote.sourceCurrency === "USD" && quote.targetCurrency === "NGN";
+  const customerExchangeRate =
+    isFundingDirection && quote.targetAmount > 0
+      ? Number(
+          (
+            (quote.sourceAmount + quote.exchangeMarkup) /
+            quote.targetAmount
+          ).toFixed(2)
+        )
+      : isWithdrawalDirection && quote.sourceAmount > 0
+        ? Number(
+            (
+              (quote.targetAmount - quote.exchangeMarkup) /
+              quote.sourceAmount
+            ).toFixed(2)
+          )
+        : undefined;
+  const serializedCustomerRate = customerExchangeRate
+    ? {
+        baseCurrency: "USD",
+        quoteCurrency: "NGN",
+        value: customerExchangeRate,
+        includesMarkup: true,
+        display: isWithdrawalDirection
+          ? `1 USD pays NGN ${customerExchangeRate}`
+          : `1 USD = NGN ${customerExchangeRate}`,
+      }
+    : null;
+
+  return {
+    id: quote._id,
+    operation: quote.operation,
+    brand: quote.brand,
+    source: {
+      currency: quote.sourceCurrency,
+      amount: sourceAmount,
+    },
+    target: {
+      currency: quote.targetCurrency,
+      amount: targetAmount,
+    },
+    exchangeRate: serializedCustomerRate,
+    fee: fromMinorUnit(quote.fee),
+    feeBreakdown: {
+      providerFee: fromMinorUnit(Number(pricing.providerFee) || 0),
+      billxpressFee: fromMinorUnit(Number(pricing.billxpressFee) || 0),
+    },
+    exchangeMarkup: fromMinorUnit(quote.exchangeMarkup),
+    walletDebit:
+      quote.walletDebit > 0 ? fromMinorUnit(quote.walletDebit) : undefined,
+    walletCredit:
+      quote.walletCredit > 0 ? fromMinorUnit(quote.walletCredit) : undefined,
+    summary:
+      quote.operation === "creation"
+        ? {
+            cardBrand: quote.brand,
+            amountEntered: {
+              currency: quote.sourceCurrency,
+              amount: sourceAmount,
+            },
+            amountToCard: {
+              currency: quote.targetCurrency,
+              amount: targetAmount,
+            },
+            exchangeRate: serializedCustomerRate,
+            charges: {
+              cardCreationFee: fromMinorUnit(creationFee),
+              initialFundingFee: fromMinorUnit(fundingFee),
+              exchangeMarkup: fromMinorUnit(quote.exchangeMarkup),
+              total: fromMinorUnit(
+                creationFee + fundingFee + quote.exchangeMarkup
+              ),
+            },
+            totalWalletDebit: {
+              currency: "NGN",
+              amount: fromMinorUnit(quote.walletDebit),
+            },
+          }
+        : undefined,
+    status: quote.status,
+    expiresAt: quote.expiresAt,
+  };
+};
 
 const requireCardService = async () => {
   const setting = await getOrCreateCardSetting();
@@ -320,6 +411,111 @@ const calculateWithdrawalProviderFeeInNgn = (providerFee, providerQuote) => {
   );
 };
 
+export const getAdminCardRatePreview = async ({
+  amountNgn = 10000,
+  amountUsd = 10,
+} = {}) => {
+  const setting = await getOrCreateCardSetting();
+  const amountNgnInMinorUnit = toMinorUnit(amountNgn);
+  const amountUsdInMinorUnit = toMinorUnit(amountUsd);
+  const [fundingQuote, withdrawalQuote] = await Promise.all([
+    generateMapleradFxQuote({
+      sourceCurrency: "NGN",
+      targetCurrency: "USD",
+      amountInMinorUnit: amountNgnInMinorUnit,
+    }),
+    generateMapleradFxQuote({
+      sourceCurrency: "USD",
+      targetCurrency: "NGN",
+      amountInMinorUnit: amountUsdInMinorUnit,
+    }),
+  ]);
+
+  const fundingMarkup = Math.round(
+    (fundingQuote.sourceAmount * setting.fundingExchangeMarkupPercent) / 100
+  );
+  const withdrawalMarkup = Math.round(
+    (withdrawalQuote.targetAmount *
+      setting.withdrawalExchangeMarkupPercent) /
+      100
+  );
+  const providerFundingRate =
+    fundingQuote.targetAmount > 0
+      ? fundingQuote.sourceAmount / fundingQuote.targetAmount
+      : 0;
+  const customerFundingRate =
+    fundingQuote.targetAmount > 0
+      ? (fundingQuote.sourceAmount + fundingMarkup) /
+        fundingQuote.targetAmount
+      : 0;
+  const providerWithdrawalRate =
+    withdrawalQuote.sourceAmount > 0
+      ? withdrawalQuote.targetAmount / withdrawalQuote.sourceAmount
+      : 0;
+  const customerWithdrawalRate =
+    withdrawalQuote.sourceAmount > 0
+      ? (withdrawalQuote.targetAmount - withdrawalMarkup) /
+        withdrawalQuote.sourceAmount
+      : 0;
+
+  return {
+    fetchedAt: new Date(),
+    settings: {
+      fundingExchangeMarkupPercent: setting.fundingExchangeMarkupPercent,
+      withdrawalExchangeMarkupPercent:
+        setting.withdrawalExchangeMarkupPercent,
+    },
+    funding: {
+      direction: "NGN_TO_USD",
+      input: {
+        currency: "NGN",
+        amount: fromMinorUnit(fundingQuote.sourceAmount),
+      },
+      outputBeforeCharges: {
+        currency: "USD",
+        amount: fromMinorUnit(fundingQuote.targetAmount),
+      },
+      providerRate: {
+        ngnPerUsd: Number(providerFundingRate.toFixed(2)),
+        display: `1 USD = NGN ${providerFundingRate.toFixed(2)}`,
+      },
+      configuredMarkup: {
+        percent: setting.fundingExchangeMarkupPercent,
+        amountNgn: fromMinorUnit(fundingMarkup),
+      },
+      effectiveCustomerRate: {
+        ngnPerUsd: Number(customerFundingRate.toFixed(2)),
+        display: `1 USD costs NGN ${customerFundingRate.toFixed(2)}`,
+      },
+    },
+    withdrawal: {
+      direction: "USD_TO_NGN",
+      input: {
+        currency: "USD",
+        amount: fromMinorUnit(withdrawalQuote.sourceAmount),
+      },
+      outputBeforeCharges: {
+        currency: "NGN",
+        amount: fromMinorUnit(withdrawalQuote.targetAmount),
+      },
+      providerRate: {
+        ngnPerUsd: Number(providerWithdrawalRate.toFixed(2)),
+        display: `1 USD = NGN ${providerWithdrawalRate.toFixed(2)}`,
+      },
+      configuredMarkup: {
+        percent: setting.withdrawalExchangeMarkupPercent,
+        amountNgn: fromMinorUnit(withdrawalMarkup),
+      },
+      effectiveCustomerRate: {
+        ngnPerUsd: Number(customerWithdrawalRate.toFixed(2)),
+        display: `User receives NGN ${customerWithdrawalRate.toFixed(
+          2
+        )} per USD before other fees`,
+      },
+    },
+  };
+};
+
 export const createCardCreationQuote = async ({
   userId,
   amountNgn,
@@ -359,12 +555,24 @@ export const createCardCreationQuote = async ({
     targetCurrency: "USD",
     amountInMinorUnit,
   });
-  const billxpressFee =
-    calculateFee(amountInMinorUnit, setting.creationFee) +
-    calculateFee(amountInMinorUnit, setting.fundingFee);
-  const providerFee =
-    calculateProviderFeeInNgn(setting.providerCreationFee, providerQuote) +
-    calculateProviderFeeInNgn(setting.providerFundingFee, providerQuote);
+  const billxpressCreationFee = calculateFee(
+    amountInMinorUnit,
+    setting.creationFee
+  );
+  const billxpressFundingFee = calculateFee(
+    amountInMinorUnit,
+    setting.fundingFee
+  );
+  const providerCreationFee = calculateProviderFeeInNgn(
+    setting.providerCreationFee,
+    providerQuote
+  );
+  const providerFundingFee = calculateProviderFeeInNgn(
+    setting.providerFundingFee,
+    providerQuote
+  );
+  const billxpressFee = billxpressCreationFee + billxpressFundingFee;
+  const providerFee = providerCreationFee + providerFundingFee;
   const fee = billxpressFee + providerFee;
   const exchangeMarkup = Math.round(
     (amountInMinorUnit * setting.fundingExchangeMarkupPercent) / 100
@@ -388,6 +596,10 @@ export const createCardCreationQuote = async ({
       settings: serializeCardSetting(setting),
       providerFee,
       billxpressFee,
+      billxpressCreationFee,
+      providerCreationFee,
+      billxpressFundingFee,
+      providerFundingFee,
     },
     providerResponse: providerQuote.providerResponse,
   });
@@ -848,6 +1060,55 @@ export const withdrawVirtualDollarCard = async ({
 export const listVirtualDollarCards = async (userId) =>
   VirtualDollarCard.find({ user: userId }).sort({ createdAt: -1 });
 
+export const listAdminVirtualDollarCards = async ({
+  page = 1,
+  limit = 20,
+  status,
+  userId,
+  maintenancePastDue,
+} = {}) => {
+  const safePage = Math.max(Number(page) || 1, 1);
+  const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 100);
+  const query = {};
+
+  if (status) {
+    query.status = String(status).trim().toUpperCase();
+  }
+
+  if (userId) {
+    query.user = userId;
+  }
+
+  if (maintenancePastDue !== undefined) {
+    query.maintenancePastDue =
+      maintenancePastDue === true || maintenancePastDue === "true";
+  }
+
+  const [cards, total] = await Promise.all([
+    VirtualDollarCard.find(query)
+      .populate("user", "firstName lastName username email phone isActive")
+      .sort({ createdAt: -1 })
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit),
+    VirtualDollarCard.countDocuments(query),
+  ]);
+
+  return {
+    cards: cards.map((card) => ({
+      ...serializeCard(card),
+      user: card.user,
+      providerCardId: card.providerCardId,
+      creationReference: card.creationReference,
+    })),
+    pagination: {
+      page: safePage,
+      limit: safeLimit,
+      total,
+      pages: Math.ceil(total / safeLimit),
+    },
+  };
+};
+
 export const getVirtualDollarCardDetails = async (userId, cardId) => {
   const card = await requireOwnedCard(userId, cardId);
 
@@ -931,86 +1192,347 @@ const addOneMonth = (date) => {
   return next;
 };
 
+const getMaintenanceBillingKey = (card) =>
+  card.nextMaintenanceAt.toISOString().slice(0, 7);
+
+const getMaintenanceProviderReference = (card) =>
+  `card-maintenance:${card._id}:${getMaintenanceBillingKey(card)}`;
+
+const getMaintenanceGraceDeadline = (card, setting) => {
+  const deadline = new Date(card.nextMaintenanceAt);
+  deadline.setUTCDate(
+    deadline.getUTCDate() + setting.maintenanceGracePeriodDays
+  );
+  return deadline;
+};
+
+const getMaintenanceNgnQuote = (setting) =>
+  generateMapleradFxQuote({
+    sourceCurrency: "USD",
+    targetCurrency: "NGN",
+    amountInMinorUnit: setting.monthlyMaintenanceFee,
+  });
+
+const notifyCardMaintenance = ({
+  card,
+  title,
+  message,
+  priority = "normal",
+  event,
+  amountNgn,
+}) =>
+  createNotificationBestEffort({
+    userId: card.user,
+    title,
+    message,
+    type: "card_maintenance",
+    channel: "both",
+    priority,
+    data: {
+      cardId: card._id,
+      event,
+      dueAt: card.nextMaintenanceAt,
+      graceEndsAt: card.maintenanceGraceEndsAt,
+      amountNgn,
+    },
+  });
+
+const markMaintenanceReminderSent = async (card, reminderKey) => {
+  card.maintenanceReminderKeys = [
+    ...(card.maintenanceReminderKeys || []).filter(
+      (key) => key !== reminderKey
+    ),
+    reminderKey,
+  ].slice(-24);
+  await card.save();
+};
+
+const finalizeCardMaintenancePayment = async ({
+  card,
+  setting,
+  transaction,
+  amountNgn,
+}) => {
+  const restored = card.frozenForMaintenance;
+
+  if (card.frozenForMaintenance && card.providerCardId) {
+    await unfreezeMapleradCard(card.providerCardId);
+    card.status = "ACTIVE";
+  }
+
+  const paidDueAt = card.nextMaintenanceAt;
+  card.lastMaintenanceAt = paidDueAt;
+  card.nextMaintenanceAt = addOneMonth(paidDueAt);
+  card.maintenancePastDue = false;
+  card.maintenanceGraceEndsAt = null;
+  card.frozenForMaintenance = false;
+  card.lastMaintenanceFailure = null;
+  await card.save();
+
+  await notifyCardMaintenance({
+    card,
+    title: "Card maintenance fee paid",
+    message: `Your monthly card maintenance fee of USD ${fromMinorUnit(
+      setting.monthlyMaintenanceFee
+    )} (NGN ${amountNgn}) was paid successfully. Your next payment is due on ${card.nextMaintenanceAt.toLocaleDateString(
+      "en-NG",
+      { timeZone: "UTC" }
+    )}.`,
+    event: "payment_successful",
+    amountNgn,
+  });
+
+  return { card, transaction, restored };
+};
+
+const chargeDueCardMaintenance = async ({ cardId }) => {
+  const setting = await getOrCreateCardSetting();
+  const now = new Date();
+  let card = await VirtualDollarCard.findOneAndUpdate(
+    {
+      _id: cardId,
+      status: { $in: ["ACTIVE", "FROZEN"] },
+      nextMaintenanceAt: { $ne: null, $lte: now },
+      maintenancePaymentProcessing: { $ne: true },
+    },
+    { $set: { maintenancePaymentProcessing: true } },
+    { returnDocument: "after" }
+  );
+
+  if (!card) {
+    throw badRequest("Card maintenance fee is not currently due");
+  }
+
+  try {
+    const providerReference = getMaintenanceProviderReference(card);
+    const existing = await Transaction.findOne({ providerReference });
+
+    if (existing && existing.status === "successful") {
+      return finalizeCardMaintenancePayment({
+        card,
+        setting,
+        transaction: existing,
+        amountNgn: fromMinorUnit(existing.amount),
+      });
+    }
+
+    const quote = await getMaintenanceNgnQuote(setting);
+    const debitResult = await debitWallet({
+      userId: card.user,
+      amountInMinorUnit: quote.targetAmount,
+      walletType: "main",
+      type: "debit",
+      reference: generateTransactionReference("VCM"),
+      provider: "maplerad",
+      providerReference,
+      narration: "Monthly virtual dollar card maintenance fee",
+      metadata: {
+        service: "virtual_dollar_card",
+        operation: "maintenance",
+        cardId: card._id,
+        maintenanceFeeUsd: setting.monthlyMaintenanceFee,
+        providerRate: quote.rate,
+        dueAt: card.nextMaintenanceAt,
+      },
+    });
+
+    return finalizeCardMaintenancePayment({
+      card,
+      setting,
+      transaction: debitResult.transaction,
+      amountNgn: fromMinorUnit(quote.targetAmount),
+    });
+  } finally {
+    await VirtualDollarCard.updateOne(
+      { _id: card._id },
+      { $set: { maintenancePaymentProcessing: false } }
+    );
+  }
+};
+
+export const payVirtualDollarCardMaintenance = async ({
+  userId,
+  cardId,
+  transactionPin,
+}) => {
+  await requireUserPin(userId, transactionPin);
+  const card = await requireOwnedCard(userId, cardId);
+  const result = await chargeDueCardMaintenance({ cardId: card._id });
+  const wallet = await getOrCreateWallet(userId);
+
+  return {
+    message: result.restored
+      ? "Card maintenance fee paid and card restored"
+      : "Card maintenance fee paid",
+    card: result.card,
+    wallet,
+    transaction: result.transaction,
+  };
+};
+
+const processUpcomingMaintenanceReminders = async (setting, now) => {
+  const reminderWindowEnd = new Date(now);
+  reminderWindowEnd.setUTCDate(reminderWindowEnd.getUTCDate() + 7);
+  const cards = await VirtualDollarCard.find({
+    status: { $in: ["ACTIVE", "FROZEN"] },
+    nextMaintenanceAt: { $gt: now, $lte: reminderWindowEnd },
+  }).limit(100);
+  let reminded = 0;
+  let estimatedAmountNgn = null;
+
+  for (const card of cards) {
+    const millisecondsRemaining = card.nextMaintenanceAt.getTime() - now.getTime();
+    const daysRemaining = Math.ceil(millisecondsRemaining / (24 * 60 * 60 * 1000));
+    const reminderDay =
+      daysRemaining <= 1 ? 1 : daysRemaining <= 3 ? 3 : 7;
+    const reminderKey = `${getMaintenanceBillingKey(card)}:${reminderDay}`;
+
+    if ((card.maintenanceReminderKeys || []).includes(reminderKey)) {
+      continue;
+    }
+
+    if (estimatedAmountNgn === null) {
+      try {
+        const quote = await getMaintenanceNgnQuote(setting);
+        estimatedAmountNgn = fromMinorUnit(quote.targetAmount);
+      } catch {
+        estimatedAmountNgn = undefined;
+      }
+    }
+
+    await notifyCardMaintenance({
+      card,
+      title: "Upcoming card maintenance fee",
+      message: `Your USD ${fromMinorUnit(
+        setting.monthlyMaintenanceFee
+      )} card maintenance fee is due in ${daysRemaining} day${
+        daysRemaining === 1 ? "" : "s"
+      }${
+        estimatedAmountNgn
+          ? ` (currently about NGN ${estimatedAmountNgn})`
+          : ""
+      }. Please keep enough money in your BillXpress wallet.`,
+      event: `reminder_${reminderDay}_days`,
+      amountNgn: estimatedAmountNgn,
+    });
+    await markMaintenanceReminderSent(card, reminderKey);
+    reminded += 1;
+  }
+
+  return reminded;
+};
+
 export const processDueCardMaintenanceFees = async () => {
   const setting = await getOrCreateCardSetting();
 
   if (!setting.isEnabled || setting.monthlyMaintenanceFee <= 0) {
-    return { processed: 0 };
+    return { processed: 0, reminded: 0, frozen: 0 };
   }
 
   const now = new Date();
+  const reminded = await processUpcomingMaintenanceReminders(setting, now);
   const cards = await VirtualDollarCard.find({
     status: { $in: ["ACTIVE", "FROZEN"] },
     nextMaintenanceAt: { $ne: null, $lte: now },
   }).limit(100);
   let processed = 0;
+  let frozen = 0;
 
   for (const card of cards) {
-    const billingKey = card.nextMaintenanceAt.toISOString().slice(0, 7);
-    const providerReference = `card-maintenance:${card._id}:${billingKey}`;
-    const existing = await Transaction.findOne({ providerReference });
-
-    if (existing) {
-      card.lastMaintenanceAt = card.nextMaintenanceAt;
-      card.nextMaintenanceAt = addOneMonth(card.nextMaintenanceAt);
-      card.maintenancePastDue = false;
-      await card.save();
-      continue;
-    }
-
     try {
-      const quote = await generateMapleradFxQuote({
-        sourceCurrency: "USD",
-        targetCurrency: "NGN",
-        amountInMinorUnit: setting.monthlyMaintenanceFee,
-      });
-      await debitWallet({
-        userId: card.user,
-        amountInMinorUnit: quote.targetAmount,
-        walletType: "main",
-        type: "debit",
-        reference: generateTransactionReference("VCM"),
-        provider: "maplerad",
-        providerReference,
-        narration: "Monthly virtual dollar card maintenance fee",
-        metadata: {
-          service: "virtual_dollar_card",
-          operation: "maintenance",
-          cardId: card._id,
-          maintenanceFeeUsd: setting.monthlyMaintenanceFee,
-          providerRate: quote.rate,
-        },
-      });
-      card.lastMaintenanceAt = card.nextMaintenanceAt;
-      card.nextMaintenanceAt = addOneMonth(card.nextMaintenanceAt);
-      card.maintenancePastDue = false;
-      await card.save();
+      await chargeDueCardMaintenance({ cardId: card._id });
       processed += 1;
     } catch (error) {
-      const graceDeadline = new Date(card.nextMaintenanceAt);
-      graceDeadline.setUTCDate(
-        graceDeadline.getUTCDate() + setting.maintenanceGracePeriodDays
-      );
+      const freshCard = await VirtualDollarCard.findById(card._id);
+      const graceDeadline = getMaintenanceGraceDeadline(freshCard, setting);
+      const dueKey = `${getMaintenanceBillingKey(freshCard)}:due`;
+      const dueNotificationAlreadySent = (
+        freshCard.maintenanceReminderKeys || []
+      ).includes(dueKey);
+      freshCard.maintenancePastDue = true;
+      freshCard.maintenanceGraceEndsAt = graceDeadline;
+      freshCard.lastMaintenanceFailure = error.message;
+      await freshCard.save();
+
+      if (!dueNotificationAlreadySent) {
+        await notifyCardMaintenance({
+          card: freshCard,
+          title: "Card maintenance payment due",
+          message: `We could not collect your card maintenance fee. Fund your BillXpress wallet and pay before ${graceDeadline.toLocaleDateString(
+            "en-NG",
+            { timeZone: "UTC" }
+          )} to avoid your card being frozen.`,
+          priority: "high",
+          event: "payment_due",
+        });
+        await markMaintenanceReminderSent(freshCard, dueKey);
+      }
+
+      if (dueNotificationAlreadySent && now < graceDeadline) {
+        const graceDaysRemaining = Math.max(
+          1,
+          Math.ceil(
+            (graceDeadline.getTime() - now.getTime()) /
+              (24 * 60 * 60 * 1000)
+          )
+        );
+        const graceKey = `${getMaintenanceBillingKey(
+          freshCard
+        )}:grace:${graceDaysRemaining}`;
+
+        if (
+          !(freshCard.maintenanceReminderKeys || []).includes(graceKey)
+        ) {
+          await notifyCardMaintenance({
+            card: freshCard,
+            title: "Card maintenance grace period",
+            message: `Your card maintenance fee is still unpaid. You have ${graceDaysRemaining} day${
+              graceDaysRemaining === 1 ? "" : "s"
+            } left to pay before your card is frozen.`,
+            priority: "high",
+            event: "grace_period_reminder",
+          });
+          await markMaintenanceReminderSent(freshCard, graceKey);
+        }
+      }
 
       if (
         setting.freezeOnMaintenanceFailure &&
         now >= graceDeadline &&
-        card.providerCardId
+        freshCard.providerCardId &&
+        freshCard.status === "ACTIVE"
       ) {
-        card.maintenancePastDue = true;
         try {
-          if (card.status === "ACTIVE") {
-            await freezeMapleradCard(card.providerCardId);
+          await freezeMapleradCard(freshCard.providerCardId);
+          freshCard.status = "FROZEN";
+          freshCard.frozenForMaintenance = true;
+          await freshCard.save();
+          frozen += 1;
+
+          const frozenKey = `${getMaintenanceBillingKey(
+            freshCard
+          )}:maintenance_frozen`;
+          if (
+            !(freshCard.maintenanceReminderKeys || []).includes(frozenKey)
+          ) {
+            await notifyCardMaintenance({
+              card: freshCard,
+              title: "Card frozen for unpaid maintenance",
+              message:
+                "Your virtual dollar card has been frozen because its maintenance fee is unpaid. Fund your wallet and use Pay maintenance fee to restore it.",
+              priority: "high",
+              event: "card_frozen",
+            });
+            await markMaintenanceReminderSent(freshCard, frozenKey);
           }
-          card.status = "FROZEN";
-          await card.save();
-        } catch {
-          await card.save();
+        } catch (freezeError) {
+          freshCard.lastMaintenanceFailure = freezeError.message;
+          await freshCard.save();
           // The next scheduled run will retry the provider freeze.
         }
       }
     }
   }
 
-  return { processed };
+  return { processed, reminded, frozen };
 };

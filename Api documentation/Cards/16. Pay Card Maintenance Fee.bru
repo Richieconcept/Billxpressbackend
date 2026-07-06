@@ -1,0 +1,72 @@
+meta {
+  name: 16. Pay Card Maintenance Fee
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/api/v1/cards/{{cardId}}/maintenance/pay
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "transactionPin": "1234"
+  }
+}
+
+docs {
+  # Pay Card Maintenance Fee
+
+  Allows the card owner to pay an outstanding monthly maintenance fee from
+  their main NGN wallet.
+
+  The backend:
+
+  1. verifies the transaction PIN
+  2. fetches the current USD-to-NGN rate
+  3. debits the exact NGN equivalent
+  4. clears the overdue status
+  5. unfreezes the Maplerad card only when it was frozen for maintenance
+  6. schedules the next monthly due date
+  7. sends an email and in-app success notification
+
+  ## Success Response
+
+  ```json
+  {
+    "message": "Card maintenance fee paid and card restored",
+    "card": {
+      "status": "ACTIVE",
+      "maintenancePastDue": false,
+      "maintenanceGraceEndsAt": null,
+      "frozenForMaintenance": false,
+      "maintenanceStatus": "CURRENT",
+      "nextMaintenanceAt": "..."
+    },
+    "wallet": {},
+    "transaction": {}
+  }
+  ```
+
+  ## Common Errors
+
+  ```json
+  {
+    "message": "Card maintenance fee is not currently due"
+  }
+  ```
+
+  ```json
+  {
+    "message": "Insufficient wallet balance"
+  }
+  ```
+
+  Show the Pay button when `maintenancePastDue` is `true`.
+}

@@ -1,0 +1,48 @@
+meta {
+  name: 17. Admin List Cards
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/cards?page=1&limit=20
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin List Virtual Dollar Cards
+
+  Returns all BillXpress virtual dollar cards with their owners, statuses and
+  maintenance state.
+
+  ## Optional Filters
+
+  - `page`
+  - `limit` (maximum 100)
+  - `status`: `PENDING`, `ACTIVE`, `FROZEN`, `FAILED`, or `TERMINATED`
+  - `userId`
+  - `maintenancePastDue`: `true` or `false`
+
+  ## Admin Table Fields
+
+  Show:
+
+  - owner name, email and phone
+  - card brand and masked PAN
+  - BillXpress and provider card IDs
+  - card status
+  - current card balance
+  - next and last maintenance dates
+  - grace-period deadline
+  - maintenance status
+  - whether the card was frozen for maintenance
+  - latest maintenance failure
+
+  Full PAN, CVV and other card credentials are intentionally not returned.
+  Admins should never have access to users' complete card credentials.
+}
