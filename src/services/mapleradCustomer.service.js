@@ -280,7 +280,7 @@ export const upgradeUserToMapleradTier1 = async (userId, body) => {
 
   const customer = await getOrCreateMapleradCustomerForUser(user);
 
-  if (customer.tier >= 1 || user.kycLevel >= 1) {
+  if (customer.tier >= 1) {
     const error = new Error("KYC verification has already been completed");
     error.statusCode = 409;
     throw error;

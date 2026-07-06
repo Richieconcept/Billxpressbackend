@@ -22,21 +22,21 @@ auth:bearer {
 body:json {
   {
     "dob": "20-10-1988",
-    "identificationNumber": "11111111111",
-    "phoneNumber": "08123456789",
+    "identificationNumber": "22632986994",
+    "phoneNumber": "07019173738",
     "address": {
-      "street": "12 Example Street",
-      "city": "Ikeja",
-      "state": "Lagos",
+      "street": "No 2 Pavera Close",
+      "city": "Kubwa",
+      "state": "FCT",
       "country": "NG",
-      "postalCode": "100001"
+      "postalCode": "900001"
     },
     "photo": "https://example.com/selfie.jpg"
   }
 }
 
 vars:pre-request {
-  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTQyNTg5NjlhMjY5MzJkODU3NWYxZGYiLCJyb2xlIjoidXNlciIsImF1dGhUaWVyIjoidGllcl8xIiwiaWF0IjoxNzgyNzMzMDMxLCJleHAiOjE3ODMzMzc4MzF9.M-AHfkIe9pktipNYu417NDRJUL9u_y7Hc5hmCHSHWqY
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzIiLCJpYXQiOjE3ODMzMzc0MzEsImV4cCI6MTc4Mzk0MjIzMX0.7XhOVN_onVIEI2e2lNM1FSx1Y_7Bbk7N8547TPpbFis
 }
 
 docs {
@@ -72,24 +72,24 @@ docs {
   
   `photo`
   Optional. Selfie/photo URL if available.
-
+  
   ## Important Paid Verification Rule
-
+  
   BillXpress temporarily debits `NGN 100` from the user's main wallet before
   submitting verification to Maplerad. The fee is kept only when verification
   succeeds. If Maplerad rejects the identity, the backend automatically refunds
   NGN 100 and marks the original fee transaction as reversed.
-
+  
   Fetch the current configurable fee from:
-
+  
   ```txt
   GET /api/v1/users/me/kyc
   ```
-
+  
   using `settings.bvnVerificationFee`.
-
+  
   The frontend must:
-
+  
   - show the fee and require explicit confirmation before submission
   - ensure the main wallet has at least the displayed fee
   - disable the submit button while the request is in progress
@@ -97,7 +97,7 @@ docs {
   - require the user to confirm that their name and date of birth exactly match
     their BVN record
   - show the backend error before allowing corrected details to be submitted
-
+  
   The backend blocks concurrent attempts. If Maplerad rejects a request, the
   exact same details cannot be submitted again for 15 minutes. Corrected details
   may be submitted without waiting.
@@ -124,37 +124,37 @@ docs {
     }
   }
   ```
-
+  
   ## Validation And Retry Errors
-
+  
   Invalid local BVN format:
-
+  
   ```json
   {
     "message": "BVN must contain exactly 11 digits"
   }
   ```
-
+  
   Insufficient main-wallet balance:
-
+  
   ```json
   {
     "message": "Insufficient wallet balance"
   }
   ```
-
+  
   When this error is returned, Maplerad was not called and no fee was charged.
-
+  
   Duplicate request already running:
-
+  
   ```json
   {
     "message": "KYC verification is already in progress"
   }
   ```
-
+  
   Exact same rejected details submitted during the cooldown:
-
+  
   ```json
   {
     "message": "These same KYC details were recently rejected by Maplerad: couldn't validate BVN. Confirm that the date of birth exactly matches the BVN record before retrying."
