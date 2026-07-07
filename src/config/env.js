@@ -11,6 +11,7 @@ const mapleradEnv = [
   "MAPLERAD_WEBHOOK_SECRET",
 ];
 const vtpassEnv = ["VTPASS_API_KEY", "VTPASS_SECRET_KEY"];
+const exosupplierEnv = ["EXOSUPPLIER_API_KEY"];
 
 export const validateEnv = () => {
   const requiredEnv = [...baseRequiredEnv];
@@ -35,4 +36,5 @@ export const validateEnv = () => {
   warnIfMissing("Monnify one-time funding", monnifyEnv);
   warnIfMissing("Maplerad one-time funding", mapleradEnv);
   warnIfMissing("VTpass services", vtpassEnv);
+  warnIfMissing("Exosupplier social growth", exosupplierEnv);
 };

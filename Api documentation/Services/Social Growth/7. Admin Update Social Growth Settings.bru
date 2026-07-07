@@ -22,9 +22,10 @@ auth:bearer {
 body:json {
   {
     "isEnabled": true,
-    "activeProvider": "vheeboost",
+    "activeProvider": "exosupplier",
     "userMarkupPercent": 15,
     "vendorMarkupPercent": 10,
+    "usdToNgnRate": 1600,
     "roundingMode": "ceil",
     "userPricingTiers": [
       { "minCost": 0, "maxCost": 1000, "markupPercent": 15 },
@@ -46,11 +47,31 @@ body:json {
 docs {
   # Admin Update Social Growth Settings
 
-  Admin uses this endpoint to update social growth pricing.
+  Admin uses this endpoint to update social growth provider and pricing settings.
+
+  You can send all fields at once or only the fields that changed. The backend saves only recognized fields.
 
   ## Endpoint
 
   `PATCH /api/v1/admin/services/social-growth/settings`
+
+  ## Authentication
+
+  Admin JWT required:
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  The logged-in user must have:
+
+  ```json
+  {
+    "role": "admin"
+  }
+  ```
+
+  Normal users and vendors must not call this endpoint.
 
   ## Body Fields
 
@@ -58,7 +79,16 @@ docs {
   Use `true` to allow purchases or `false` to disable social growth.
 
   `activeProvider`
-  Currently only `vheeboost`.
+  Provider the backend should use for service list, quote, order placement, and order status checks. Supported values are `exosupplier` and `vheeboost`.
+
+  `usdToNgnRate`
+  Exchange rate used when provider pricing is returned in USD. Example: if USD 1 should become NGN 1600, send `1600`.
+
+  `userMarkupPercent`
+  Fallback percentage markup for normal users if no pricing tier matches the provider cost.
+
+  `vendorMarkupPercent`
+  Fallback percentage markup for active vendors if no pricing tier matches the provider cost.
 
   `userPricingTiers`
   Percentage rules for normal users based on provider cost.
@@ -67,7 +97,87 @@ docs {
   Percentage rules for vendors based on provider cost.
 
   `roundingMode`
-  Use `ceil` to round up to the next naira.
+  Use `ceil` to round up to the next naira. Use `round` for normal rounding.
+
+  ## Full Example Body
+
+  ```json
+  {
+    "isEnabled": true,
+    "activeProvider": "exosupplier",
+    "userMarkupPercent": 15,
+    "vendorMarkupPercent": 10,
+    "usdToNgnRate": 1600,
+    "roundingMode": "ceil",
+    "userPricingTiers": [
+      { "minCost": 0, "maxCost": 1000, "markupPercent": 15 },
+      { "minCost": 1001, "maxCost": 5000, "markupPercent": 10 },
+      { "minCost": 5001, "maxCost": 15000, "markupPercent": 7 },
+      { "minCost": 15001, "maxCost": 50000, "markupPercent": 5 },
+      { "minCost": 50001, "maxCost": null, "markupPercent": 3 }
+    ],
+    "vendorPricingTiers": [
+      { "minCost": 0, "maxCost": 1000, "markupPercent": 10 },
+      { "minCost": 1001, "maxCost": 5000, "markupPercent": 7 },
+      { "minCost": 5001, "maxCost": 15000, "markupPercent": 5 },
+      { "minCost": 15001, "maxCost": 50000, "markupPercent": 3 },
+      { "minCost": 50001, "maxCost": null, "markupPercent": 2 }
+    ]
+  }
+  ```
+
+  ## Partial Update Examples
+
+  Disable social growth temporarily:
+
+  ```json
+  {
+    "isEnabled": false
+  }
+  ```
+
+  Switch provider:
+
+  ```json
+  {
+    "activeProvider": "vheeboost"
+  }
+  ```
+
+  Update only the USD exchange rate:
+
+  ```json
+  {
+    "usdToNgnRate": 1650
+  }
+  ```
+
+  ## Tier Rules Explained
+
+  Each tier has:
+
+  `minCost`
+  Lowest provider cost for the tier.
+
+  `maxCost`
+  Highest provider cost for the tier. Use `null` for the final "and above" tier.
+
+  `markupPercent`
+  Percentage added on top of provider cost.
+
+  Example:
+
+  ```json
+  { "minCost": 1001, "maxCost": 5000, "markupPercent": 10 }
+  ```
+
+  This means if the provider cost is between NGN 1001 and NGN 5000, the user price is provider cost plus 10%.
+
+  The backend sorts valid tiers by `minCost`. Invalid tiers are ignored. A tier is invalid if:
+
+  - `minCost` is missing or below `0`
+  - `maxCost` is below `minCost`
+  - `markupPercent` is missing, below `0`, or above `100`
 
   ## Recommended MVP Tier Structure
 
@@ -91,5 +201,80 @@ docs {
   cost 50001 and above => 2%
   ```
 
-  The frontend user app should not call this endpoint. Only admin dashboard should call it.
+  ## Expected Success Response
+
+  Status: `200 OK`
+
+  ```json
+  {
+    "message": "Social growth service settings updated successfully",
+    "settings": {
+      "id": "66...",
+      "service": "social_growth",
+      "isEnabled": true,
+      "activeProvider": "exosupplier",
+      "availableProviders": [
+        {
+          "name": "exosupplier",
+          "available": true
+        },
+        {
+          "name": "vheeboost",
+          "available": true
+        }
+      ],
+      "userMarkupPercent": 15,
+      "vendorMarkupPercent": 10,
+      "usdToNgnRate": 1600,
+      "userPricingTiers": [
+        { "minCost": 0, "maxCost": 1000, "markupPercent": 15 },
+        { "minCost": 1001, "maxCost": 5000, "markupPercent": 10 }
+      ],
+      "vendorPricingTiers": [
+        { "minCost": 0, "maxCost": 1000, "markupPercent": 10 },
+        { "minCost": 1001, "maxCost": 5000, "markupPercent": 7 }
+      ],
+      "roundingMode": "ceil",
+      "updatedBy": "66...",
+      "createdAt": "2026-07-07T08:00:00.000Z",
+      "updatedAt": "2026-07-07T08:30:00.000Z"
+    }
+  }
+  ```
+
+  ## Common Errors
+
+  No recognized field was sent:
+
+  ```json
+  {
+    "message": "No valid social growth settings were provided. Send JSON fields like activeProvider, userPricingTiers, or vendorPricingTiers."
+  }
+  ```
+
+  Unsupported provider:
+
+  ```json
+  {
+    "message": "SocialGrowthServiceSetting validation failed: activeProvider: `unknown` is not a valid enum value for path `activeProvider`."
+  }
+  ```
+
+  User is not admin:
+
+  ```json
+  {
+    "message": "Not authorized for this role"
+  }
+  ```
+
+  ## Admin Dashboard Notes
+
+  Fetch current settings first with `GET /api/v1/admin/services/social-growth/settings`.
+
+  Save only when the admin clicks a clear save button.
+
+  After saving, use the `settings` object from the response or call the GET endpoint again.
+
+  The frontend user app should not call this endpoint. Only the admin dashboard should call it.
 }

@@ -67,6 +67,24 @@ const getPricingForUser = (settings, user, costPrice) => {
 const roundSellingPrice = (amount, roundingMode) =>
   roundingMode === "round" ? Math.round(amount) : Math.ceil(amount);
 
+const normalizeUsdToNgnRate = (settings) => {
+  const rate = Number(settings?.usdToNgnRate);
+
+  return Number.isFinite(rate) && rate > 0 ? rate : 1600;
+};
+
+const isUsdCurrency = (currency) => String(currency || "").toUpperCase() === "USD";
+
+const convertProviderAmountToBillingCurrency = (amount, settings, currency) => {
+  const value = Number(amount);
+
+  if (!Number.isFinite(value)) return 0;
+
+  return isUsdCurrency(currency)
+    ? Number((value * normalizeUsdToNgnRate(settings)).toFixed(2))
+    : value;
+};
+
 const calculateOrderCost = ({ rate, quantity }) =>
   Number(((Number(quantity) / 1000) * Number(rate)).toFixed(2));
 
@@ -104,6 +122,7 @@ export const serializeSocialGrowthServiceSetting = (settings) => ({
   availableProviders: listSocialGrowthProviders(),
   userMarkupPercent: settings.userMarkupPercent,
   vendorMarkupPercent: settings.vendorMarkupPercent,
+  usdToNgnRate: normalizeUsdToNgnRate(settings),
   userPricingTiers: normalizePricingTiers(settings.userPricingTiers),
   vendorPricingTiers: normalizePricingTiers(settings.vendorPricingTiers),
   roundingMode: settings.roundingMode,
@@ -123,6 +142,7 @@ export const updateSocialGrowthServiceSetting = async (payload, adminUserId) => 
     "activeProvider",
     "userMarkupPercent",
     "vendorMarkupPercent",
+    "usdToNgnRate",
     "userPricingTiers",
     "vendorPricingTiers",
     "roundingMode",
@@ -138,7 +158,7 @@ export const updateSocialGrowthServiceSetting = async (payload, adminUserId) => 
   }
 
   receivedFields.forEach((field) => {
-    if (["userMarkupPercent", "vendorMarkupPercent"].includes(field)) {
+    if (["userMarkupPercent", "vendorMarkupPercent", "usdToNgnRate"].includes(field)) {
       settings[field] = Number(source[field]);
     } else if (["userPricingTiers", "vendorPricingTiers"].includes(field)) {
       settings[field] = normalizePricingTiers(source[field]);
@@ -165,8 +185,15 @@ export const serializeSocialGrowthProviderService = ({
   quantity,
 }) => {
   const safeQuantity = Number(quantity) || providerService.min;
+  const providerCurrency =
+    providerService.providerCurrency || providerService.currency || "NGN";
+  const billingRate = convertProviderAmountToBillingCurrency(
+    providerService.rate,
+    settings,
+    providerCurrency
+  );
   const costPrice = calculateOrderCost({
-    rate: providerService.rate,
+    rate: billingRate,
     quantity: safeQuantity,
   });
   const pricingConfig = getPricingForUser(settings, user, costPrice);
@@ -182,14 +209,19 @@ export const serializeSocialGrowthProviderService = ({
     providerServiceId: providerService.providerServiceId,
     name: providerService.name,
     category: providerService.category,
-    rate: providerService.rate,
+    rate: billingRate,
     rateUnit: "per_1000",
+    providerRate: providerService.providerRate ?? providerService.rate,
+    providerCurrency,
+    exchangeRate: isUsdCurrency(providerCurrency)
+      ? normalizeUsdToNgnRate(settings)
+      : null,
     min: providerService.min,
     max: providerService.max,
     refill: providerService.refill,
     dripFeed: providerService.dripFeed,
     type: providerService.type,
-    currency: providerService.currency,
+    currency: "NGN",
     quoteQuantity: safeQuantity,
     costPrice,
     sellingPrice: pricing.sellingPrice,
@@ -539,13 +571,21 @@ export const syncSocialGrowthOrderStatus = async ({ userId, orderId }) => {
   }
 
   const provider = getSocialGrowthProvider(order.provider);
+  const settings = await getOrCreateSocialGrowthServiceSetting();
   const statusResult = await provider.fetchOrderStatus(order.providerOrderId);
 
   order.status = statusResult.status;
   order.startCount = statusResult.startCount;
   order.remains = statusResult.remains;
-  order.charge = statusResult.charge;
-  order.currency = statusResult.currency || order.currency;
+  order.charge =
+    statusResult.charge === null
+      ? null
+      : convertProviderAmountToBillingCurrency(
+          statusResult.charge,
+          settings,
+          statusResult.currency
+        );
+  order.currency = "NGN";
   order.providerResponse = {
     ...order.providerResponse,
     statusCheck: statusResult.raw,

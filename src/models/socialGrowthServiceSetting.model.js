@@ -40,8 +40,8 @@ const socialGrowthServiceSettingSchema = new mongoose.Schema(
 
     activeProvider: {
       type: String,
-      enum: ["vheeboost"],
-      default: "vheeboost",
+      enum: ["exosupplier", "vheeboost"],
+      default: "exosupplier",
     },
 
     userMarkupPercent: {
@@ -56,6 +56,12 @@ const socialGrowthServiceSettingSchema = new mongoose.Schema(
       default: 10,
       min: 0,
       max: 100,
+    },
+
+    usdToNgnRate: {
+      type: Number,
+      default: 1600,
+      min: 1,
     },
 
     userPricingTiers: {

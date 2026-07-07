@@ -195,5 +195,14 @@ docs {
   POST /api/v1/services/social-growth/orders
   ```
 
-  The backend calculates tiered markup, debits wallet, calls VheeBoost, saves order history, and refunds automatically if the provider fails.
+  The backend calculates tiered markup, debits wallet, calls the active social growth provider, saves order history, and refunds automatically if the provider fails.
+
+  Admin social growth settings are available at:
+
+  ```txt
+  GET   /api/v1/admin/services/social-growth/settings
+  PATCH /api/v1/admin/services/social-growth/settings
+  ```
+
+  The admin dashboard can use those endpoints to enable or disable social growth, switch between `exosupplier` and `vheeboost`, update exchange rate, and control normal-user/vendor pricing tiers.
 }

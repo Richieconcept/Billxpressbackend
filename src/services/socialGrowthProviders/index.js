@@ -1,6 +1,8 @@
+import { exosupplierProvider } from "./exosupplier.provider.js";
 import { vheeboostProvider } from "./vheeboost.provider.js";
 
 const providers = {
+  exosupplier: exosupplierProvider,
   vheeboost: vheeboostProvider,
 };
 

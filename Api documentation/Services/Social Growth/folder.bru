@@ -8,9 +8,34 @@ docs {
 
   Social Growth lets users buy services like followers, likes, views, comments, and other social media growth products.
 
-  The frontend should only call BillXpress endpoints. Do not call VheeBoost directly from the app.
+  The frontend should only call BillXpress endpoints. Do not call Exosupplier, VheeBoost, or any other provider directly from the app.
 
-  ## User Flow
+  ## Who Uses These Endpoints
+
+  The mobile app uses requests 1 to 5 in this folder.
+
+  The admin dashboard uses requests 6 and 7:
+
+  ```txt
+  GET   /api/v1/admin/services/social-growth/settings
+  PATCH /api/v1/admin/services/social-growth/settings
+  ```
+
+  Admin requests need an admin JWT:
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  The logged-in user behind `authToken` must have:
+
+  ```json
+  {
+    "role": "admin"
+  }
+  ```
+
+  ## User Purchase Flow
 
   1. Call `GET /api/v1/services/social-growth/services`.
   2. Show categories and services returned by the backend.
@@ -18,12 +43,32 @@ docs {
   4. Call `POST /api/v1/services/social-growth/quote`.
   5. Show the final `sellingPrice`.
   6. When user confirms, call `POST /api/v1/services/social-growth/orders`.
-  7. Backend verifies transaction PIN, debits wallet, sends order to VheeBoost, then saves transaction and order history.
-  8. If VheeBoost fails, backend refunds the wallet automatically.
+  7. Backend verifies transaction PIN, debits wallet, sends order to the active provider, then saves transaction and order history.
+  8. If the provider fails, backend refunds the wallet automatically.
+
+  ## Admin Setup Flow
+
+  Use this flow when building or testing the admin dashboard:
+
+  1. Login as an admin and save the JWT as `authToken`.
+  2. Call `GET /api/v1/admin/services/social-growth/settings`.
+  3. Show the current provider, enabled status, exchange rate, markup settings, and tiers.
+  4. Let admin update only the fields they want to change.
+  5. Call `PATCH /api/v1/admin/services/social-growth/settings`.
+  6. Re-fetch settings after saving so the dashboard shows the saved backend values.
+
+  Admin can:
+
+  - enable or disable social growth purchases
+  - switch the active provider between `exosupplier` and `vheeboost`
+  - set the USD to NGN exchange rate for providers that return USD prices
+  - set fallback markup for normal users and vendors
+  - set tiered markup rules for normal users and vendors
+  - choose whether prices round up with `ceil` or round normally with `round`
 
   ## Pricing Rule
 
-  VheeBoost returns `rate` as provider cost per `1000` quantity.
+  Providers return `rate` as provider cost per `1000` quantity.
 
   Example:
 
@@ -35,5 +80,25 @@ docs {
   sellingPrice = 1640
   ```
 
-  Admin can control the markup tiers.
+  The backend first calculates provider cost:
+
+  ```txt
+  provider cost = quantity / 1000 * provider rate
+  ```
+
+  Then it finds the matching tier for that cost. If no tier matches, it uses the fallback markup percent.
+
+  Normal app users use `userPricingTiers` and `userMarkupPercent`.
+
+  Active vendors use `vendorPricingTiers` and `vendorMarkupPercent`.
+
+  ## Admin Safety Notes
+
+  Use `isEnabled: false` when the provider is down or pricing is not ready. Users will receive `Social growth service is currently unavailable`.
+
+  Keep tier ranges simple and non-overlapping. The backend sorts valid tiers by `minCost` and ignores invalid tiers.
+
+  Use `maxCost: null` for the final open-ended tier.
+
+  Do not show provider API keys in the admin dashboard. Provider keys live in environment variables on the backend.
 }

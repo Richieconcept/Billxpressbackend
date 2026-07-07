@@ -21,9 +21,142 @@ auth:bearer {
 docs {
   # Admin Get Social Growth Settings
 
-  Admin uses this to see the active social growth provider and pricing tiers.
+  Admin uses this to see the current social growth configuration before editing it.
+
+  This is the safest first request for the admin dashboard because it returns the exact values the backend is using.
 
   ## Endpoint
 
   `GET /api/v1/admin/services/social-growth/settings`
+
+  ## Authentication
+
+  Admin JWT required:
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  The logged-in user must have:
+
+  ```json
+  {
+    "role": "admin"
+  }
+  ```
+
+  Normal users and vendors must not call this endpoint.
+
+  ## When To Call This
+
+  Call this when:
+
+  - the admin opens the Social Growth settings page
+  - the admin clicks refresh
+  - the admin saves settings and you want to show the latest saved values
+
+  ## Expected Success Response
+
+  Status: `200 OK`
+
+  ```json
+  {
+    "settings": {
+      "id": "66...",
+      "service": "social_growth",
+      "isEnabled": true,
+      "activeProvider": "exosupplier",
+      "availableProviders": [
+        {
+          "name": "exosupplier",
+          "available": true
+        },
+        {
+          "name": "vheeboost",
+          "available": true
+        }
+      ],
+      "userMarkupPercent": 15,
+      "vendorMarkupPercent": 10,
+      "usdToNgnRate": 1600,
+      "userPricingTiers": [
+        { "minCost": 0, "maxCost": 1000, "markupPercent": 15 },
+        { "minCost": 1001, "maxCost": 5000, "markupPercent": 10 },
+        { "minCost": 5001, "maxCost": 15000, "markupPercent": 7 },
+        { "minCost": 15001, "maxCost": 50000, "markupPercent": 5 },
+        { "minCost": 50001, "maxCost": null, "markupPercent": 3 }
+      ],
+      "vendorPricingTiers": [
+        { "minCost": 0, "maxCost": 1000, "markupPercent": 10 },
+        { "minCost": 1001, "maxCost": 5000, "markupPercent": 7 },
+        { "minCost": 5001, "maxCost": 15000, "markupPercent": 5 },
+        { "minCost": 15001, "maxCost": 50000, "markupPercent": 3 },
+        { "minCost": 50001, "maxCost": null, "markupPercent": 2 }
+      ],
+      "roundingMode": "ceil",
+      "updatedBy": "66...",
+      "createdAt": "2026-07-07T08:00:00.000Z",
+      "updatedAt": "2026-07-07T08:30:00.000Z"
+    }
+  }
+  ```
+
+  ## Field Meaning
+
+  `isEnabled`
+  `true` means users can fetch services, quote, and place orders. `false` disables social growth purchases.
+
+  `activeProvider`
+  Provider used by the backend when fetching services and creating orders. Supported values are `exosupplier` and `vheeboost`.
+
+  `availableProviders`
+  List of providers the backend code currently supports. Use this to build a provider dropdown.
+
+  `usdToNgnRate`
+  Exchange rate used when the active provider returns prices in USD. Providers that already return NGN prices do not need conversion.
+
+  `userMarkupPercent`
+  Fallback markup for normal users if no tier matches the calculated provider cost.
+
+  `vendorMarkupPercent`
+  Fallback markup for active vendors if no tier matches the calculated provider cost.
+
+  `userPricingTiers`
+  Tiered markup rules for normal users.
+
+  `vendorPricingTiers`
+  Tiered markup rules for active vendors.
+
+  `roundingMode`
+  `ceil` rounds prices up to the next naira. `round` uses normal rounding.
+
+  ## Admin Dashboard Notes
+
+  Show `isEnabled` as a switch.
+
+  Show `activeProvider` as a select/dropdown using `availableProviders`.
+
+  Show pricing tiers as editable rows with `minCost`, `maxCost`, and `markupPercent`.
+
+  Treat `maxCost: null` as "and above" in the UI.
+
+  Do not allow blank `minCost` or `markupPercent` values before saving.
+
+  ## Common Errors
+
+  Missing or expired token:
+
+  ```json
+  {
+    "message": "Not authorized, no token"
+  }
+  ```
+
+  User is not admin:
+
+  ```json
+  {
+    "message": "Not authorized for this role"
+  }
+  ```
 }
