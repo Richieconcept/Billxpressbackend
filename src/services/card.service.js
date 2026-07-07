@@ -27,6 +27,7 @@ import {
   verifyTransactionPin,
 } from "./wallet.service.js";
 import { createNotificationBestEffort } from "./notification.service.js";
+import { getPublicProviderFailure } from "./providerFailure.service.js";
 
 const SUPPORTED_BRANDS = ["VISA", "MASTERCARD"];
 
@@ -843,7 +844,13 @@ const requireUserPin = async (userId, transactionPin) => {
   return user;
 };
 
-const refundCardDebit = async ({ userId, quote, originalReference, reason }) =>
+const refundCardDebit = async ({
+  userId,
+  quote,
+  originalReference,
+  reason,
+  providerFailureCode,
+}) =>
   creditWallet({
     userId,
     amountInMinorUnit: quote.walletDebit,
@@ -857,8 +864,18 @@ const refundCardDebit = async ({ userId, quote, originalReference, reason }) =>
       quoteId: quote._id,
       originalReference,
       reason,
+      providerFailureCode,
     },
   });
+
+const buildCardProviderFailureError = (error, serviceName) => {
+  const publicFailure = getPublicProviderFailure(error, serviceName);
+  const publicError = new Error(publicFailure.message);
+  publicError.statusCode = publicFailure.statusCode;
+  publicError.code = publicFailure.code;
+  publicError.providerResponse = error.providerResponse;
+  return { publicFailure, publicError };
+};
 
 export const createVirtualDollarCard = async ({
   userId,
@@ -926,8 +943,17 @@ export const createVirtualDollarCard = async ({
       transaction: debitResult.transaction,
     };
   } catch (error) {
+    const mappedFailure = debitResult
+      ? buildCardProviderFailureError(error, "Card creation")
+      : null;
+
     quote.status = "failed";
-    quote.failureReason = error.message;
+    quote.failureReason = mappedFailure?.publicFailure.message || error.message;
+    quote.providerResponse = {
+      quote: quote.providerResponse,
+      providerError: error.providerResponse || error.message,
+      publicFailure: mappedFailure?.publicFailure,
+    };
     await quote.save();
 
     if (debitResult) {
@@ -935,10 +961,11 @@ export const createVirtualDollarCard = async ({
         userId,
         quote,
         originalReference: reference,
-        reason: error.message,
+        reason: mappedFailure.publicFailure.message,
+        providerFailureCode: mappedFailure.publicFailure.code,
       });
     }
-    throw error;
+    throw mappedFailure?.publicError || error;
   }
 };
 
@@ -1009,18 +1036,28 @@ export const fundVirtualDollarCard = async ({
       transaction: debitResult.transaction,
     };
   } catch (error) {
+    const mappedFailure = debitResult
+      ? buildCardProviderFailureError(error, "Card funding")
+      : null;
+
     quote.status = "failed";
-    quote.failureReason = error.message;
+    quote.failureReason = mappedFailure?.publicFailure.message || error.message;
+    quote.providerResponse = {
+      quote: quote.providerResponse,
+      providerError: error.providerResponse || error.message,
+      publicFailure: mappedFailure?.publicFailure,
+    };
     await quote.save();
     if (debitResult) {
       await refundCardDebit({
         userId,
         quote,
         originalReference: reference,
-        reason: error.message,
+        reason: mappedFailure.publicFailure.message,
+        providerFailureCode: mappedFailure.publicFailure.code,
       });
     }
-    throw error;
+    throw mappedFailure?.publicError || error;
   }
 };
 
