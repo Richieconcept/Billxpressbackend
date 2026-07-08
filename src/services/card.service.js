@@ -588,79 +588,72 @@ export const createCardCreationQuote = async ({
     throw badRequest("Selected card brand is not available");
   }
 
-  const amountInMinorUnit = toMinorUnit(amountNgn);
-  if (
-    amountInMinorUnit < setting.minimumFundingAmount ||
-    amountInMinorUnit > setting.maximumFundingAmount
-  ) {
-    throw badRequest(
-      `Amount must be between NGN ${fromMinorUnit(
-        setting.minimumFundingAmount
-      )} and NGN ${fromMinorUnit(setting.maximumFundingAmount)}`
-    );
-  }
-
-  const providerQuote = await generateMapleradFxQuote({
-    sourceCurrency: "NGN",
-    targetCurrency: "USD",
-    amountInMinorUnit,
-  });
-  const exchangeMarkup = Math.round(
-    (amountInMinorUnit * setting.fundingExchangeMarkupPercent) / 100
-  );
-  const creationFeeResult = calculateUsdFeeAtCustomerRate({
-    feeConfig: setting.creationFeeUsd,
-    providerQuote,
-    exchangeMarkup,
-  });
-  const billxpressCreationFee = creationFeeResult.feeInNgn;
-  const billxpressCreationFeeUsd = creationFeeResult.feeInUsd;
-  const billxpressFundingFee = calculateFee(
-    amountInMinorUnit,
-    setting.fundingFee
-  );
-  const providerCreationFee = calculateProviderFeeInNgn(
-    setting.providerCreationFee,
-    providerQuote
-  );
+  const ignoredInitialFundingAmount = Number(amountNgn) || 0;
+  const billxpressCreationFeeUsd = calculateFee(0, setting.creationFeeUsd);
   const providerCreationFeeUsd = calculateFee(
-    providerQuote.targetAmount,
+    0,
     setting.providerCreationFee
   );
-  const providerFundingFee = calculateProviderFeeInNgn(
-    setting.providerFundingFee,
-    providerQuote
-  );
-  const billxpressFee = billxpressCreationFee + billxpressFundingFee;
-  const providerFee = providerCreationFee + providerFundingFee;
+  const totalCreationFeeUsd =
+    billxpressCreationFeeUsd + providerCreationFeeUsd;
+  const providerQuote =
+    totalCreationFeeUsd > 0
+      ? await generateMapleradFxQuote({
+          sourceCurrency: "USD",
+          targetCurrency: "NGN",
+          amountInMinorUnit: totalCreationFeeUsd,
+        })
+      : null;
+  const billxpressCreationFee =
+    totalCreationFeeUsd > 0
+      ? Math.ceil(
+          (billxpressCreationFeeUsd *
+            providerQuote.targetAmount) /
+            totalCreationFeeUsd
+        )
+      : 0;
+  const providerCreationFee =
+    totalCreationFeeUsd > 0
+      ? providerQuote.targetAmount - billxpressCreationFee
+      : 0;
+  const billxpressFundingFee = 0;
+  const providerFundingFee = 0;
+  const billxpressFee = billxpressCreationFee;
+  const providerFee = providerCreationFee;
   const fee = billxpressFee + providerFee;
   return CardQuote.create({
     user: userId,
     operation: "creation",
     brand: selectedBrand,
-    providerQuoteReference: providerQuote.reference,
-    sourceCurrency: providerQuote.sourceCurrency,
-    sourceAmount: providerQuote.sourceAmount,
-    targetCurrency: providerQuote.targetCurrency,
-    targetAmount: providerQuote.targetAmount,
-    providerRate: providerQuote.rate,
+    providerQuoteReference:
+      providerQuote?.reference || generateTransactionReference("VDCQ"),
+    sourceCurrency: "NGN",
+    sourceAmount: fee,
+    targetCurrency: "USD",
+    targetAmount: 0,
+    providerRate: providerQuote?.rate || 0,
     fee,
-    exchangeMarkup,
-    walletDebit: amountInMinorUnit + fee + exchangeMarkup,
+    exchangeMarkup: 0,
+    walletDebit: fee,
     expiresAt: createQuoteExpiry(setting),
     pricingSnapshot: {
       settings: serializeCardSetting(setting),
+      initialFundingEnabled: false,
+      ignoredInitialFundingAmount: Math.max(0, ignoredInitialFundingAmount),
       providerFee,
       billxpressFee,
       billxpressCreationFee,
       billxpressCreationFeeUsd,
-      creationFeeCustomerRate: creationFeeResult.customerRate,
+      creationFeeCustomerRate:
+        totalCreationFeeUsd > 0
+          ? Number((providerQuote.targetAmount / totalCreationFeeUsd).toFixed(2))
+          : 0,
       providerCreationFee,
       providerCreationFeeUsd,
       billxpressFundingFee,
       providerFundingFee,
     },
-    providerResponse: providerQuote.providerResponse,
+    providerResponse: providerQuote?.providerResponse || {},
   });
 };
 
@@ -877,6 +870,20 @@ const buildCardProviderFailureError = (error, serviceName) => {
   return { publicFailure, publicError };
 };
 
+const mapProviderCardStatus = (status) => {
+  const normalizedStatus = String(status || "ACTIVE").toUpperCase();
+
+  if (normalizedStatus === "DISABLED") {
+    return "FROZEN";
+  }
+
+  return ["PENDING", "ACTIVE", "FROZEN", "FAILED", "TERMINATED"].includes(
+    normalizedStatus
+  )
+    ? normalizedStatus
+    : "ACTIVE";
+};
+
 export const createVirtualDollarCard = async ({
   userId,
   quoteId,
@@ -890,38 +897,51 @@ export const createVirtualDollarCard = async ({
   let debitResult;
 
   try {
-    debitResult = await debitWallet({
-      userId,
-      amountInMinorUnit: quote.walletDebit,
-      walletType: "main",
-      type: "debit",
-      reference,
-      provider: "maplerad",
-      narration: "Virtual dollar card creation and initial funding",
-      metadata: {
-        service: "virtual_dollar_card",
-        operation: "creation",
-        quoteId: quote._id,
-        usdAmount: quote.targetAmount,
-        fee: quote.fee,
-        exchangeMarkup: quote.exchangeMarkup,
-      },
-    });
+    if (quote.walletDebit > 0) {
+      debitResult = await debitWallet({
+        userId,
+        amountInMinorUnit: quote.walletDebit,
+        walletType: "main",
+        type: "debit",
+        reference,
+        provider: "maplerad",
+        narration: "Virtual dollar card creation",
+        metadata: {
+          service: "virtual_dollar_card",
+          operation: "creation",
+          quoteId: quote._id,
+          usdAmount: quote.targetAmount,
+          fee: quote.fee,
+          exchangeMarkup: quote.exchangeMarkup,
+        },
+      });
+    }
 
-    const exchangeResponse = await exchangeMapleradCurrency(
-      quote.providerQuoteReference
-    );
+    const exchangeResponse =
+      quote.targetAmount > 0
+        ? await exchangeMapleradCurrency(quote.providerQuoteReference)
+        : null;
     const creationResult = await createMapleradCard({
       customerId: customer.customerId,
       brand: quote.brand,
       amountInMinorUnit: quote.targetAmount,
     });
+    const providerCard = creationResult.providerCard || {};
     const card = await VirtualDollarCard.create({
       user: userId,
       mapleradCustomerId: customer.customerId,
       creationReference: creationResult.reference,
       brand: quote.brand,
-      status: "PENDING",
+      providerCardId: creationResult.providerCardId,
+      status: creationResult.providerCardId
+        ? mapProviderCardStatus(providerCard.status)
+        : "PENDING",
+      name: providerCard.name,
+      maskedPan: providerCard.masked_pan,
+      balance: Number(providerCard.balance) || quote.targetAmount || 0,
+      nextMaintenanceAt: creationResult.providerCardId
+        ? addOneMonth(new Date())
+        : null,
       providerResponse: creationResult.providerResponse,
     });
 
@@ -936,11 +956,13 @@ export const createVirtualDollarCard = async ({
     await quote.save();
 
     return {
-      message: "Card creation is processing",
+      message: creationResult.providerCardId
+        ? "Card created successfully"
+        : "Card creation is processing",
       card,
       quote,
-      wallet: debitResult.wallet,
-      transaction: debitResult.transaction,
+      wallet: debitResult?.wallet,
+      transaction: debitResult?.transaction,
     };
   } catch (error) {
     const mappedFailure = debitResult
@@ -1211,12 +1233,21 @@ export const getVirtualDollarCardDetails = async (userId, cardId) => {
     return { card, providerCard: null };
   }
 
-  const response = await getMapleradCard(card.providerCardId);
+  let response;
+  try {
+    response = await getMapleradCard(card.providerCardId);
+  } catch (error) {
+    return {
+      card,
+      providerCard: null,
+      providerError: {
+        message: error.message,
+        statusCode: error.statusCode,
+      },
+    };
+  }
   const providerCard = response.data || response;
-  card.status =
-    String(providerCard.status || card.status).toUpperCase() === "DISABLED"
-      ? "FROZEN"
-      : String(providerCard.status || card.status).toUpperCase();
+  card.status = mapProviderCardStatus(providerCard.status || card.status);
   card.balance = Number(providerCard.balance) || card.balance;
   card.name = providerCard.name || card.name;
   card.maskedPan = providerCard.masked_pan || card.maskedPan;
@@ -1277,8 +1308,10 @@ export const serializeCardOperation = (result) => ({
   message: result.message,
   card: serializeCard(result.card),
   quote: serializeCardQuote(result.quote),
-  wallet: serializeWallet(result.wallet),
-  transaction: serializeTransaction(result.transaction),
+  wallet: result.wallet ? serializeWallet(result.wallet) : undefined,
+  transaction: result.transaction
+    ? serializeTransaction(result.transaction)
+    : undefined,
 });
 
 const addOneMonth = (date) => {

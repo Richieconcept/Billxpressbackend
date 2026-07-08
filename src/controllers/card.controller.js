@@ -84,6 +84,7 @@ export const getCard = async (req, res) => {
     res.json({
       card: serializeCard(result.card),
       details: result.providerCard,
+      providerError: result.providerError,
     });
   } catch (error) {
     sendCardError(res, "Could not fetch card", error);

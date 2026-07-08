@@ -464,21 +464,38 @@ export const createMapleradCard = async ({
   brand,
   amountInMinorUnit,
 }) => {
+  const body = {
+    customer_id: customerId,
+    currency: "USD",
+    type: "VIRTUAL",
+    auto_approve: true,
+    brand,
+    is_contactless: false,
+  };
+
+  if (Number.isInteger(amountInMinorUnit) && amountInMinorUnit > 0) {
+    body.amount = amountInMinorUnit;
+  }
+
   const response = await requestMaplerad("/issuing", {
     method: "POST",
-    body: {
-      customer_id: customerId,
-      currency: "USD",
-      type: "VIRTUAL",
-      auto_approve: true,
-      brand,
-      amount: amountInMinorUnit,
-      is_contactless: false,
-    },
+    body,
   });
   const cardRequest = response.data || response;
+  const providerCard = cardRequest.card || cardRequest;
+  const reference = pickFirst(
+    cardRequest.reference,
+    response.reference,
+    providerCard.reference,
+    providerCard.id
+  );
+  const providerCardId = pickFirst(
+    providerCard.id,
+    cardRequest.card_id,
+    response.card_id
+  );
 
-  if (!cardRequest.reference) {
+  if (!reference) {
     const error = new Error("Maplerad did not return a card creation reference");
     error.statusCode = 502;
     error.providerResponse = response;
@@ -486,7 +503,9 @@ export const createMapleradCard = async ({
   }
 
   return {
-    reference: cardRequest.reference,
+    reference,
+    providerCard,
+    providerCardId,
     providerResponse: response,
   };
 };
