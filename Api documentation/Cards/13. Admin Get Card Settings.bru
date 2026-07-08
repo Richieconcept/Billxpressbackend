@@ -13,3 +13,116 @@ get {
 auth:bearer {
   token: {{authToken}}
 }
+
+docs {
+  # Admin Get Card Settings
+
+  Admin uses this endpoint to see the current virtual dollar card settings before editing them.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/cards/settings`
+
+  ## Authentication
+
+  Admin JWT required:
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  The logged-in user must have:
+
+  ```json
+  {
+    "role": "admin"
+  }
+  ```
+
+  ## Important Card Creation Fee Rule
+
+  Maplerad does not currently provide a separate endpoint for card creation fee.
+
+  Because of that, BillXpress stores the fee in admin card settings:
+
+  `creationFeeUsd.flat`
+  The BillXpress card creation fee charged to the customer, in USD.
+
+  `providerCreationFee.flat`
+  The provider/Maplerad card creation cost we want to include in pricing, in USD.
+
+  During card creation quote, the backend converts these USD fees to NGN using
+  a fresh Maplerad USD-to-NGN quote. Card creation itself does not fund the card
+  automatically; funding fees and funding limits apply only to the separate card
+  funding endpoints.
+
+  ## Expected Success Response
+
+  ```json
+  {
+    "settings": {
+      "isEnabled": true,
+      "allowedBrands": ["VISA", "MASTERCARD"],
+      "defaultBrand": "VISA",
+      "creationFee": {
+        "percent": 0,
+        "flat": 0,
+        "currency": "NGN",
+        "deprecated": true
+      },
+      "creationFeeUsd": {
+        "percent": 0,
+        "flat": 3,
+        "currency": "USD"
+      },
+      "providerCreationFee": {
+        "percent": 0,
+        "flat": 2
+      },
+      "fundingFee": {
+        "percent": 0,
+        "flat": 0
+      },
+      "providerFundingFee": {
+        "percent": 0,
+        "flat": 0
+      },
+      "withdrawalFee": {
+        "percent": 0,
+        "flat": 0
+      },
+      "providerWithdrawalFee": {
+        "percent": 0,
+        "flat": 0
+      },
+      "fundingExchangeMarkupPercent": 0,
+      "withdrawalExchangeMarkupPercent": 0,
+      "monthlyMaintenanceFee": 0,
+      "maintenanceGracePeriodDays": 3,
+      "freezeOnMaintenanceFailure": true,
+      "minimumFundingAmount": 1000,
+      "maximumFundingAmount": 1000000,
+      "minimumWithdrawalAmount": 1,
+      "quoteTtlSeconds": 300,
+      "updatedBy": "66...",
+      "updatedAt": "2026-07-07T13:43:25.545Z"
+    }
+  }
+  ```
+
+  ## Admin Dashboard Notes
+
+  Show `creationFeeUsd.flat` as "BillXpress card creation fee (USD)".
+
+  Show `providerCreationFee.flat` as "Provider card creation cost (USD)".
+
+  Do not use the deprecated `creationFee` field for new card creation pricing.
+  It is kept only for old compatibility and is not used by new card creation
+  quotes.
+
+  `minimumFundingAmount`, `maximumFundingAmount`, `fundingFee`, and
+  `providerFundingFee` do not affect card creation anymore. They apply when the
+  user funds an already-created card.
+
+  After saving changes with `PATCH /api/v1/admin/cards/settings`, re-fetch this endpoint or use the returned `settings` object.
+}

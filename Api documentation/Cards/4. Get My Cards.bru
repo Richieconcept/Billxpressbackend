@@ -10,10 +10,48 @@ get {
   auth: bearer
 }
 
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
 auth:bearer {
   token: {{authToken}}
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzMiLCJpYXQiOjE3ODM1MTQ3OTQsImV4cCI6MTc4NDExOTU5NH0.6ekoFxafORcjJYFlIgcSlPzm0MyjqU-6XQkkqt8PJ5U
+}
+
 docs {
-  Returns the logged-in user's cards using masked card information.
+  Returns the logged-in user's BillXpress-created virtual dollar cards using
+  masked card information.
+
+  Cards created directly on Maplerad are not returned here until they are
+  imported or attached to the user in BillXpress. The frontend should treat this
+  endpoint as the source of truth for cards available inside the app.
+
+  ## Expected Response
+
+  ```json
+  {
+    "cards": [
+      {
+        "id": "...",
+        "brand": "VISA",
+        "currency": "USD",
+        "type": "VIRTUAL",
+        "status": "ACTIVE",
+        "name": "BillXpress Card",
+        "maskedPan": "**** **** **** 1234",
+        "balance": 0,
+        "maintenanceStatus": "CURRENT",
+        "createdAt": "2026-07-08T13:10:00.000Z",
+        "updatedAt": "2026-07-08T13:10:00.000Z"
+      }
+    ]
+  }
+  ```
+
+  New cards may be returned as `PENDING` if Maplerad has not sent final card
+  details yet.
 }

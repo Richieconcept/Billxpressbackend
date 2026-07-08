@@ -20,7 +20,7 @@ body:json {
     "allowedBrands": ["VISA", "MASTERCARD"],
     "defaultBrand": "VISA",
     "providerCreationFee": { "percent": 0, "flat": 2 },
-    "creationFeeUsd": { "percent": 0, "flat": 2 },
+    "creationFeeUsd": { "percent": 0, "flat": 3 },
     "providerFundingFee": { "percent": 1, "flat": 0 },
     "fundingFee": { "percent": 1, "flat": 0 },
     "providerWithdrawalFee": { "percent": 0, "flat": 1 },
@@ -38,9 +38,67 @@ body:json {
 }
 
 docs {
+  # Admin Update Card Settings
+
+  Admin uses this endpoint to update virtual dollar card pricing and limits.
+
+  ## Endpoint
+
+  `PATCH /api/v1/admin/cards/settings`
+
+  ## Authentication
+
+  Admin JWT required:
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Card Creation Fee In USD
+
+  Maplerad does not currently provide a separate endpoint where we can fetch the card creation fee.
+
+  Because of that, admin controls card creation fee here:
+
+  `creationFeeUsd`
+  BillXpress customer-facing card creation fee, in USD.
+
+  Example:
+
+  ```json
+  {
+    "creationFeeUsd": {
+      "percent": 0,
+      "flat": 3
+    }
+  }
+  ```
+
+  This means BillXpress charges USD 3 for card creation.
+
+  `providerCreationFee`
+  Provider/Maplerad card creation cost to include in the quote, in USD.
+
+  Example:
+
+  ```json
+  {
+    "providerCreationFee": {
+      "percent": 0,
+      "flat": 2
+    }
+  }
+  ```
+
+  This means the quote includes USD 2 as provider cost.
+
+  In the user card-creation quote, both USD values are converted to NGN using a
+  fresh Maplerad USD-to-NGN quote. Card creation does not fund the card
+  automatically.
+
   Provider fee `flat` values are USD. They represent Maplerad's cost.
   BillXpress `creationFeeUsd.flat` is USD. The backend converts it to NGN using
-  the exact marked-up customer exchange rate displayed in the creation quote.
+  the exact rate snapshotted in the creation quote.
   For example, a `$2` fee at the displayed rate `1 USD = NGN 1,500` becomes
   `NGN 3,000`.
 
@@ -48,7 +106,34 @@ docs {
   creation quotes. This prevents an old NGN value from accidentally being
   interpreted as USD.
 
+  ## Partial Update Example
+
+  To update only the BillXpress card creation fee:
+
+  ```json
+  {
+    "creationFeeUsd": {
+      "percent": 0,
+      "flat": 3
+    }
+  }
+  ```
+
+  To update only the provider card creation cost:
+
+  ```json
+  {
+    "providerCreationFee": {
+      "percent": 0,
+      "flat": 2
+    }
+  }
+  ```
+
   `fundingFee.flat` and `withdrawalFee.flat` remain NGN customer charges.
+  `fundingFee`, `providerFundingFee`, `minimumFundingAmount`, and
+  `maximumFundingAmount` apply only to separate card funding, not card creation.
+
   `monthlyMaintenanceFee` is USD and is converted at the current Maplerad rate.
   Percentage values are entered as normal percentages, for example `1` = 1%.
 

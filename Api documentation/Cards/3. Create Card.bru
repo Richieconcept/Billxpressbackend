@@ -20,16 +20,58 @@ auth:bearer {
 
 body:json {
   {
-    "quoteId": "6a4254e3ac984635b8262413",
+    "quoteId": "6a4e3fbf91d20b5b307d744c",
     "transactionPin": "1234"
   }
 }
 
 vars:pre-request {
-  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTQyNDMwMGI2YTQ3MmViMTVlOWFlNDQiLCJyb2xlIjoidXNlciIsImF1dGhUaWVyIjoidGllcl8zIiwiaWF0IjoxNzgyNzMxODE1LCJleHAiOjE3ODMzMzY2MTV9.xITqIdPid2Qz1g3SY6xygexXXkTRx8PnZKKUKUltYHQ
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzMiLCJpYXQiOjE3ODM1MTI5NDMsImV4cCI6MTc4NDExNzc0M30.QDN72C7QH3fBikA3IDkXXMUfyD7R9Vr_IxD4mGFe8k8
 }
 
 docs {
-  Uses a valid creation quote. Card creation is asynchronous and initially
-  returns `PENDING`; the Maplerad webhook changes it to `ACTIVE` or `FAILED`.
+  Uses a valid card-only creation quote.
+
+  Card creation no longer funds the card automatically. After this succeeds,
+  the frontend should show the created card and let the user fund it through
+  the separate funding flow:
+
+  1. `POST /api/v1/cards/:cardId/funding-quote`
+  2. `POST /api/v1/cards/:cardId/fund`
+
+  ## Expected Response
+
+  Maplerad may return the provider card immediately. In that case the backend
+  saves the provider card ID and returns:
+
+  ```json
+  {
+    "message": "Card created successfully",
+    "card": {
+      "id": "...",
+      "brand": "VISA",
+      "currency": "USD",
+      "type": "VIRTUAL",
+      "status": "ACTIVE",
+      "maskedPan": "**** **** **** 1234",
+      "balance": 0
+    },
+    "quote": {
+      "id": "...",
+      "operation": "creation",
+      "status": "completed",
+      "walletDebit": 7500
+    },
+    "wallet": {},
+    "transaction": {}
+  }
+  ```
+
+  If Maplerad only returns a creation reference, the card can still return
+  `PENDING`; the Maplerad webhook should later update it to `ACTIVE` or
+  `FAILED`.
+
+  `wallet` and `transaction` are returned only when the quote has a wallet
+  debit, for example when creation fees are configured. If card creation is
+  free, those fields may be omitted.
 }

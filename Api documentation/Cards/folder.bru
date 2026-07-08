@@ -10,7 +10,8 @@ docs {
 
   Amount rules:
 
-  - Creation and funding quotes accept `amountNgn`.
+  - Creation quotes accept `brand`; they no longer require `amountNgn`.
+  - Funding quotes accept `amountNgn`.
   - Withdrawal quotes accept `amountUsd`.
   - Always display the returned quote totals.
   - Never calculate exchange rates or fees on the frontend.
@@ -27,13 +28,18 @@ docs {
   GET /api/v1/admin/cards/rates
   ```
 
-  For users, display `quote.exchangeRate`. Creation quotes also repeat it at
-  `quote.summary.exchangeRate`. Its `includesMarkup` field is `true`.
+  For users, display `quote.exchangeRate` when present. Creation quotes also
+  repeat it at `quote.summary.exchangeRate` when creation fees are converted
+  from USD to NGN. Its `includesMarkup` field is `true`.
 
-  Card creation charges are configured in USD and converted to NGN using that
-  same displayed customer rate. Display both
+  Card creation charges are configured in USD and converted to NGN by the
+  backend. Display both
   `quote.summary.charges.cardCreationFeeUsd` and
   `quote.summary.charges.cardCreationFee`; never convert them in the frontend.
+
+  Card creation does not automatically fund the card. After a successful
+  creation, use the funding quote and fund endpoints when the user wants to add
+  USD to the card.
 
   ## Monthly Maintenance Lifecycle
 

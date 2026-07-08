@@ -20,19 +20,26 @@ auth:bearer {
 
 body:json {
   {
-    "amountNgn": 10000,
     "brand": "VISA"
   }
 }
 
 vars:pre-request {
-  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzMiLCJpYXQiOjE3ODMzNTIzNjQsImV4cCI6MTc4Mzk1NzE2NH0.4QOrD3BHs_wugTl8ZdrDKx1gRI0tOHv5RubIM_hcxp0
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzMiLCJpYXQiOjE3ODM1MTI5NDMsImV4cCI6MTc4NDExNzc0M30.QDN72C7QH3fBikA3IDkXXMUfyD7R9Vr_IxD4mGFe8k8
 }
 
 docs {
-  Creates a short-lived quote for card creation and initial USD funding.
+  Creates a short-lived quote for card-only creation.
   Display the returned `summary` on the confirmation screen. Never calculate
   exchange rates or charges on the frontend.
+
+  Card creation no longer funds the card automatically. The frontend should
+  create the card first, then use `POST /api/v1/cards/:cardId/funding-quote`
+  and `POST /api/v1/cards/:cardId/fund` when the user wants to add USD to the
+  card.
+
+  `amountNgn` is no longer required for card creation. If an older frontend
+  still sends it, the backend ignores it for initial funding.
 
   ## Expected Response
 
@@ -46,31 +53,31 @@ docs {
         "cardBrand": "VISA",
         "amountEntered": {
           "currency": "NGN",
-          "amount": 10000
+          "amount": 7500
         },
         "amountToCard": {
           "currency": "USD",
-          "amount": 6.94
+          "amount": 0
         },
         "exchangeRate": {
           "baseCurrency": "USD",
           "quoteCurrency": "NGN",
-          "value": 1455.33,
+          "value": 1500,
           "includesMarkup": true,
-          "display": "1 USD = NGN 1455.33"
+          "display": "1 USD pays NGN 1500"
         },
         "charges": {
-          "cardCreationFee": 5821.32,
-          "cardCreationFeeUsd": 4,
-          "billxpressCardCreationFeeUsd": 2,
+          "cardCreationFee": 7500,
+          "cardCreationFeeUsd": 5,
+          "billxpressCardCreationFeeUsd": 3,
           "providerCardCreationFeeUsd": 2,
-          "initialFundingFee": 100,
-          "exchangeMarkup": 100,
-          "total": 6021.32
+          "initialFundingFee": 0,
+          "exchangeMarkup": 0,
+          "total": 7500
         },
         "totalWalletDebit": {
           "currency": "NGN",
-          "amount": 16021.32
+          "amount": 7500
         }
       },
       "status": "pending",
@@ -84,16 +91,15 @@ docs {
   Show:
 
   - selected card brand
-  - amount entered in NGN
-  - exact USD amount that will reach the card
-  - readable exchange rate
   - card creation fee
   - card creation fee in USD
-  - initial funding charge
-  - exchange markup
-  - total charges
+  - provider card creation cost in USD
   - final wallet debit
   - quote expiry countdown
+
+  Do not show an initial funding amount on the creation confirmation screen.
+  The card balance after creation should be treated as USD 0 unless the card
+  details returned later by Maplerad say otherwise.
 
   The values above are illustrative. Always display the actual values returned
   by the API.
@@ -104,10 +110,10 @@ docs {
   app.
 
   `summary.charges.cardCreationFeeUsd` is the configured dollar fee.
-  `summary.charges.cardCreationFee` is its NGN equivalent calculated with
-  `summary.exchangeRate.value`. The backend snapshots both values in the quote,
-  so card creation debits exactly what the user confirmed even if rates later
-  move.
+  `summary.charges.cardCreationFee` is its NGN equivalent calculated by the
+  backend using a fresh Maplerad USD-to-NGN quote. The backend snapshots both
+  values in the quote, so card creation debits exactly what the user confirmed
+  even if rates later move.
 
   `cardCreationFeeUsd` includes both BillXpress's configured creation charge
   and the Maplerad/provider creation cost. The two USD components are also
