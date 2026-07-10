@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import CardQuote from "../models/cardQuote.model.js";
 import CardSetting from "../models/cardSetting.model.js";
 import MapleradCustomer from "../models/mapleradCustomer.model.js";
@@ -418,9 +419,21 @@ const requireEligibleCustomer = async (userId) => {
 };
 
 const requireOwnedCard = async (userId, cardId) => {
+  const normalizedCardId = String(cardId || "").trim();
+
+  if (!normalizedCardId) {
+    throw badRequest("Invalid card id");
+  }
+
+  const cardMatch = mongoose.Types.ObjectId.isValid(normalizedCardId)
+    ? {
+        $or: [{ _id: normalizedCardId }, { providerCardId: normalizedCardId }],
+      }
+    : { providerCardId: normalizedCardId };
+
   const card = await VirtualDollarCard.findOne({
-    _id: cardId,
     user: userId,
+    ...cardMatch,
   });
 
   if (!card) {
@@ -688,8 +701,8 @@ export const createCardFundingQuote = async ({
   const setting = await requireCardService();
   const card = await requireOwnedCard(userId, cardId);
 
-  if (card.status !== "ACTIVE") {
-    throw badRequest("Only an active card can be funded");
+  if (!["ACTIVE", "FROZEN"].includes(card.status)) {
+    throw badRequest("Only an active or frozen card can be funded");
   }
 
   if (!card.providerCardId) {
