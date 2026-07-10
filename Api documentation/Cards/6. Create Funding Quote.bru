@@ -10,6 +10,10 @@ post {
   auth: bearer
 }
 
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
 auth:bearer {
   token: {{authToken}}
 }
@@ -20,10 +24,14 @@ body:json {
   }
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzMiLCJpYXQiOjE3ODM2NzM4ODAsImV4cCI6MTc4NDI3ODY4MH0.eI3s2ZweaHvTawvYfP4l7FGnb2HQRrEtFUNzUSkMRO4
+}
+
 docs {
   The user chooses how much NGN to convert. The response states the exact USD
   amount the card receives and the total NGN wallet debit.
-
+  
   Display `quote.exchangeRate`. It is the BillXpress customer rate and already
   includes the configured funding exchange markup. The raw Maplerad rate is
   admin-only.

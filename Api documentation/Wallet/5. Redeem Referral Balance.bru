@@ -27,7 +27,7 @@ body:json {
 }
 
 vars:pre-request {
-  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzIiLCJpYXQiOjE3ODMwOTMzNzQsImV4cCI6MTc4MzY5ODE3NH0.eNtaVvwa6C-Q7_FVY35EVG0D0O5yUqP9E5bBMfMnHww
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzMiLCJpYXQiOjE3ODM0MzUxNTUsImV4cCI6MTc4NDAzOTk1NX0.j6sC0vgZO2vwM_bSUG9KcRebFgVN_tl8myJgNqnwqKc
 }
 
 docs {
@@ -102,17 +102,17 @@ docs {
     "message": "Insufficient wallet balance"
   }
   ```
-
+  
   Amount below NGN 30:
-
+  
   ```json
   {
     "message": "The minimum referral withdrawal is NGN 30."
   }
   ```
-
+  
   Requested amount includes a locked NGN 300 reward:
-
+  
   ```json
   {
     "message": "A NGN 300 reward earned from one referred user is locked until that user buys a service worth at least NGN 1000. You can currently redeem NGN 90."
@@ -122,13 +122,13 @@ docs {
   ## Frontend Notes
   
   Fetch `GET /api/v1/referrals/summary` before displaying the form.
-
+  
   Show or enable the redeem button when:
-
+  
   ```txt
   withdrawableReferralBalance >= settings.minimumRedeemAmount
   ```
-
+  
   Use `withdrawableReferralBalance`, not the total `referralBalance`, as the
   maximum redeemable amount.
   

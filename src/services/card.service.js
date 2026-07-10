@@ -309,6 +309,7 @@ export const serializeCardQuote = (quote) => {
   return {
     id: quote._id,
     operation: quote.operation,
+    cardId: quote.card || undefined,
     brand: quote.brand,
     source: {
       currency: quote.sourceCurrency,
@@ -364,7 +365,29 @@ export const serializeCardQuote = (quote) => {
               amount: fromMinorUnit(quote.walletDebit),
             },
           }
-        : undefined,
+        : quote.operation === "funding"
+          ? {
+              cardId: quote.card,
+              amountEntered: {
+                currency: quote.sourceCurrency,
+                amount: sourceAmount,
+              },
+              amountToCard: {
+                currency: quote.targetCurrency,
+                amount: targetAmount,
+              },
+              exchangeRate: serializedCustomerRate,
+              charges: {
+                fundingFee: fromMinorUnit(fundingFee),
+                exchangeMarkup: fromMinorUnit(quote.exchangeMarkup),
+                total: fromMinorUnit(fundingFee + quote.exchangeMarkup),
+              },
+              totalWalletDebit: {
+                currency: "NGN",
+                amount: fromMinorUnit(quote.walletDebit),
+              },
+            }
+          : undefined,
     status: quote.status,
     expiresAt: quote.expiresAt,
   };
