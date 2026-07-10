@@ -792,12 +792,13 @@ export const createCardFundingQuote = async ({
     targetCurrency: "USD",
     amountInMinorUnit,
   });
-  const billxpressFee = calculateFee(amountInMinorUnit, setting.fundingFee);
+  const customerFee = calculateTieredFee(amountInMinorUnit, setting.fundingFee);
   const providerFee = calculateProviderFeeInNgn(
     setting.providerFundingFee,
     providerQuote
   );
-  const fee = billxpressFee + providerFee;
+  const fee = customerFee;
+  const billxpressFee = Math.max(0, customerFee - providerFee);
   const exchangeMarkup = Math.round(
     (amountInMinorUnit * setting.fundingExchangeMarkupPercent) / 100
   );
@@ -820,6 +821,7 @@ export const createCardFundingQuote = async ({
       settings: serializeCardSetting(setting),
       providerFee,
       billxpressFee,
+      customerFee,
     },
     providerResponse: providerQuote.providerResponse,
   });
