@@ -47,9 +47,29 @@ const calculateFee = (amount, config = {}) =>
     )
   );
 
+const calculateTieredFee = (amount, config = {}) => {
+  const thresholdAmount = Number(config.thresholdAmount) || 0;
+
+  if (thresholdAmount > 0) {
+    if (amount < thresholdAmount) {
+      return Math.max(0, Math.round(Number(config.belowThresholdFlat) || 0));
+    }
+
+    return Math.max(
+      0,
+      Math.round((amount * (Number(config.aboveThresholdPercent) || 0)) / 100)
+    );
+  }
+
+  return calculateFee(amount, config);
+};
+
 const serializeFee = (fee = {}) => ({
   percent: Number(fee.percent) || 0,
   flat: fromMinorUnit(Number(fee.flat) || 0),
+  thresholdAmount: fromMinorUnit(Number(fee.thresholdAmount) || 0),
+  belowThresholdFlat: fromMinorUnit(Number(fee.belowThresholdFlat) || 0),
+  aboveThresholdPercent: Number(fee.aboveThresholdPercent) || 0,
 });
 
 export const getOrCreateCardSetting = async () => {
@@ -80,6 +100,12 @@ export const serializeCardSetting = (setting) => ({
   providerFundingFee: serializeFee(setting.providerFundingFee),
   withdrawalFee: serializeFee(setting.withdrawalFee),
   providerWithdrawalFee: serializeFee(setting.providerWithdrawalFee),
+  crossBorderFee: serializeFee(setting.crossBorderFee),
+  providerCrossBorderFee: serializeFee(setting.providerCrossBorderFee),
+  chargebackFee: serializeFee(setting.chargebackFee),
+  providerChargebackFee: serializeFee(setting.providerChargebackFee),
+  declineFee: serializeFee(setting.declineFee),
+  providerDeclineFee: serializeFee(setting.providerDeclineFee),
   fundingExchangeMarkupPercent: setting.fundingExchangeMarkupPercent,
   withdrawalExchangeMarkupPercent: setting.withdrawalExchangeMarkupPercent,
   monthlyMaintenanceFee: fromMinorUnit(setting.monthlyMaintenanceFee),
@@ -98,6 +124,18 @@ const updateFee = (setting, field, payload) => {
 
   const percent = Number(payload?.percent);
   const flat = Number(payload?.flat);
+  const thresholdAmount =
+    payload?.thresholdAmount === undefined
+      ? 0
+      : Number(payload.thresholdAmount);
+  const belowThresholdFlat =
+    payload?.belowThresholdFlat === undefined
+      ? 0
+      : Number(payload.belowThresholdFlat);
+  const aboveThresholdPercent =
+    payload?.aboveThresholdPercent === undefined
+      ? 0
+      : Number(payload.aboveThresholdPercent);
 
   if (!Number.isFinite(percent) || percent < 0 || percent > 100) {
     throw badRequest(`${field} percent must be between 0 and 100`);
@@ -107,9 +145,32 @@ const updateFee = (setting, field, payload) => {
     throw badRequest(`${field} flat amount must be zero or greater`);
   }
 
+  if (!Number.isFinite(thresholdAmount) || thresholdAmount < 0) {
+    throw badRequest(`${field} threshold amount must be zero or greater`);
+  }
+
+  if (!Number.isFinite(belowThresholdFlat) || belowThresholdFlat < 0) {
+    throw badRequest(
+      `${field} below-threshold flat amount must be zero or greater`
+    );
+  }
+
+  if (
+    !Number.isFinite(aboveThresholdPercent) ||
+    aboveThresholdPercent < 0 ||
+    aboveThresholdPercent > 100
+  ) {
+    throw badRequest(
+      `${field} above-threshold percent must be between 0 and 100`
+    );
+  }
+
   setting[field] = {
     percent,
     flat: Math.round(flat * 100),
+    thresholdAmount: Math.round(thresholdAmount * 100),
+    belowThresholdFlat: Math.round(belowThresholdFlat * 100),
+    aboveThresholdPercent,
   };
 };
 
@@ -178,6 +239,12 @@ export const updateCardSetting = async (payload, adminUserId) => {
   updateFee(setting, "providerFundingFee", payload.providerFundingFee);
   updateFee(setting, "withdrawalFee", payload.withdrawalFee);
   updateFee(setting, "providerWithdrawalFee", payload.providerWithdrawalFee);
+  updateFee(setting, "crossBorderFee", payload.crossBorderFee);
+  updateFee(setting, "providerCrossBorderFee", payload.providerCrossBorderFee);
+  updateFee(setting, "chargebackFee", payload.chargebackFee);
+  updateFee(setting, "providerChargebackFee", payload.providerChargebackFee);
+  updateFee(setting, "declineFee", payload.declineFee);
+  updateFee(setting, "providerDeclineFee", payload.providerDeclineFee);
   setPercent(setting, payload, "fundingExchangeMarkupPercent");
   setPercent(setting, payload, "withdrawalExchangeMarkupPercent");
   setMoney(setting, payload, "monthlyMaintenanceFee");
@@ -449,7 +516,10 @@ const createQuoteExpiry = (setting) =>
   new Date(Date.now() + setting.quoteTtlSeconds * 1000);
 
 const calculateProviderFeeInNgn = (providerFee, providerQuote) => {
-  const feeInUsd = calculateFee(providerQuote.targetAmount, providerFee);
+  const feeInUsd = calculateTieredFee(
+    providerQuote.targetAmount,
+    providerFee
+  );
 
   if (feeInUsd === 0 || providerQuote.targetAmount <= 0) {
     return 0;

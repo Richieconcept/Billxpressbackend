@@ -4,6 +4,9 @@ const feeSchema = new mongoose.Schema(
   {
     percent: { type: Number, default: 0, min: 0, max: 100 },
     flat: { type: Number, default: 0, min: 0 },
+    thresholdAmount: { type: Number, default: 0, min: 0 },
+    belowThresholdFlat: { type: Number, default: 0, min: 0 },
+    aboveThresholdPercent: { type: Number, default: 0, min: 0, max: 100 },
   },
   { _id: false }
 );
@@ -52,6 +55,30 @@ const cardSettingSchema = new mongoose.Schema(
       default: () => ({ percent: 0, flat: 0 }),
     },
     providerWithdrawalFee: {
+      type: feeSchema,
+      default: () => ({ percent: 0, flat: 0 }),
+    },
+    crossBorderFee: {
+      type: feeSchema,
+      default: () => ({ percent: 0, flat: 0 }),
+    },
+    providerCrossBorderFee: {
+      type: feeSchema,
+      default: () => ({ percent: 0, flat: 0 }),
+    },
+    chargebackFee: {
+      type: feeSchema,
+      default: () => ({ percent: 0, flat: 0 }),
+    },
+    providerChargebackFee: {
+      type: feeSchema,
+      default: () => ({ percent: 0, flat: 0 }),
+    },
+    declineFee: {
+      type: feeSchema,
+      default: () => ({ percent: 0, flat: 0 }),
+    },
+    providerDeclineFee: {
       type: feeSchema,
       default: () => ({ percent: 0, flat: 0 }),
     },
