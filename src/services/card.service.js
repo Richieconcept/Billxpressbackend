@@ -97,7 +97,6 @@ export const serializeCardSetting = (setting) => ({
   },
   providerCreationFee: serializeFee(setting.providerCreationFee),
   fundingFee: serializeFee(setting.fundingFee),
-  providerFundingFee: serializeFee(setting.providerFundingFee),
   withdrawalFee: serializeFee(setting.withdrawalFee),
   providerWithdrawalFee: serializeFee(setting.providerWithdrawalFee),
   crossBorderFee: serializeFee(setting.crossBorderFee),
@@ -793,12 +792,9 @@ export const createCardFundingQuote = async ({
     amountInMinorUnit,
   });
   const customerFee = calculateTieredFee(amountInMinorUnit, setting.fundingFee);
-  const providerFee = calculateProviderFeeInNgn(
-    setting.providerFundingFee,
-    providerQuote
-  );
+  const providerFee = 0;
   const fee = customerFee;
-  const billxpressFee = Math.max(0, customerFee - providerFee);
+  const billxpressFee = customerFee;
   const exchangeMarkup = Math.round(
     (amountInMinorUnit * setting.fundingExchangeMarkupPercent) / 100
   );

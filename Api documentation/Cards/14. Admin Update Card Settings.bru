@@ -21,13 +21,6 @@ body:json {
     "defaultBrand": "VISA",
     "providerCreationFee": { "percent": 0, "flat": 2 },
     "creationFeeUsd": { "percent": 0, "flat": 3 },
-    "providerFundingFee": {
-      "percent": 2,
-      "flat": 0,
-      "thresholdAmount": 0,
-      "belowThresholdFlat": 0,
-      "aboveThresholdPercent": 0
-    },
     "fundingFee": {
       "percent": 0,
       "flat": 0,
@@ -149,8 +142,8 @@ docs {
   ```
 
   `fundingFee.flat` and `withdrawalFee.flat` remain NGN customer charges.
-  `fundingFee`, `providerFundingFee`, `minimumFundingAmount`, and
-  `maximumFundingAmount` apply only to separate card funding, not card creation.
+  `fundingFee`, `minimumFundingAmount`, and `maximumFundingAmount` apply only
+  to separate card funding, not card creation.
 
   ## Fee Object Shape
 
@@ -190,18 +183,11 @@ docs {
 
   ## Card Funding Fee Example
 
-  Maplerad card funding cost and the customer funding charge can be configured
-  without hardcoding:
+  Card funding should use only our customer billing input. Do not show
+  Maplerad/provider funding fields on the admin form.
 
   ```json
   {
-    "providerFundingFee": {
-      "percent": 2,
-      "flat": 0,
-      "thresholdAmount": 0,
-      "belowThresholdFlat": 0,
-      "aboveThresholdPercent": 0
-    },
     "fundingFee": {
       "percent": 0,
       "flat": 0,
@@ -214,16 +200,10 @@ docs {
 
   This means:
 
-  - Maplerad/provider cost is shown as `2%`
-  - customer pays `NGN 2,000` when funding is below `NGN 100,000`
+  - customer pays `NGN 2,000` when funding from `NGN 100` up to below
+    `NGN 100,000`
   - customer pays `3%` when funding is `NGN 100,000` or above
-  - the backend subtracts the provider cost from the customer fee to calculate
-    BillXpress margin
-  - for an above-threshold funding quote, if provider cost is about `2%` and
-    customer charge is `3%`, BillXpress margin is about `1%`
-
-  The frontend admin screen should show `providerFundingFee` as provider cost
-  and `fundingFee` as the total customer funding charge.
+  - the backend bills exactly this funding fee to the user
 
   ## Other Card Provider Fees
 
@@ -241,12 +221,9 @@ docs {
   }
   ```
 
-  Provider fields are cost fields. For card funding, `fundingFee` is the total
-  customer charge rule, not an extra fee added on top of provider cost. The
-  quote response returns `feeBreakdown.providerFee` and
-  `feeBreakdown.billxpressFee`, where `billxpressFee` is the remaining margin
-  after provider cost. The current backend exposes and stores the other
-  non-provider incident fee fields for the admin dashboard.
+  Provider fields are cost fields. For card funding, ignore provider funding
+  cost on the admin screen and use `fundingFee` only. The quote response returns
+  `quote.fee` as the exact funding fee charged to the user.
 
   `monthlyMaintenanceFee` is USD and is converted at the current Maplerad rate.
   Percentage values are entered as normal percentages, for example `1` = 1%.

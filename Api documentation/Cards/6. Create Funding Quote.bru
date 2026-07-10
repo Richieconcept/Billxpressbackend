@@ -41,15 +41,13 @@ docs {
   funding fee charged to the user. This total is calculated from admin card
   settings:
 
-  - `providerFundingFee` is the provider/Maplerad cost.
-  - `fundingFee` is the total customer funding charge rule.
-  - `quote.feeBreakdown.providerFee` and `quote.feeBreakdown.billxpressFee`
-    show the cost and BillXpress margin separately.
+  - `fundingFee` is the customer funding charge rule.
+  - Maplerad/provider funding cost is not shown or configured for this funding
+    billing rule.
 
   Example: if admin configures `fundingFee` as `NGN 2,000` below
   `NGN 100,000` and `3%` from `NGN 100,000` upward, the backend uses that as
-  the customer fee. It then deducts the configured provider cost internally to
-  show the BillXpress margin in `quote.feeBreakdown.billxpressFee`.
+  the customer fee.
 
   The customer app should not calculate this fee itself; it should show the
   values returned in the quote.
