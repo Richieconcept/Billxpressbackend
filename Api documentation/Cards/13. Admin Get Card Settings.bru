@@ -88,14 +88,7 @@ docs {
       },
       "withdrawalFee": {
         "percent": 0,
-        "flat": 0,
-        "thresholdAmount": 0,
-        "belowThresholdFlat": 0,
-        "aboveThresholdPercent": 0
-      },
-      "providerWithdrawalFee": {
-        "percent": 0,
-        "flat": 1,
+        "flat": 2000,
         "thresholdAmount": 0,
         "belowThresholdFlat": 0,
         "aboveThresholdPercent": 0
@@ -107,13 +100,6 @@ docs {
         "belowThresholdFlat": 0,
         "aboveThresholdPercent": 0
       },
-      "providerCrossBorderFee": {
-        "percent": 2.5,
-        "flat": 0.5,
-        "thresholdAmount": 0,
-        "belowThresholdFlat": 0,
-        "aboveThresholdPercent": 0
-      },
       "chargebackFee": {
         "percent": 0,
         "flat": 0,
@@ -121,23 +107,9 @@ docs {
         "belowThresholdFlat": 0,
         "aboveThresholdPercent": 0
       },
-      "providerChargebackFee": {
-        "percent": 0,
-        "flat": 45,
-        "thresholdAmount": 0,
-        "belowThresholdFlat": 0,
-        "aboveThresholdPercent": 0
-      },
       "declineFee": {
         "percent": 0,
         "flat": 0,
-        "thresholdAmount": 0,
-        "belowThresholdFlat": 0,
-        "aboveThresholdPercent": 0
-      },
-      "providerDeclineFee": {
-        "percent": 0,
-        "flat": 0.5,
         "thresholdAmount": 0,
         "belowThresholdFlat": 0,
         "aboveThresholdPercent": 0
@@ -208,11 +180,13 @@ docs {
   }
   ```
 
-  The extra incident/cross-border fields are admin-editable pricing controls:
-  `providerCrossBorderFee`, `crossBorderFee`, `providerChargebackFee`,
-  `chargebackFee`, `providerDeclineFee`, and `declineFee`. The frontend should
-  show provider fields as cost. For card funding, do not show Maplerad/provider
-  funding inputs; show only `fundingFee` as the customer charge.
+  Withdrawal is also our customer charge only. If it is fixed, send
+  `withdrawalFee.percent` as `0` and put the fixed NGN amount in
+  `withdrawalFee.flat`.
+
+  The extra incident/cross-border fields are admin-editable customer charge
+  controls: `crossBorderFee`, `chargebackFee`, and `declineFee`. Do not show
+  Maplerad/provider inputs for these charges on the admin form.
 
   After saving changes with `PATCH /api/v1/admin/cards/settings`, re-fetch this endpoint or use the returned `settings` object.
 }

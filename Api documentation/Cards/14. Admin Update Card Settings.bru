@@ -28,13 +28,9 @@ body:json {
       "belowThresholdFlat": 2000,
       "aboveThresholdPercent": 3
     },
-    "providerWithdrawalFee": { "percent": 0, "flat": 1 },
-    "withdrawalFee": { "percent": 1, "flat": 0 },
-    "providerCrossBorderFee": { "percent": 2.5, "flat": 0.5 },
+    "withdrawalFee": { "percent": 0, "flat": 2000 },
     "crossBorderFee": { "percent": 0, "flat": 0 },
-    "providerChargebackFee": { "percent": 0, "flat": 45 },
     "chargebackFee": { "percent": 0, "flat": 0 },
-    "providerDeclineFee": { "percent": 0, "flat": 0.5 },
     "declineFee": { "percent": 0, "flat": 0 },
     "fundingExchangeMarkupPercent": 1,
     "withdrawalExchangeMarkupPercent": 1,
@@ -205,25 +201,42 @@ docs {
   - customer pays `3%` when funding is `NGN 100,000` or above
   - the backend bills exactly this funding fee to the user
 
-  ## Other Card Provider Fees
+  ## Withdrawal Fee Example
 
-  These fields are editable so the admin dashboard can show provider pricing
-  and configure any BillXpress-side customer charges without code changes:
+  Withdrawal is fixed, so set percent to `0` and put the fixed NGN charge in
+  `flat`:
 
   ```json
   {
-    "providerCrossBorderFee": { "percent": 2.5, "flat": 0.5 },
+    "withdrawalFee": {
+      "percent": 0,
+      "flat": 2000,
+      "thresholdAmount": 0,
+      "belowThresholdFlat": 0,
+      "aboveThresholdPercent": 0
+    }
+  }
+  ```
+
+  The backend bills exactly this withdrawal fee to the user. Do not show
+  Maplerad/provider withdrawal inputs on the admin form.
+
+  ## Other Card Customer Charges
+
+  These fields are editable customer charges. They are the amounts BillXpress
+  wants to bill the user. Do not show Maplerad/provider inputs for these fields
+  on the admin form:
+
+  ```json
+  {
     "crossBorderFee": { "percent": 0, "flat": 0 },
-    "providerChargebackFee": { "percent": 0, "flat": 45 },
     "chargebackFee": { "percent": 0, "flat": 0 },
-    "providerDeclineFee": { "percent": 0, "flat": 0.5 },
     "declineFee": { "percent": 0, "flat": 0 }
   }
   ```
 
-  Provider fields are cost fields. For card funding, ignore provider funding
-  cost on the admin screen and use `fundingFee` only. The quote response returns
-  `quote.fee` as the exact funding fee charged to the user.
+  For card funding and withdrawal, use only `fundingFee` and `withdrawalFee`.
+  The quote response returns `quote.fee` as the exact fee charged to the user.
 
   `monthlyMaintenanceFee` is USD and is converted at the current Maplerad rate.
   Percentage values are entered as normal percentages, for example `1` = 1%.

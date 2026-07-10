@@ -98,13 +98,9 @@ export const serializeCardSetting = (setting) => ({
   providerCreationFee: serializeFee(setting.providerCreationFee),
   fundingFee: serializeFee(setting.fundingFee),
   withdrawalFee: serializeFee(setting.withdrawalFee),
-  providerWithdrawalFee: serializeFee(setting.providerWithdrawalFee),
   crossBorderFee: serializeFee(setting.crossBorderFee),
-  providerCrossBorderFee: serializeFee(setting.providerCrossBorderFee),
   chargebackFee: serializeFee(setting.chargebackFee),
-  providerChargebackFee: serializeFee(setting.providerChargebackFee),
   declineFee: serializeFee(setting.declineFee),
-  providerDeclineFee: serializeFee(setting.providerDeclineFee),
   fundingExchangeMarkupPercent: setting.fundingExchangeMarkupPercent,
   withdrawalExchangeMarkupPercent: setting.withdrawalExchangeMarkupPercent,
   monthlyMaintenanceFee: fromMinorUnit(setting.monthlyMaintenanceFee),
@@ -235,15 +231,10 @@ export const updateCardSetting = async (payload, adminUserId) => {
   updateFee(setting, "creationFeeUsd", payload.creationFeeUsd);
   updateFee(setting, "providerCreationFee", payload.providerCreationFee);
   updateFee(setting, "fundingFee", payload.fundingFee);
-  updateFee(setting, "providerFundingFee", payload.providerFundingFee);
   updateFee(setting, "withdrawalFee", payload.withdrawalFee);
-  updateFee(setting, "providerWithdrawalFee", payload.providerWithdrawalFee);
   updateFee(setting, "crossBorderFee", payload.crossBorderFee);
-  updateFee(setting, "providerCrossBorderFee", payload.providerCrossBorderFee);
   updateFee(setting, "chargebackFee", payload.chargebackFee);
-  updateFee(setting, "providerChargebackFee", payload.providerChargebackFee);
   updateFee(setting, "declineFee", payload.declineFee);
-  updateFee(setting, "providerDeclineFee", payload.providerDeclineFee);
   setPercent(setting, payload, "fundingExchangeMarkupPercent");
   setPercent(setting, payload, "withdrawalExchangeMarkupPercent");
   setMoney(setting, payload, "monthlyMaintenanceFee");
@@ -853,15 +844,13 @@ export const createCardWithdrawalQuote = async ({
     targetCurrency: "NGN",
     amountInMinorUnit,
   });
-  const billxpressFee = calculateFee(
+  const customerFee = calculateTieredFee(
     providerQuote.targetAmount,
     setting.withdrawalFee
   );
-  const providerFee = calculateWithdrawalProviderFeeInNgn(
-    setting.providerWithdrawalFee,
-    providerQuote
-  );
-  const fee = billxpressFee + providerFee;
+  const providerFee = 0;
+  const fee = customerFee;
+  const billxpressFee = customerFee;
   const exchangeMarkup = Math.round(
     (providerQuote.targetAmount *
       setting.withdrawalExchangeMarkupPercent) /

@@ -27,4 +27,23 @@ docs {
   Display `quote.exchangeRate`. It is the effective customer payout rate after
   the configured withdrawal exchange markup. Do not display Maplerad's raw
   provider rate.
+
+  Display `quote.fee` or the withdrawal charge in the quote summary as the
+  total withdrawal fee charged to the user. This fee comes only from admin
+  `withdrawalFee`. For a fixed withdrawal charge, admin should set:
+
+  ```json
+  {
+    "withdrawalFee": {
+      "percent": 0,
+      "flat": 2000,
+      "thresholdAmount": 0,
+      "belowThresholdFlat": 0,
+      "aboveThresholdPercent": 0
+    }
+  }
+  ```
+
+  The customer app should not calculate withdrawal fees itself. Show the values
+  returned in the quote.
 }
