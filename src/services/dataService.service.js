@@ -20,6 +20,7 @@ import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
 const DATA_NETWORKS = ["MTN", "AIRTEL", "GLO", "9MOBILE"];
 const CATALOG_PROVIDERS = new Set([
+  "autopilot",
   "smeapi",
   "smeplug",
   "ujaydata",
@@ -250,6 +251,17 @@ const buildPlanQuery = ({ provider, network, dataType, isEnabled } = {}) => {
   return query;
 };
 
+const getPlanCostPrice = (plan) => {
+  const networkPrice = Number(plan.networkPrice || 0);
+  const providerPrice = Number(plan.providerPrice || 0);
+
+  if (plan.allowHostedSim !== false && networkPrice > 0) {
+    return networkPrice;
+  }
+
+  return providerPrice || networkPrice;
+};
+
 const catalogDocumentToProviderPlan = (document) => ({
   catalogId: String(document._id),
   provider: document.provider,
@@ -264,7 +276,7 @@ const catalogDocumentToProviderPlan = (document) => ({
   validityDays: document.validityDays,
   networkPrice: document.networkPrice,
   providerPrice: document.providerPrice,
-  costPrice: Math.max(document.networkPrice || 0, document.providerPrice || 0),
+  costPrice: getPlanCostPrice(document),
   ourPrice: document.ourPrice,
   available: document.isEnabled && document.providerAvailable,
   allowHostedSim: document.allowHostedSim,
@@ -275,7 +287,7 @@ const catalogDocumentToProviderPlan = (document) => ({
 export const syncDataPlans = async ({ providerName, adminUserId } = {}) => {
   const settings = await getOrCreateDataServiceSetting();
   const provider = getDataProvider(providerName || settings.activeProvider);
-  const plans = await provider.fetchPlans();
+  const plans = await provider.fetchPlans({ forceRefresh: true });
   const syncedAt = new Date();
 
   if (plans.length === 0) {
@@ -359,6 +371,7 @@ export const serializeAdminDataPlan = (plan) => ({
   validityDays: plan.validityDays,
   networkPrice: plan.networkPrice,
   providerPrice: plan.providerPrice,
+  costPrice: getPlanCostPrice(plan),
   ourPrice: plan.ourPrice,
   isEnabled: plan.isEnabled,
   allowHostedSim: plan.allowHostedSim,

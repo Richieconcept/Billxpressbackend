@@ -54,7 +54,8 @@ docs {
 
   ## Catalogue And Pricing Rules
 
-  SMEAPI and SME Plug are catalogue-backed providers:
+  SMEAPI, SME Plug, Autopilot, UjayData, and Ogdams are catalogue-backed
+  providers:
 
   - synchronize each provider separately;
   - new plans start disabled;
@@ -73,11 +74,11 @@ docs {
   Example:
 
   1. SMEAPI MTN plans are synchronized, priced, and enabled.
-  2. SME Plug MTN plans are synchronized, priced, and enabled separately.
+  2. SME Plug or Autopilot MTN plans are synchronized, priced, and enabled separately.
   3. Admin sets `networkProviders.MTN` to `smeapi`.
   4. Customers see SMEAPI MTN plans.
-  5. Admin changes only `networkProviders.MTN` to `smeplug`.
-  6. Customers immediately see the previously configured SME Plug MTN plans.
+  5. Admin changes only `networkProviders.MTN` to `smeplug` or `autopilot`.
+  6. Customers immediately see the previously configured plans for that provider.
   7. Switching back restores the previously configured SMEAPI MTN plans.
 
   Frontend routes and payloads remain unchanged throughout.

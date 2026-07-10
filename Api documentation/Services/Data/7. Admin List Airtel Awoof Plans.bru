@@ -5,9 +5,15 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/v1/admin/services/data/plans?provider=smeplug&network=AIRTEL&type=AWOOF
+  url: {{baseUrl}}/api/v1/admin/services/data/plans?provider=autopilot&network=MTN&type=AWOOF
   body: none
   auth: bearer
+}
+
+params:query {
+  provider: autopilot
+  network: MTN
+  type: AWOOF
 }
 
 headers {
@@ -19,12 +25,12 @@ auth:bearer {
 }
 
 vars:pre-request {
-  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjgyNDE5NSwiZXhwIjoxNzgzNDI4OTk1fQ.1cVLyOmQtwzpu6WpbQcGA5JqfpgGqBg8eP2srPnr7x8
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MzcwNTIwNywiZXhwIjoxNzg0MzEwMDA3fQ.vz63mZi7jNTqcsDQMza1zRy5Yb2To2icmW0nS_4bazA
 }
 
 docs {
   # Admin List Airtel Awoof Plans
-
+  
   A ready-made filtered request showing all Airtel Awoof plans, including
   disabled plans. Use the returned database `id`, not `providerPlanId`, when
   updating a plan.

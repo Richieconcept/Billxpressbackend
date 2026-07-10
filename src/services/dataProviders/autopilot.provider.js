@@ -37,6 +37,9 @@ const toNumber = (value) => {
   return Number.isFinite(number) ? number : 0;
 };
 
+const firstPositiveNumber = (...values) =>
+  values.map(toNumber).find((value) => value > 0) || 0;
+
 const getProducts = (response) => {
   const products = response?.data?.product;
   return Array.isArray(products) ? products : [];
@@ -169,29 +172,56 @@ const fetchPlansForType = async (network, dataType) => {
     return [];
   }
 
-  return getProducts(response).map((plan) => ({
-    provider: PROVIDER,
-    providerPlanId: String(plan.planId || ""),
-    providerPlanCode: String(plan.planId || ""),
-    network: String(network.network || dataType.network || "").toUpperCase(),
-    networkCode: String(network.networkId || dataType.networkId || ""),
-    name: String(plan.planName || plan.bundle || plan.description || ""),
-    type: String(plan.type || dataType.name || ""),
-    validity: plan.Validity || plan.validity || null,
-    validityDays: parseValidityDays(plan.Validity || plan.validity),
-    costPrice: toNumber(plan.ourPrice),
-    available: String(plan.ourStatus || "").toUpperCase() === "ACTIVE",
-    raw: {
-      ...plan,
-      networkId: network.networkId,
-      network: network.network,
-      dataType: dataType.name,
-    },
-  }));
+  return getProducts(response).map((plan) => {
+    const networkPrice = firstPositiveNumber(
+      plan.networkPrice,
+      plan.network_price,
+      plan.netPrice,
+      plan.net_price,
+      plan.telcoPrice,
+      plan.telco_price,
+      plan.simPrice,
+      plan.sim_price,
+      plan.hostedSimPrice,
+      plan.hosted_sim_price
+    );
+    const providerPrice = firstPositiveNumber(
+      plan.providerPrice,
+      plan.provider_price,
+      plan.apiPrice,
+      plan.api_price,
+      plan.walletPrice,
+      plan.wallet_price,
+      plan.ourPrice,
+      plan.price
+    );
+
+    return {
+      provider: PROVIDER,
+      providerPlanId: String(plan.planId || ""),
+      providerPlanCode: String(plan.planId || ""),
+      network: String(network.network || dataType.network || "").toUpperCase(),
+      networkCode: String(network.networkId || dataType.networkId || ""),
+      name: String(plan.planName || plan.bundle || plan.description || ""),
+      type: String(plan.type || dataType.name || ""),
+      validity: plan.Validity || plan.validity || null,
+      validityDays: parseValidityDays(plan.Validity || plan.validity),
+      networkPrice,
+      providerPrice,
+      costPrice: networkPrice || providerPrice,
+      available: String(plan.ourStatus || "").toUpperCase() === "ACTIVE",
+      raw: {
+        ...plan,
+        networkId: network.networkId,
+        network: network.network,
+        dataType: dataType.name,
+      },
+    };
+  });
 };
 
-export const fetchPlans = async () => {
-  if (planCache.expiresAt > Date.now()) {
+export const fetchPlans = async ({ forceRefresh = false } = {}) => {
+  if (!forceRefresh && planCache.expiresAt > Date.now()) {
     return planCache.plans;
   }
 

@@ -25,8 +25,9 @@ vars:pre-request {
 docs {
   # Admin List Saved Provider Plans
   
-  Returns enabled and disabled SMEAPI, SME Plug, or UjayData plans. Copy a plan's `id` into the `dataPlanId`
-  Bruno environment variable before running the update request.
+  Returns enabled and disabled SMEAPI, SME Plug, Autopilot, UjayData, or Ogdams
+  plans. Copy a plan's `id` into the `dataPlanId` Bruno environment variable
+  before running the update request.
 
   Optional query filters:
 
@@ -49,6 +50,12 @@ docs {
   /api/v1/admin/services/data/plans?provider=smeapi&network=MTN
   ```
 
+  For Autopilot MTN plans:
+
+  ```txt
+  /api/v1/admin/services/data/plans?provider=autopilot&network=MTN
+  ```
+
   Admin UI should show:
 
   - provider and network;
@@ -62,4 +69,13 @@ docs {
   `isEnabled` is BillXpress's choice. `providerAvailable` is the upstream
   provider's current status. A plan must satisfy both before customers can see
   it.
+
+  Price fields:
+
+  - `networkPrice`: SIM/network hosted cost. Use this when BillXpress is
+    vending from its SIM.
+  - `providerPrice`: provider wallet/API cost.
+  - `costPrice`: effective cost used for fallback markup/profit. When
+    `allowHostedSim` is true and `networkPrice` exists, this equals
+    `networkPrice`; otherwise it falls back to `providerPrice`.
 }

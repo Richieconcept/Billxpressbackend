@@ -19,7 +19,7 @@ auth:bearer {
 }
 
 vars:pre-request {
-  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MjgyNDE5NSwiZXhwIjoxNzgzNDI4OTk1fQ.1cVLyOmQtwzpu6WpbQcGA5JqfpgGqBg8eP2srPnr7x8
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4MzcwNTIwNywiZXhwIjoxNzg0MzEwMDA3fQ.vz63mZi7jNTqcsDQMza1zRy5Yb2To2icmW0nS_4bazA
 }
 
 docs {
@@ -31,22 +31,22 @@ docs {
   ## Endpoint
   
   `GET /api/v1/services/data/plans`
-
+  
   Optional query parameters:
-
+  
   ```txt
   network=MTN|AIRTEL|GLO|9MOBILE
   type=SME|SME2|GIFTING|CORPORATE|CORPORATE2|AWOOF
   ```
-
+  
   Examples:
-
+  
   ```txt
   GET /api/v1/services/data/plans?network=MTN
   GET /api/v1/services/data/plans?network=MTN&type=SME
   GET /api/v1/services/data/plans?network=AIRTEL&type=AWOOF
   ```
-
+  
   When `network` is omitted, the endpoint returns enabled plans for all
   networks using each network's configured provider.
   
@@ -73,7 +73,7 @@ docs {
   - returns `sellingPrice`
   
   Pricing order:
-
+  
   1. If admin set `ourPrice`, that exact fixed price is used.
   2. Otherwise, a matching user/vendor percentage tier is used.
   3. If no tier matches, the flat user/vendor percentage is used.
@@ -122,7 +122,7 @@ docs {
   
   `pricingModel: "flat"`
   No tier matched, so backend used `userMarkupPercent` or `vendorMarkupPercent`.
-
+  
   `pricingModel: "custom"`
   Admin set a fixed `ourPrice` for this individual plan. Percentage markup is
   not added to that plan.
@@ -183,19 +183,19 @@ docs {
     "count": 1
   }
   ```
-
+  
   `provider: "mixed"` is normal when different networks use different
   providers. Frontend should not branch purchase logic by provider.
-
+  
   ## Empty Plans
-
+  
   An empty `plans` array can mean:
-
+  
   - no matching plan is enabled;
   - provider catalogue has not been synchronized;
   - the selected provider marked its plans unavailable;
   - admin switched the network to a provider whose plans are not configured.
-
+  
   Show a friendly unavailable state. Do not fall back to calling a provider
   directly.
 }
