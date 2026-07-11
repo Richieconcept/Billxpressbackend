@@ -16,6 +16,43 @@ const getMapleradConfig = () => {
   };
 };
 
+const redactMapleradLogValue = (value, key = "") => {
+  if (/authorization|secret|token|bvn|nin|name|email|phone|address|pan|card/i.test(key)) {
+    return "[REDACTED]";
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactMapleradLogValue(item));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([entryKey, entryValue]) => [
+        entryKey,
+        redactMapleradLogValue(entryValue, entryKey),
+      ])
+    );
+  }
+
+  return value;
+};
+
+const logMapleradFailure = ({ path, method, response, data }) => {
+  console.error(
+    "[Maplerad] request failed",
+    JSON.stringify({
+      path,
+      method,
+      httpStatus: response.status,
+      statusText: response.statusText,
+      providerStatus: data?.status,
+      providerCode: data?.code,
+      message: data?.message || data?.data?.message || data?.error,
+      response: redactMapleradLogValue(data),
+    })
+  );
+};
+
 export const requestMaplerad = async (
   path,
   { method = "GET", body, headers = {} } = {}
@@ -33,6 +70,7 @@ export const requestMaplerad = async (
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok || data.status === false) {
+    logMapleradFailure({ path, method, response, data });
     const error = new Error(data.message || "Maplerad request failed");
     error.statusCode = response.status || 502;
     error.providerResponse = data;

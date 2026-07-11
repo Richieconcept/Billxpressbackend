@@ -950,9 +950,15 @@ const buildCardProviderFailureError = (error, serviceName) => {
   const publicError = new Error(publicFailure.message);
   publicError.statusCode = publicFailure.statusCode;
   publicError.code = publicFailure.code;
-  publicError.providerResponse = error.providerResponse;
   return { publicFailure, publicError };
 };
+
+const serializeInternalProviderError = (error) =>
+  error.providerResponse || {
+    message: error.message,
+    statusCode: error.statusCode,
+    code: error.code,
+  };
 
 const mapProviderCardStatus = (status) => {
   const normalizedStatus = String(status || "ACTIVE").toUpperCase();
@@ -1057,9 +1063,10 @@ export const createVirtualDollarCard = async ({
     quote.failureReason = mappedFailure?.publicFailure.message || error.message;
     quote.providerResponse = {
       quote: quote.providerResponse,
-      providerError: error.providerResponse || error.message,
+      internalProviderError: serializeInternalProviderError(error),
       publicFailure: mappedFailure?.publicFailure,
     };
+    quote.markModified("providerResponse");
     await quote.save();
 
     if (debitResult) {
@@ -1150,9 +1157,10 @@ export const fundVirtualDollarCard = async ({
     quote.failureReason = mappedFailure?.publicFailure.message || error.message;
     quote.providerResponse = {
       quote: quote.providerResponse,
-      providerError: error.providerResponse || error.message,
+      internalProviderError: serializeInternalProviderError(error),
       publicFailure: mappedFailure?.publicFailure,
     };
+    quote.markModified("providerResponse");
     await quote.save();
     if (debitResult) {
       await refundCardDebit({
