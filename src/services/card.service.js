@@ -670,15 +670,6 @@ export const createCardCreationQuote = async ({
   const setting = await requireCardService();
   await requireEligibleCustomer(userId);
 
-  const existingCard = await VirtualDollarCard.findOne({
-    user: userId,
-    status: { $in: ["PENDING", "ACTIVE", "FROZEN"] },
-  });
-
-  if (existingCard) {
-    throw badRequest("You already have an active or pending dollar card");
-  }
-
   const selectedBrand = String(brand || setting.defaultBrand).toUpperCase();
   if (!setting.allowedBrands.includes(selectedBrand)) {
     throw badRequest("Selected card brand is not available");

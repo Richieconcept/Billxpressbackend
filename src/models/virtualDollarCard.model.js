@@ -73,14 +73,6 @@ const virtualDollarCardSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-virtualDollarCardSchema.index(
-  { user: 1 },
-  {
-    unique: true,
-    partialFilterExpression: {
-      status: { $in: ["PENDING", "ACTIVE", "FROZEN"] },
-    },
-  }
-);
+virtualDollarCardSchema.index({ user: 1, createdAt: -1 });
 
 export default mongoose.model("VirtualDollarCard", virtualDollarCardSchema);

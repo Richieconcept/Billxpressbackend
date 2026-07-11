@@ -173,6 +173,10 @@ const fetchPlansForType = async (network, dataType) => {
   }
 
   return getProducts(response).map((plan) => {
+    const networkName = String(
+      network.network || dataType.network || ""
+    ).toUpperCase();
+    const networkPriceKey = `${networkName.toLowerCase()}Price`;
     const networkPrice = firstPositiveNumber(
       plan.networkPrice,
       plan.network_price,
@@ -183,7 +187,15 @@ const fetchPlansForType = async (network, dataType) => {
       plan.simPrice,
       plan.sim_price,
       plan.hostedSimPrice,
-      plan.hosted_sim_price
+      plan.hosted_sim_price,
+      plan[networkPriceKey],
+      plan.mtnPrice,
+      plan.airtelPrice,
+      plan.gloPrice,
+      plan.mobilePrice,
+      plan.nineMobilePrice,
+      plan["9mobilePrice"],
+      plan.price
     );
     const providerPrice = firstPositiveNumber(
       plan.providerPrice,
@@ -192,15 +204,14 @@ const fetchPlansForType = async (network, dataType) => {
       plan.api_price,
       plan.walletPrice,
       plan.wallet_price,
-      plan.ourPrice,
-      plan.price
+      plan.ourPrice
     );
 
     return {
       provider: PROVIDER,
       providerPlanId: String(plan.planId || ""),
       providerPlanCode: String(plan.planId || ""),
-      network: String(network.network || dataType.network || "").toUpperCase(),
+      network: networkName,
       networkCode: String(network.networkId || dataType.networkId || ""),
       name: String(plan.planName || plan.bundle || plan.description || ""),
       type: String(plan.type || dataType.name || ""),
