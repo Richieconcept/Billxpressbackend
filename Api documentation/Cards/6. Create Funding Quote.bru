@@ -32,6 +32,11 @@ vars:pre-request {
 docs {
   The user chooses how much NGN to convert. The response states the exact USD
   amount the card receives and the total NGN wallet debit.
+
+  The backend uses Maplerad's FX quote to snapshot the current rate and compute
+  the USD amount. Card funding later uses that USD amount to fund from the
+  Maplerad USD spend balance; it does not execute the `/fx` exchange when the
+  user confirms funding.
   
   Display `quote.exchangeRate`. It is the BillXpress customer rate and already
   includes the configured funding exchange markup. The raw Maplerad rate is

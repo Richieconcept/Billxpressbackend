@@ -1122,9 +1122,6 @@ export const fundVirtualDollarCard = async ({
         exchangeMarkup: quote.exchangeMarkup,
       },
     });
-    const exchangeResponse = await exchangeMapleradCurrency(
-      quote.providerQuoteReference
-    );
     const fundingResponse = await fundMapleradCard(
       card.providerCardId,
       quote.targetAmount
@@ -1136,8 +1133,8 @@ export const fundVirtualDollarCard = async ({
     quote.completedAt = new Date();
     quote.providerResponse = {
       quote: quote.providerResponse,
-      exchange: exchangeResponse,
       funding: fundingResponse,
+      fxQuoteUsedForPricingOnly: true,
     };
     await quote.save();
 
