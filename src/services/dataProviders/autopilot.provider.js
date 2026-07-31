@@ -40,6 +40,60 @@ const toNumber = (value) => {
 const firstPositiveNumber = (...values) =>
   values.map(toNumber).find((value) => value > 0) || 0;
 
+const normalizeStatus = (value) =>
+  String(value ?? "")
+    .trim()
+    .toUpperCase();
+
+const isInactiveStatus = (value) =>
+  [
+    "INACTIVE",
+    "IN-ACTIVE",
+    "NOT ACTIVE",
+    "NOT_ACTIVE",
+    "DEACTIVATED",
+    "DISABLED",
+    "UNAVAILABLE",
+    "SUSPENDED",
+    "OFF",
+    "FALSE",
+    "0",
+  ].includes(normalizeStatus(value));
+
+const isActiveStatus = (value) =>
+  ["ACTIVE", "AVAILABLE", "ENABLED", "ON", "TRUE", "1"].includes(
+    normalizeStatus(value)
+  );
+
+const getPlanAvailability = (plan, networkName) => {
+  const networkStatusKeys = {
+    MTN: ["mtnStatus"],
+    AIRTEL: ["airtelStatus"],
+    GLO: ["gloStatus"],
+    "9MOBILE": ["mobileStatus", "nineMobileStatus", "9mobileStatus"],
+  }[networkName] || [];
+  const statuses = [
+    plan.ourStatus,
+    plan.status,
+    plan.planStatus,
+    plan.available,
+    plan.isAvailable,
+    plan.active,
+    plan.isActive,
+    ...networkStatusKeys.map((key) => plan[key]),
+  ].filter((value) => value !== undefined && value !== null && value !== "");
+
+  if (statuses.some(isActiveStatus)) {
+    return true;
+  }
+
+  if (statuses.some(isInactiveStatus)) {
+    return false;
+  }
+
+  return true;
+};
+
 const getProducts = (response) => {
   const products = response?.data?.product;
   return Array.isArray(products) ? products : [];
@@ -220,7 +274,7 @@ const fetchPlansForType = async (network, dataType) => {
       networkPrice,
       providerPrice,
       costPrice: networkPrice || providerPrice,
-      available: String(plan.ourStatus || "").toUpperCase() === "ACTIVE",
+      available: getPlanAvailability(plan, networkName),
       raw: {
         ...plan,
         networkId: network.networkId,
