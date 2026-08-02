@@ -1,9 +1,9 @@
 const PROVIDER = "smeapi";
 const NETWORK_CODES = {
   MTN: "1",
-  AIRTEL: "2",
-  GLO: "3",
-  "9MOBILE": "4",
+  GLO: "2",
+  "9MOBILE": "3",
+  AIRTEL: "4",
 };
 
 const getBaseUrl = () =>
