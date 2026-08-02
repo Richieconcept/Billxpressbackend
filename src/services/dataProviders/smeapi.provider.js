@@ -278,23 +278,38 @@ const isConfirmedFailureResponse = (response) => {
   );
 };
 
-const buildPurchasePayloads = ({ plan, phone }) => [
+const normalizeProviderNumber = (value) => {
+  const text = String(value || "");
+
+  return /^\d+$/.test(text) ? Number(text) : text;
+};
+
+const buildPurchasePayloads = ({ plan, phone, reference }) => [
   {
-    network: String(plan.networkCode),
+    network: normalizeProviderNumber(plan.networkCode),
+    data_plan: normalizeProviderNumber(plan.providerPlanId),
     phone,
-    dataplan: String(plan.providerPlanId),
-    ported_number: false,
+    ref: reference,
+    ported_number: "false",
   },
   {
     network: String(plan.networkCode),
     mobile_number: phone,
     plan: String(plan.providerPlanId),
+    "request-id": reference,
     Ported_number: false,
+  },
+  {
+    network: String(plan.networkCode),
+    phone,
+    dataplan: String(plan.providerPlanId),
+    ref: reference,
+    ported_number: false,
   },
 ];
 
 export const purchaseData = async ({ plan, phone, reference }) => {
-  const payloads = buildPurchasePayloads({ plan, phone });
+  const payloads = buildPurchasePayloads({ plan, phone, reference });
   let lastError = null;
 
   for (const payload of payloads) {
