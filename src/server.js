@@ -3,6 +3,7 @@ import app from "./app.js";
 import connectDB from "./config/db.js";
 import { validateEnv } from "./config/env.js";
 import { processDueCardMaintenanceFees } from "./services/card.service.js";
+import { startDataPlanSyncScheduler } from "./services/dataPlanSyncScheduler.service.js";
 
 dotenv.config();
 
@@ -17,6 +18,8 @@ app.listen(PORT, () => {
   console.log("🚀 Server Started Successfully");
   console.log(`🌐 Running on: http://localhost:${PORT}`);
 });
+
+startDataPlanSyncScheduler();
 
 const maintenanceIntervalMs = Number(
   process.env.CARD_MAINTENANCE_INTERVAL_MS || 60 * 60 * 1000
