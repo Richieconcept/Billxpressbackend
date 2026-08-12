@@ -19,23 +19,23 @@ auth:bearer {
 }
 
 vars:pre-request {
-  cardId: 4d454592-d2d1-4bd7-ad11-59de342cd47a
-  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzMiLCJpYXQiOjE3ODM1MTQ3OTQsImV4cCI6MTc4NDExOTU5NH0.6ekoFxafORcjJYFlIgcSlPzm0MyjqU-6XQkkqt8PJ5U
+  cardId: 6a51f57beb133962f51cd1c3
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTIwMzI5YjcyYWRhZjAyMjQwYmQ0YmQiLCJyb2xlIjoidmVuZG9yIiwiYXV0aFRpZXIiOiJ0aWVyXzMiLCJpYXQiOjE3ODM3NzYzMzgsImV4cCI6MTc4NDM4MTEzOH0.GIR6BDY2hIY2GuFwWaucBddvW8nCdGHbAXzB0Y6FAQE
 }
 
 docs {
   Fetches a single BillXpress card and attempts to refresh current details from
   Maplerad.
-
+  
   The backend always returns the saved BillXpress card when it exists. If the
   Maplerad detail lookup fails, `details` will be `null` and `providerError`
   will explain the provider-side issue.
-
+  
   Treat PAN, CVV and other sensitive card credentials as sensitive. Never log
   or persist full card credentials on the frontend.
-
+  
   ## Expected Response
-
+  
   ```json
   {
     "card": {
@@ -56,9 +56,9 @@ docs {
     "providerError": null
   }
   ```
-
+  
   ## Provider Detail Failure
-
+  
   ```json
   {
     "card": {
@@ -73,7 +73,7 @@ docs {
     }
   }
   ```
-
+  
   Frontend should still show the saved `card` object in this case and can show a
   gentle "details temporarily unavailable" state for provider-only data.
 }

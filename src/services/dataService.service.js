@@ -20,6 +20,7 @@ import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
 const DATA_NETWORKS = ["MTN", "AIRTEL", "GLO", "9MOBILE"];
 const CATALOG_PROVIDERS = new Set([
+  "2fast",
   "autopilot",
   "smeapi",
   "smeplug",
