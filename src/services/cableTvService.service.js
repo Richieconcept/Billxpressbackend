@@ -9,7 +9,10 @@ import {
   toMinorUnit,
   verifyTransactionPin,
 } from "./wallet.service.js";
-import { createNotificationBestEffort } from "./notification.service.js";
+import {
+  createNotificationBestEffort,
+  notifyAdminsOfServiceFailureBestEffort,
+} from "./notification.service.js";
 import {
   getCableTvProvider,
   listCableTvProviders,
@@ -423,6 +426,24 @@ export const purchaseCableTvForUser = async ({
         refundReference: refundResult.transaction.reference,
         provider: provider.name,
         failureCode: publicFailure.code,
+      },
+    });
+
+    await notifyAdminsOfServiceFailureBestEffort({
+      user,
+      service: "cable_tv",
+      amount: quote.sellingPrice,
+      reference,
+      provider: provider.name,
+      providerReference: debitResult.transaction.providerReference,
+      failureCode: publicFailure.code,
+      transactionId: debitResult.transaction._id,
+      data: {
+        tvProvider: normalizedTvProvider,
+        smartcardNumber: normalizedSmartcardNumber,
+        packageCode: normalizedPackageCode,
+        packageName: quote.package.name,
+        refundReference: refundResult.transaction.reference,
       },
     });
 

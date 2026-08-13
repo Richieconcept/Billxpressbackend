@@ -1,0 +1,46 @@
+meta {
+  name: 10. Admin Debit User Wallet
+  type: http
+  seq: 94
+}
+
+post {
+  url: {{baseUrl}}/api/v1/admin/users/{{userId}}/wallet/debit
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "amount": "{{walletAmount}}",
+    "walletType": "main",
+    "reason": "Admin manual wallet debit"
+  }
+}
+
+docs {
+  # Admin Debit User Wallet
+
+  Debits a user's `main` or `referral` wallet and creates a transaction with
+  `provider: "billxpress_admin"`. The request fails when the selected wallet
+  balance is insufficient.
+
+  Body:
+
+  ```json
+  {
+    "amount": 1000,
+    "walletType": "main",
+    "reason": "Admin manual wallet debit"
+  }
+  ```
+}

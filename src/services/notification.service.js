@@ -206,6 +206,64 @@ export const createNotificationsForUsers = async ({
   return results;
 };
 
+export const notifyAdminsOfServiceFailureBestEffort = async ({
+  user,
+  service,
+  title,
+  message,
+  amount,
+  reference,
+  provider,
+  providerReference,
+  failureCode,
+  transactionId,
+  data = {},
+}) => {
+  try {
+    const admins = await User.find({ role: "admin", isActive: true }).select("_id");
+
+    if (admins.length === 0) {
+      return [];
+    }
+
+    const userLabel = [
+      user?.firstName,
+      user?.lastName,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim() || user?.username || user?.email || "A user";
+
+    return createNotificationsForUsers({
+      userIds: admins.map((admin) => admin._id),
+      title: title || "Service purchase failed",
+      message:
+        message ||
+        `${userLabel}'s ${service || "service"} purchase failed and was refunded.`,
+      type: "service_purchase_failed",
+      channel: "in_app",
+      priority: "high",
+      data: {
+        service,
+        customerUserId: user?._id,
+        customerName: userLabel,
+        customerEmail: user?.email,
+        customerPhone: user?.phone,
+        amount,
+        reference,
+        provider,
+        providerReference,
+        failureCode,
+        transactionId,
+        ...data,
+      },
+    });
+  } catch (error) {
+    console.error("Admin failure notification failed", error);
+    return [];
+  }
+};
+
 export const upsertDeviceToken = async ({
   userId,
   token,

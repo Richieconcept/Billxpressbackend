@@ -9,7 +9,10 @@ import {
   toMinorUnit,
   verifyTransactionPin,
 } from "./wallet.service.js";
-import { createNotificationBestEffort } from "./notification.service.js";
+import {
+  createNotificationBestEffort,
+  notifyAdminsOfServiceFailureBestEffort,
+} from "./notification.service.js";
 import {
   getAirtimeProvider,
   listAirtimeProviders,
@@ -327,6 +330,23 @@ export const purchaseAirtimeForUser = async ({
         refundReference: refundResult.transaction.reference,
         provider: provider.name,
         failureCode: publicFailure.code,
+      },
+    });
+
+    await notifyAdminsOfServiceFailureBestEffort({
+      user,
+      service: "airtime",
+      amount: quote.sellingPrice,
+      reference,
+      provider: provider.name,
+      providerReference: debitResult.transaction.providerReference,
+      failureCode: publicFailure.code,
+      transactionId: debitResult.transaction._id,
+      data: {
+        network: normalizedNetwork,
+        phone: normalizedPhone,
+        airtimeValue: quote.amount,
+        refundReference: refundResult.transaction.reference,
       },
     });
 

@@ -55,6 +55,10 @@ import {
 import { listAdminReferralRewards } from "../controllers/referral.controller.js";
 import { authorizeRoles, protect } from "../middlewares/auth.middleware.js";
 import {
+  adminCreditUserWallet,
+  adminDebitUserWallet,
+} from "../controllers/wallet.controller.js";
+import {
   getAdminBankTransferSetting,
   updateAdminBankTransferSetting,
 } from "../controllers/bankTransferSetting.controller.js";
@@ -79,6 +83,18 @@ router.patch(
   setUserStatus
 );
 router.delete("/users/:userId", protect, authorizeRoles("admin"), deleteUser);
+router.post(
+  "/users/:userId/wallet/credit",
+  protect,
+  authorizeRoles("admin"),
+  adminCreditUserWallet
+);
+router.post(
+  "/users/:userId/wallet/debit",
+  protect,
+  authorizeRoles("admin"),
+  adminDebitUserWallet
+);
 router.get("/admins", protect, authorizeRoles("admin"), listAdmins);
 router.get(
   "/referrals/rewards",

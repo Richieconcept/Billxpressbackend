@@ -9,7 +9,10 @@ import {
   toMinorUnit,
   verifyTransactionPin,
 } from "./wallet.service.js";
-import { createNotificationBestEffort } from "./notification.service.js";
+import {
+  createNotificationBestEffort,
+  notifyAdminsOfServiceFailureBestEffort,
+} from "./notification.service.js";
 import {
   getElectricityProvider,
   listElectricityProviders,
@@ -394,6 +397,24 @@ export const purchaseElectricityForUser = async ({
         refundReference: refundResult.transaction.reference,
         provider: provider.name,
         failureCode: publicFailure.code,
+      },
+    });
+
+    await notifyAdminsOfServiceFailureBestEffort({
+      user,
+      service: "electricity",
+      amount: quote.sellingPrice,
+      reference,
+      provider: provider.name,
+      providerReference: debitResult.transaction.providerReference,
+      failureCode: publicFailure.code,
+      transactionId: debitResult.transaction._id,
+      data: {
+        disco: normalizedDisco,
+        meterNumber: normalizedMeterNumber,
+        meterType: normalizedMeterType,
+        electricityValue: quote.amount,
+        refundReference: refundResult.transaction.reference,
       },
     });
 

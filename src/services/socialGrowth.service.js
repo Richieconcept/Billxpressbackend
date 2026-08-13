@@ -10,7 +10,10 @@ import {
   toMinorUnit,
   verifyTransactionPin,
 } from "./wallet.service.js";
-import { createNotificationBestEffort } from "./notification.service.js";
+import {
+  createNotificationBestEffort,
+  notifyAdminsOfServiceFailureBestEffort,
+} from "./notification.service.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 import {
@@ -511,6 +514,22 @@ export const purchaseSocialGrowthForUser = async ({
         refundReference: refundResult.transaction.reference,
         provider: provider.name,
         failureCode: publicFailure.code,
+      },
+    });
+
+    await notifyAdminsOfServiceFailureBestEffort({
+      user,
+      service: "social_growth",
+      amount: quote.sellingPrice,
+      reference,
+      provider: provider.name,
+      providerReference: debitResult.transaction.providerReference,
+      failureCode: publicFailure.code,
+      transactionId: debitResult.transaction._id,
+      data: {
+        serviceId: quote.providerServiceId,
+        quantity: quote.quoteQuantity,
+        refundReference: refundResult.transaction.reference,
       },
     });
 

@@ -418,3 +418,136 @@ export const adminCreditReferralBalance = async (req, res) => {
     sendWalletError(res, "Could not credit referral balance", error);
   }
 };
+
+const parseAdminWalletAdjustment = ({ req, direction }) => {
+  const amountInMinorUnit = toMinorUnit(req.body?.amount);
+  const walletType = String(req.body?.walletType || "main")
+    .trim()
+    .toLowerCase();
+
+  if (!["main", "referral"].includes(walletType)) {
+    const error = new Error("walletType must be main or referral");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const reason = String(req.body?.reason || req.body?.narration || "").trim();
+
+  if (!reason) {
+    const error = new Error("Reason is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return {
+    amountInMinorUnit,
+    amount: fromMinorUnit(amountInMinorUnit),
+    walletType,
+    reason,
+    referencePrefix: direction === "credit" ? "ADMINCR" : "ADMINDR",
+  };
+};
+
+export const adminCreditUserWallet = async (req, res) => {
+  try {
+    const targetUser = await User.findById(req.params.userId);
+
+    if (!targetUser || !targetUser.isActive) {
+      return res.status(404).json({
+        message: "Target user not found or inactive",
+      });
+    }
+
+    const adjustment = parseAdminWalletAdjustment({ req, direction: "credit" });
+    const result = await creditWallet({
+      userId: targetUser._id,
+      amountInMinorUnit: adjustment.amountInMinorUnit,
+      walletType: adjustment.walletType,
+      type: "credit",
+      reference: generateTransactionReference(adjustment.referencePrefix),
+      provider: "billxpress_admin",
+      narration: adjustment.reason,
+      metadata: {
+        adjustedBy: req.user._id,
+        adjustmentType: "admin_credit",
+        reason: adjustment.reason,
+      },
+    });
+
+    await createNotificationBestEffort({
+      userId: targetUser._id,
+      title: "Wallet credited",
+      message: `Your ${adjustment.walletType} wallet has been credited with NGN ${adjustment.amount}.`,
+      type: "wallet_funding_success",
+      channel: "both",
+      priority: "normal",
+      data: {
+        amount: adjustment.amount,
+        walletType: adjustment.walletType,
+        reference: result.transaction.reference,
+        reason: adjustment.reason,
+      },
+      createdBy: req.user._id,
+    });
+
+    res.status(201).json({
+      message: "Wallet credited successfully",
+      wallet: serializeWallet(result.wallet),
+      transaction: serializeTransaction(result.transaction),
+    });
+  } catch (error) {
+    sendWalletError(res, "Could not credit user wallet", error);
+  }
+};
+
+export const adminDebitUserWallet = async (req, res) => {
+  try {
+    const targetUser = await User.findById(req.params.userId);
+
+    if (!targetUser || !targetUser.isActive) {
+      return res.status(404).json({
+        message: "Target user not found or inactive",
+      });
+    }
+
+    const adjustment = parseAdminWalletAdjustment({ req, direction: "debit" });
+    const result = await debitWallet({
+      userId: targetUser._id,
+      amountInMinorUnit: adjustment.amountInMinorUnit,
+      walletType: adjustment.walletType,
+      type: "debit",
+      reference: generateTransactionReference(adjustment.referencePrefix),
+      provider: "billxpress_admin",
+      narration: adjustment.reason,
+      metadata: {
+        adjustedBy: req.user._id,
+        adjustmentType: "admin_debit",
+        reason: adjustment.reason,
+      },
+    });
+
+    await createNotificationBestEffort({
+      userId: targetUser._id,
+      title: "Wallet debited",
+      message: `Your ${adjustment.walletType} wallet has been debited by NGN ${adjustment.amount}.`,
+      type: "system",
+      channel: "both",
+      priority: "high",
+      data: {
+        amount: adjustment.amount,
+        walletType: adjustment.walletType,
+        reference: result.transaction.reference,
+        reason: adjustment.reason,
+      },
+      createdBy: req.user._id,
+    });
+
+    res.status(201).json({
+      message: "Wallet debited successfully",
+      wallet: serializeWallet(result.wallet),
+      transaction: serializeTransaction(result.transaction),
+    });
+  } catch (error) {
+    sendWalletError(res, "Could not debit user wallet", error);
+  }
+};

@@ -1,0 +1,45 @@
+meta {
+  name: 9. Admin Credit User Wallet
+  type: http
+  seq: 93
+}
+
+post {
+  url: {{baseUrl}}/api/v1/admin/users/{{userId}}/wallet/credit
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "amount": "{{walletAmount}}",
+    "walletType": "main",
+    "reason": "Admin manual wallet credit"
+  }
+}
+
+docs {
+  # Admin Credit User Wallet
+
+  Credits a user's `main` or `referral` wallet and creates a transaction with
+  `provider: "billxpress_admin"`.
+
+  Body:
+
+  ```json
+  {
+    "amount": 1000,
+    "walletType": "main",
+    "reason": "Admin manual wallet credit"
+  }
+  ```
+}
