@@ -27,15 +27,19 @@ body:json {
   }
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4NjYyNzkzMCwiZXhwIjoxNzg3MjMyNzMwfQ.1JQiqErHtW1mYoEjhnz6qEwFOYBJRFTrT5t6gV5z20s
+}
+
 docs {
   # Admin Debit User Wallet
-
+  
   Debits a user's `main` or `referral` wallet and creates a transaction with
   `provider: "billxpress_admin"`. The request fails when the selected wallet
   balance is insufficient.
-
+  
   Body:
-
+  
   ```json
   {
     "amount": 1000,

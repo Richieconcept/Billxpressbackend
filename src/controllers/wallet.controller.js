@@ -1,6 +1,5 @@
 import Transaction from "../models/transaction.model.js";
 import User from "../models/user.model.js";
-import VirtualAccount from "../models/virtualAccount.model.js";
 import {
   confirmFundingIntentStatus,
   createOneTimeFundingIntent,
@@ -85,16 +84,21 @@ export const getTransactions = async (req, res) => {
 
 export const getVirtualAccount = async (req, res) => {
   try {
-    const virtualAccount = await VirtualAccount.findOne({ user: req.user._id });
+    const result = await getOrCreateVirtualAccountForUser(req.user);
+    const virtualAccount = await serializeVirtualAccount(result.virtualAccount);
 
-    if (!virtualAccount) {
-      return res.status(404).json({
-        message: "Virtual account has not been created",
-      });
-    }
-
-    res.json({
-      virtualAccount: await serializeVirtualAccount(virtualAccount),
+    res.status(virtualAccount.isReady ? 200 : 202).json({
+      message: virtualAccount.isReady
+        ? "Virtual account fetched successfully"
+        : "Virtual account is still being created. Please try again shortly.",
+      virtualAccount,
+      virtualAccounts: virtualAccount.accounts || [],
+      virtualAccountCreated: result.created,
+      virtualAccountError:
+        virtualAccount.isReady || result.providerErrors?.length === 0
+          ? null
+          : "Virtual account provider is temporarily unavailable",
+      virtualAccountErrors: result.providerErrors || [],
     });
   } catch (error) {
     sendWalletError(res, "Could not fetch virtual account", error);

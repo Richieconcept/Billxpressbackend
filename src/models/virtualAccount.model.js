@@ -24,20 +24,17 @@ const virtualAccountSchema = new mongoose.Schema(
 
     bankName: {
       type: String,
-      required: true,
       trim: true,
     },
 
     accountNumber: {
       type: String,
-      required: true,
       trim: true,
       index: true,
     },
 
     accountName: {
       type: String,
-      required: true,
       trim: true,
     },
 
@@ -99,8 +96,8 @@ const virtualAccountSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["active", "inactive"],
-      default: "active",
+      enum: ["active", "inactive", "pending"],
+      default: "pending",
     },
 
     providerResponse: {

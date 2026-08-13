@@ -60,6 +60,7 @@ export const serializeVirtualAccount = async (virtualAccount) => ({
           createdAt: account.createdAt,
         })) || [],
   providerErrors: virtualAccount.providerErrors || [],
+  isReady: Boolean(virtualAccount.bankName && virtualAccount.accountNumber),
   feePolicy: await serializeFundingFee("pocketfi"),
   status: virtualAccount.status,
   createdAt: virtualAccount.createdAt,
@@ -134,8 +135,29 @@ export const getOrCreateVirtualAccountForUser = async (user) => {
     normalizePocketFiAccount({ response })
   );
 
+  if (normalizedAccounts.length === 0 && !existingVirtualAccount) {
+    const virtualAccount = await VirtualAccount.create({
+      user: user._id,
+      provider: "pocketfi",
+      businessId: String(process.env.POCKETFI_BUSINESS_ID || "pocketfi"),
+      status: "pending",
+      accounts: [],
+      providerErrors: errors,
+      providerResponse: {},
+    });
+
+    return {
+      virtualAccount,
+      created: false,
+      providerErrors: errors,
+    };
+  }
+
   if (normalizedAccounts.length === 0 && existingVirtualAccount) {
     existingVirtualAccount.providerErrors = errors;
+    if (!existingVirtualAccount.accountNumber) {
+      existingVirtualAccount.status = "pending";
+    }
     await existingVirtualAccount.save();
 
     return {
@@ -209,6 +231,7 @@ export const getOrCreateVirtualAccountForUser = async (user) => {
   virtualAccount.providerResponse = primaryAccount.providerResponse;
   virtualAccount.accounts = sortedAccounts;
   virtualAccount.providerErrors = errors;
+  virtualAccount.status = "active";
   await virtualAccount.save();
 
   return {
