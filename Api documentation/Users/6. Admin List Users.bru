@@ -18,29 +18,33 @@ auth:bearer {
   token: {{authToken}}
 }
 
+vars:pre-request {
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4NjYyNzkzMCwiZXhwIjoxNzg3MjMyNzMwfQ.1JQiqErHtW1mYoEjhnz6qEwFOYBJRFTrT5t6gV5z20s
+}
+
 docs {
   # Admin List Users
-
+  
   Admin lists and searches users.
-
+  
   ## Endpoint
-
+  
   `GET /api/v1/admin/users`
-
+  
   ## Query Params
-
+  
   `search`
   Search first name, last name, username, email, or phone.
-
+  
   `role`
   Optional: `user`, `vendor`, `admin`.
-
+  
   `status`
   Optional: `active` or `inactive`.
-
+  
   `authTier`
   Optional: `tier_1`, `tier_2`, or `tier_3`.
-
+  
   `page`, `limit`
   Pagination.
 }

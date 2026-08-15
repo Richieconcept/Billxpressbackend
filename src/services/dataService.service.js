@@ -266,6 +266,22 @@ const getPlanCostPrice = (plan) => {
   return providerPrice || networkPrice;
 };
 
+const isStoredTwoFastAwoofPlan = (plan) => {
+  const text = [
+    plan.dataType,
+    plan.providerDataType,
+    plan.raw?.type,
+    plan.name,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return plan.provider === "2fast" && /\bAWOOF\b/i.test(text);
+};
+
+const isCatalogPlanSellable = (plan) =>
+  plan.providerAvailable || isStoredTwoFastAwoofPlan(plan);
+
 const catalogDocumentToProviderPlan = (document) => ({
   catalogId: String(document._id),
   provider: document.provider,
@@ -282,7 +298,7 @@ const catalogDocumentToProviderPlan = (document) => ({
   providerPrice: document.providerPrice,
   costPrice: getPlanCostPrice(document),
   ourPrice: document.ourPrice,
-  available: document.isEnabled && document.providerAvailable,
+  available: document.isEnabled && isCatalogPlanSellable(document),
   allowHostedSim: document.allowHostedSim,
   allowWalletFallback: document.allowWalletFallback,
   raw: document.raw,
@@ -381,6 +397,7 @@ export const serializeAdminDataPlan = (plan) => ({
   allowHostedSim: plan.allowHostedSim,
   allowWalletFallback: plan.allowWalletFallback,
   providerAvailable: plan.providerAvailable,
+  available: plan.isEnabled && isCatalogPlanSellable(plan),
   lastSyncedAt: plan.lastSyncedAt,
   createdAt: plan.createdAt,
   updatedAt: plan.updatedAt,
@@ -457,7 +474,7 @@ export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
 
   const enabling = update.isEnabled === true;
 
-  if (enabling && !existing.providerAvailable) {
+  if (enabling && !isCatalogPlanSellable(existing)) {
     const error = new Error("This plan is currently unavailable from the provider");
     error.statusCode = 409;
     throw error;
