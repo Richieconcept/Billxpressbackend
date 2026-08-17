@@ -1,0 +1,31 @@
+meta {
+  name: 1. Cable TV Providers
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/cable-tv/providers
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}
+
+vars:pre-request {
+  vendorApiKey: paste-vendor-api-key-here
+}
+
+docs {
+  # Vendor Cable TV Providers
+  
+  Returns supported cable TV providers for vendors.
+  
+  Authentication:
+  
+  ```txt
+  Authorization: {{vendorApiKey}}
+  ```
+}

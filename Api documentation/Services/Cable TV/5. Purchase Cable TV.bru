@@ -23,7 +23,7 @@ body:json {
   {
     "provider": "DSTV",
     "smartcardNumber": "1212121212",
-    "packageCode": "dstv-padi",
+    "packageCode": "6a832b2d8260ff903a08a237",
     "subscriptionType": "change",
     "phone": "08011111111",
     "transactionPin": "1234"
@@ -35,7 +35,9 @@ docs {
 
   Use this endpoint after smartcard verification and user confirmation.
 
-  The backend verifies smartcard again, fetches package amount from VTpass, debits wallet, purchases through VTpass, and refunds automatically if VTpass fails.
+  The backend verifies smartcard again, reads the saved enabled package, debits
+  wallet at the calculated selling price, purchases through VTpass using the
+  provider package code, and refunds automatically if VTpass fails.
 
   `subscriptionType`
   Optional for DSTV/GOTV. Use `change` or `renew`. Defaults to `change`.

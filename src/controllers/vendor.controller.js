@@ -5,6 +5,13 @@ import {
   quoteAirtimeForUser,
 } from "../services/airtimeService.service.js";
 import {
+  getCableTvPackagesForUser,
+  getCableTvProvidersForUser,
+  purchaseCableTvForUser,
+  quoteCableTvForUser,
+  verifyCableTvSmartcardForUser,
+} from "../services/cableTvService.service.js";
+import {
   getDataPlansForUser,
   purchaseDataForUser,
 } from "../services/dataService.service.js";
@@ -303,6 +310,104 @@ export const purchaseVendorAirtime = async (req, res) => {
 
 export const getVendorAirtimePurchase = async (req, res) => {
   req.query.service = "airtime";
+  return getVendorTransaction(req, res);
+};
+
+export const getVendorCableTvProviders = async (req, res) => {
+  try {
+    const result = await getCableTvProvidersForUser(req.user);
+
+    success(res, "Cable TV providers fetched successfully", {
+      provider: result.provider,
+      tvProviders: result.tvProviders,
+      pricing: {
+        appliedMarkupPercent: result.appliedMarkupPercent,
+        roundingMode: result.settings.roundingMode,
+      },
+    });
+  } catch (error) {
+    sendVendorError(res, "Could not fetch cable TV providers", error);
+  }
+};
+
+export const getVendorCableTvPackages = async (req, res) => {
+  try {
+    const result = await getCableTvPackagesForUser({
+      user: req.user,
+      tvProvider: req.query?.provider || req.query?.tvProvider,
+    });
+
+    success(res, "Cable TV packages fetched successfully", {
+      provider: result.provider,
+      tvProvider: result.tvProvider,
+      packages: result.packages,
+      count: result.packages.length,
+    });
+  } catch (error) {
+    sendVendorError(res, "Could not fetch cable TV packages", error);
+  }
+};
+
+export const verifyVendorCableTvSmartcard = async (req, res) => {
+  try {
+    const smartcard = await verifyCableTvSmartcardForUser({
+      user: req.user,
+      tvProvider: req.body?.provider || req.body?.tvProvider,
+      smartcardNumber: req.body?.smartcardNumber,
+    });
+    const { raw, requestPayload, ...publicSmartcard } = smartcard;
+
+    success(res, "Smartcard verified successfully", {
+      smartcard: publicSmartcard,
+    });
+  } catch (error) {
+    sendVendorError(res, "Could not verify smartcard", error);
+  }
+};
+
+export const quoteVendorCableTv = async (req, res) => {
+  try {
+    const quote = await quoteCableTvForUser({
+      user: req.user,
+      tvProvider: req.body?.provider || req.body?.tvProvider,
+      packageCode: req.body?.packageCode,
+    });
+
+    success(res, "Cable TV quote calculated successfully", { quote });
+  } catch (error) {
+    sendVendorError(res, "Could not calculate cable TV quote", error);
+  }
+};
+
+export const purchaseVendorCableTv = async (req, res) => {
+  try {
+    const result = await purchaseCableTvForUser({
+      userId: req.user._id,
+      tvProvider: req.body?.provider || req.body?.tvProvider,
+      smartcardNumber: req.body?.smartcardNumber,
+      packageCode: req.body?.packageCode,
+      phone: req.body?.phone,
+      subscriptionType: req.body?.subscriptionType,
+      customerReference: req.body?.customerReference,
+      requireTransactionPin: false,
+    });
+
+    success(
+      res,
+      "Cable TV purchase successful",
+      purchasePayload(result, "cable_tv", {
+        smartcardNumber: req.body?.smartcardNumber,
+        quote: result.quote,
+      }),
+      201
+    );
+  } catch (error) {
+    sendVendorError(res, "Could not purchase cable TV", error);
+  }
+};
+
+export const getVendorCableTvPurchase = async (req, res) => {
+  req.query.service = "cable_tv";
   return getVendorTransaction(req, res);
 };
 

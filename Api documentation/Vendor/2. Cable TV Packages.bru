@@ -1,0 +1,42 @@
+meta {
+  name: 2. Cable TV Packages
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/cable-tv/packages?provider=DSTV
+  body: none
+  auth: none
+}
+
+params:query {
+  provider: DSTV
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}
+
+vars:pre-request {
+  vendorApiKey: paste-vendor-api-key-here
+}
+
+docs {
+  # Vendor Cable TV Packages
+  
+  Returns enabled packages from the saved cable TV catalogue using vendor/API
+  pricing.
+  
+  Query:
+  
+  ```txt
+  provider=DSTV|GOTV|STARTIMES
+  ```
+  
+  Send returned package `id` or package `code` as `packageCode` when quoting or
+  purchasing.
+  
+  If admin set `vendorPrice`, that fixed price is returned as `sellingPrice`.
+  Otherwise, backend applies cable TV `vendorMarkupPercent`.
+}

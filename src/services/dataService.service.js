@@ -194,11 +194,14 @@ export const updateDataServiceSetting = async (payload, adminUserId) => {
 
 export const serializeDataPlanForUser = ({ plan, settings, user }) => {
   const pricingConfig = getPricingForUser(settings, user, plan.costPrice);
-  const hasCustomPrice = Number.isFinite(Number(plan.ourPrice)) && Number(plan.ourPrice) > 0;
+  const vendor = isVendorUser(user);
+  const customPrice = vendor ? plan.vendorPrice : plan.ourPrice;
+  const hasCustomPrice =
+    Number.isFinite(Number(customPrice)) && Number(customPrice) > 0;
   const pricing = hasCustomPrice
     ? {
-        sellingPrice: Number(plan.ourPrice),
-        profit: Math.max(0, Number(plan.ourPrice) - plan.costPrice),
+        sellingPrice: Number(customPrice),
+        profit: Math.max(0, Number(customPrice) - plan.costPrice),
       }
     : calculateSellingPrice({
         costPrice: plan.costPrice,
@@ -220,7 +223,16 @@ export const serializeDataPlanForUser = ({ plan, settings, user }) => {
     costPrice: plan.costPrice,
     networkPrice: plan.networkPrice,
     providerPrice: plan.providerPrice,
-    ourPrice: hasCustomPrice ? Number(plan.ourPrice) : null,
+    ourPrice:
+      !vendor && Number.isFinite(Number(plan.ourPrice)) && Number(plan.ourPrice) > 0
+        ? Number(plan.ourPrice)
+        : null,
+    vendorPrice:
+      vendor &&
+      Number.isFinite(Number(plan.vendorPrice)) &&
+      Number(plan.vendorPrice) > 0
+        ? Number(plan.vendorPrice)
+        : undefined,
     sellingPrice: pricing.sellingPrice,
     profit: pricing.profit,
     markupPercent: pricingConfig.markupPercent,
@@ -299,6 +311,7 @@ const catalogDocumentToProviderPlan = (document) => ({
   providerPrice: document.providerPrice,
   costPrice: getPlanCostPrice(document),
   ourPrice: document.ourPrice,
+  vendorPrice: document.vendorPrice,
   available: document.isEnabled && isCatalogPlanSellable(document),
   allowHostedSim: document.allowHostedSim,
   allowWalletFallback: document.allowWalletFallback,
@@ -394,6 +407,7 @@ export const serializeAdminDataPlan = (plan) => ({
   providerPrice: plan.providerPrice,
   costPrice: getPlanCostPrice(plan),
   ourPrice: plan.ourPrice,
+  vendorPrice: plan.vendorPrice,
   isEnabled: plan.isEnabled,
   allowHostedSim: plan.allowHostedSim,
   allowWalletFallback: plan.allowWalletFallback,
@@ -422,6 +436,7 @@ export const listAdminDataPlans = async (filters = {}) => {
 export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
   const allowedFields = [
     "ourPrice",
+    "vendorPrice",
     "isEnabled",
     "dataType",
     "allowHostedSim",
@@ -439,21 +454,25 @@ export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
     throw error;
   }
 
-  if (update.ourPrice !== undefined) {
-    update.ourPrice =
-      update.ourPrice === null || update.ourPrice === ""
+  ["ourPrice", "vendorPrice"].forEach((field) => {
+    if (update[field] === undefined) return;
+
+    update[field] =
+      update[field] === null || update[field] === ""
         ? null
-        : Number(update.ourPrice);
+        : Number(update[field]);
 
     if (
-      update.ourPrice !== null &&
-      (!Number.isFinite(update.ourPrice) || update.ourPrice <= 0)
+      update[field] !== null &&
+      (!Number.isFinite(update[field]) || update[field] <= 0)
     ) {
-      const error = new Error("Our price must be greater than zero");
+      const error = new Error(
+        `${field === "ourPrice" ? "Our price" : "Vendor price"} must be greater than zero`
+      );
       error.statusCode = 400;
       throw error;
     }
-  }
+  });
 
   if (update.dataType !== undefined) {
     update.dataType = normalizePlanFilter(update.dataType);

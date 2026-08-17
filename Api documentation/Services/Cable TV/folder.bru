@@ -24,7 +24,14 @@ docs {
   8. User enters transaction PIN.
   9. Call `Purchase Cable TV`.
 
-  The backend gets the package amount from VTpass, debits wallet during purchase, and refunds automatically if VTpass fails.
+  The backend now uses a saved Cable TV package catalogue, similar to Data.
+  Admin syncs packages from VTpass, sets `ourPrice` for normal users,
+  optionally sets `vendorPrice` for API vendors, and enables only packages that
+  should be visible.
+  
+  During purchase, the backend uses the saved enabled package, debits wallet,
+  sends the provider package code and base amount to VTpass, and refunds
+  automatically if VTpass fails.
 
   ## Endpoints
 
@@ -41,5 +48,8 @@ docs {
   ```txt
   GET   /api/v1/admin/services/cable-tv/settings
   PATCH /api/v1/admin/services/cable-tv/settings
+  GET   /api/v1/admin/services/cable-tv/packages
+  POST  /api/v1/admin/services/cable-tv/packages/sync
+  PATCH /api/v1/admin/services/cable-tv/packages/:packageId
   ```
 }

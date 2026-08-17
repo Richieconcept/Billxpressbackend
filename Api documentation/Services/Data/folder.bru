@@ -54,16 +54,20 @@ docs {
 
   ## Catalogue And Pricing Rules
 
-  SMEAPI, SME Plug, Autopilot, UjayData, and Ogdams are catalogue-backed
+  SMEAPI, SME Plug, Autopilot, UjayData, Ogdams, 2Fast, and VTpass are
+  catalogue-backed
   providers:
 
   - synchronize each provider separately;
   - new plans start disabled;
-  - admin can set a fixed `ourPrice` and enable a plan;
-  - when `ourPrice` exists, it is the exact customer selling price;
-  - when `ourPrice` is empty, percentage/tier pricing remains the fallback;
+  - admin can set a fixed `ourPrice` for normal users, `vendorPrice` for API
+    vendors, and enable a plan;
+  - when `ourPrice` exists, it is the exact normal-user selling price;
+  - when `vendorPrice` exists, it is the exact vendor/API selling price;
+  - when a fixed price is empty, percentage/tier pricing remains the fallback
+    for that audience;
   - synchronization updates provider prices and availability without deleting
-    BillXpress price, type, or enabled status;
+    BillXpress prices, type, or enabled status;
   - customers only receive plans that are enabled, provider-available, and
     belong to the provider currently selected for that network.
 

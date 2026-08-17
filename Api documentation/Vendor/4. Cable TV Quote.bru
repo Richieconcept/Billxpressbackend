@@ -1,0 +1,35 @@
+meta {
+  name: 4. Cable TV Quote
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/vendor/cable-tv/quote
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: {{vendorApiKey}}
+}
+
+body:json {
+  {
+    "provider": "DSTV",
+    "packageCode": "6a832b2d8260ff903a08a237"
+  }
+}
+
+vars:pre-request {
+  vendorApiKey: paste-vendor-api-key-here
+}
+
+docs {
+  # Vendor Cable TV Quote
+  
+  Calculates the vendor/API selling price for a saved enabled cable package.
+  
+  `packageCode` can be the saved package `id` or the provider package code.
+}

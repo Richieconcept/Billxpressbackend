@@ -1,0 +1,60 @@
+meta {
+  name: 9. Admin List Cable TV Packages
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/services/cable-tv/packages?provider=vtpass&tvProvider=DSTV
+  body: none
+  auth: bearer
+}
+
+params:query {
+  provider: vtpass
+  tvProvider: DSTV
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+vars:pre-request {
+  authToken: paste-admin-token-here
+}
+
+docs {
+  # Admin List Cable TV Packages
+  
+  Lists saved VTpass cable TV packages so admin can price and enable them.
+  
+  Optional query filters:
+  
+  ```txt
+  provider=vtpass
+  tvProvider=DSTV|GOTV|STARTIMES
+  isEnabled=true|false
+  providerAvailable=true|false
+  ```
+  
+  Copy the returned package `id` into `cableTvPackageId` before running
+  `Admin Price and Enable Cable TV Package`.
+  
+  Admin UI should show:
+  
+  - provider and TV provider;
+  - package name/code;
+  - VTpass base `amount`;
+  - editable `ourPrice` for normal users;
+  - editable `vendorPrice` for API/vendor users;
+  - `isEnabled`;
+  - `providerAvailable`;
+  - `lastSyncedAt`.
+  
+  A package must be both `isEnabled: true` and `providerAvailable: true` before
+  users or vendors can see it.
+}

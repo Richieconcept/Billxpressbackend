@@ -59,7 +59,8 @@ docs {
   
   1. Finds the saved plan and verifies that its provider is currently selected
      for the plan's network.
-  2. Uses fixed `ourPrice` or calculates percentage fallback pricing.
+  2. Uses fixed `ourPrice` for normal users, fixed `vendorPrice` for vendors,
+     or calculates the correct percentage fallback pricing.
   3. Verifies transaction PIN.
   4. Debits wallet.
   5. Calls provider.

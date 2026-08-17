@@ -1,0 +1,33 @@
+meta {
+  name: 3. Verify Cable TV Smartcard
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/vendor/cable-tv/verify-smartcard
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: {{vendorApiKey}}
+}
+
+body:json {
+  {
+    "provider": "DSTV",
+    "smartcardNumber": "1212121212"
+  }
+}
+
+vars:pre-request {
+  vendorApiKey: paste-vendor-api-key-here
+}
+
+docs {
+  # Vendor Verify Cable TV Smartcard
+  
+  Verifies customer smartcard/IUC details before quote or purchase.
+}

@@ -2,6 +2,9 @@ import express from "express";
 import {
   getVendorAirtimeNetworks,
   getVendorAirtimePurchase,
+  getVendorCableTvPackages,
+  getVendorCableTvProviders,
+  getVendorCableTvPurchase,
   getVendorDataPlans,
   getVendorDataPurchase,
   getVendorProfile,
@@ -12,10 +15,13 @@ import {
   listVendorSocialGrowthOrders,
   listVendorTransactions,
   purchaseVendorAirtime,
+  purchaseVendorCableTv,
   purchaseVendorData,
   purchaseVendorSocialGrowth,
   quoteVendorAirtime,
+  quoteVendorCableTv,
   quoteVendorSocialGrowth,
+  verifyVendorCableTvSmartcard,
 } from "../controllers/vendor.controller.js";
 import { protectVendorApi } from "../middlewares/auth.middleware.js";
 import { rateLimit } from "../middlewares/rateLimit.middleware.js";
@@ -45,6 +51,13 @@ router.get("/airtime/networks", getVendorAirtimeNetworks);
 router.post("/airtime/quote", quoteVendorAirtime);
 router.post("/airtime/purchase", purchaseVendorAirtime);
 router.get("/airtime/purchase/:reference", getVendorAirtimePurchase);
+
+router.get("/cable-tv/providers", getVendorCableTvProviders);
+router.get("/cable-tv/packages", getVendorCableTvPackages);
+router.post("/cable-tv/verify-smartcard", verifyVendorCableTvSmartcard);
+router.post("/cable-tv/quote", quoteVendorCableTv);
+router.post("/cable-tv/purchase", purchaseVendorCableTv);
+router.get("/cable-tv/purchase/:reference", getVendorCableTvPurchase);
 
 router.get("/social-growth/services", getVendorSocialGrowthServices);
 router.post("/social-growth/quote", quoteVendorSocialGrowth);

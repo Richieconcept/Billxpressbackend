@@ -1,0 +1,45 @@
+meta {
+  name: 5. Purchase Cable TV
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/vendor/cable-tv/purchase
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: {{vendorApiKey}}
+}
+
+body:json {
+  {
+    "provider": "DSTV",
+    "smartcardNumber": "1212121212",
+    "packageCode": "6a832b2d8260ff903a08a237",
+    "subscriptionType": "change",
+    "phone": "08011111111",
+    "customerReference": "merchant-order-1001"
+  }
+}
+
+vars:pre-request {
+  vendorApiKey: paste-vendor-api-key-here
+}
+
+docs {
+  # Vendor Purchase Cable TV
+  
+  Purchases cable TV for a vendor/API user. No transaction PIN is required for
+  vendor API requests.
+  
+  The backend debits the vendor wallet using `vendorPrice` when set, otherwise
+  vendor markup fallback. It sends the VTpass package amount and provider
+  package code to VTpass.
+  
+  `customerReference`
+  Optional merchant reference. It must be unique per vendor service transaction.
+}

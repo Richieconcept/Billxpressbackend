@@ -1,61 +1,33 @@
 import mongoose from "mongoose";
 
-const dataPlanSchema = new mongoose.Schema(
+const cableTvPackageSchema = new mongoose.Schema(
   {
     provider: {
       type: String,
       required: true,
       index: true,
     },
-    providerPlanId: {
-      type: String,
-      required: true,
-    },
-    providerPlanCode: {
-      type: String,
-      default: "",
-    },
-    network: {
+    tvProvider: {
       type: String,
       required: true,
       uppercase: true,
       index: true,
     },
-    networkCode: {
+    tvProviderName: {
       type: String,
       default: "",
+    },
+    providerPackageCode: {
+      type: String,
+      required: true,
     },
     name: {
       type: String,
       required: true,
     },
-    dataType: {
-      type: String,
-      default: "OTHER",
-      uppercase: true,
-      index: true,
-    },
-    providerDataType: {
-      type: String,
-      default: "",
-    },
-    validity: {
-      type: String,
-      default: null,
-    },
-    validityDays: {
+    amount: {
       type: Number,
-      default: 0,
-      min: 0,
-    },
-    networkPrice: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    providerPrice: {
-      type: Number,
-      default: 0,
+      required: true,
       min: 0,
     },
     ourPrice: {
@@ -68,18 +40,14 @@ const dataPlanSchema = new mongoose.Schema(
       default: null,
       min: 0,
     },
+    fixedPrice: {
+      type: Boolean,
+      default: true,
+    },
     isEnabled: {
       type: Boolean,
       default: false,
       index: true,
-    },
-    allowHostedSim: {
-      type: Boolean,
-      default: true,
-    },
-    allowWalletFallback: {
-      type: Boolean,
-      default: false,
     },
     providerAvailable: {
       type: Boolean,
@@ -102,9 +70,9 @@ const dataPlanSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-dataPlanSchema.index(
-  { provider: 1, providerPlanId: 1 },
+cableTvPackageSchema.index(
+  { provider: 1, tvProvider: 1, providerPackageCode: 1 },
   { unique: true }
 );
 
-export default mongoose.model("DataPlan", dataPlanSchema);
+export default mongoose.model("CableTvPackage", cableTvPackageSchema);

@@ -14,7 +14,10 @@ import {
   updateAdminAirtimeSettings,
 } from "../controllers/airtimeService.controller.js";
 import {
+  getAdminCableTvPackages,
   getAdminCableTvSettings,
+  syncAdminCableTvPackages,
+  updateAdminCableTvPackageById,
   updateAdminCableTvSettings,
 } from "../controllers/cableTvService.controller.js";
 import {
@@ -125,6 +128,24 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminCableTvSettings
+);
+router.get(
+  "/services/cable-tv/packages",
+  protect,
+  authorizeRoles("admin"),
+  getAdminCableTvPackages
+);
+router.post(
+  "/services/cable-tv/packages/sync",
+  protect,
+  authorizeRoles("admin"),
+  syncAdminCableTvPackages
+);
+router.patch(
+  "/services/cable-tv/packages/:packageId",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminCableTvPackageById
 );
 router.get(
   "/services/data/settings",

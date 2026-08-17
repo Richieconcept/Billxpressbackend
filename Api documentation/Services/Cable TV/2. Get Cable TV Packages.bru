@@ -32,5 +32,12 @@ docs {
   `provider`
   Required. Use `DSTV`, `GOTV`, or `STARTIMES`.
   
-  The backend fetches packages from VTpass and applies BillXpress markup to return `sellingPrice`.
+  The backend returns enabled packages from the saved BillXpress catalogue.
+  Admin must sync VTpass packages, set prices, and enable packages before they
+  appear here.
+  
+  Normal users receive `ourPrice` context when a fixed user price exists.
+  Active vendors/API users receive vendor pricing through the vendor API.
+  
+  Send package `id` or `code` as `packageCode` when quoting or purchasing.
 }

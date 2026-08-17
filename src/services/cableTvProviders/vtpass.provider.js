@@ -124,9 +124,10 @@ const normalizePackage = (item) => ({
 
 export const getSupportedTvProviders = () =>
   TV_PROVIDERS.map(
-    ({ code, name, available, supportsSubscriptionType }) => ({
+    ({ code, name, serviceID, available, supportsSubscriptionType }) => ({
       code,
       name,
+      serviceID,
       available,
       supportsSubscriptionType,
       subscriptionTypes: supportsSubscriptionType

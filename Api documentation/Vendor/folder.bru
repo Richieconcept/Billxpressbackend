@@ -1,0 +1,22 @@
+meta {
+  name: Vendor
+  seq: 12
+}
+
+docs {
+  # Vendor API
+  
+  Vendor endpoints use API-key authentication.
+  
+  ```txt
+  Authorization: {{vendorApiKey}}
+  ```
+  
+  Do not prefix vendor API keys with `Bearer`.
+  
+  Vendor pricing uses active vendor rules:
+  
+  - Data uses per-plan `vendorPrice` when set, then vendor tier/markup fallback.
+  - Airtime uses `vendorMarkupPercent`.
+  - Cable TV uses per-package `vendorPrice` when set, then vendor markup fallback.
+}

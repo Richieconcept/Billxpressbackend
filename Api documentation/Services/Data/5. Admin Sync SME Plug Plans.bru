@@ -33,13 +33,16 @@ docs {
   # Synchronize Provider Plans
   
   Fetches the current plan catalogue from SME Plug, SMEAPI, Autopilot, UjayData,
-  or Ogdams and saves it in BillXpress. Send `"provider": "smeplug"`,
-  `"provider": "smeapi"`, `"provider": "autopilot"`, `"provider": "ujaydata"`,
-  or `"provider": "ogdams"`.
+  Ogdams, 2Fast, or VTpass and saves it in BillXpress. Send
+  `"provider": "smeplug"`, `"provider": "smeapi"`,
+  `"provider": "autopilot"`, `"provider": "ujaydata"`,
+  `"provider": "ogdams"`, `"provider": "2fast"`, or
+  `"provider": "vtpass"`.
   
-  New plans are created with `isEnabled: false` and `ourPrice: null`. A later
-  synchronization updates provider/network prices but preserves our price,
-  datatype, enabled status, and delivery controls.
+  New plans are created with `isEnabled: false`, `ourPrice: null`, and
+  `vendorPrice: null`. A later synchronization updates provider/network prices
+  but preserves BillXpress prices, datatype, enabled status, and delivery
+  controls.
   
   Run separately for each catalogue provider you want to manage:
   
@@ -53,6 +56,10 @@ docs {
   
   ```json
   { "provider": "autopilot" }
+  ```
+  
+  ```json
+  { "provider": "vtpass" }
   ```
   
   Synchronize after configuring the provider credentials and whenever the

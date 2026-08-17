@@ -74,7 +74,8 @@ docs {
   
   Pricing order:
   
-  1. If admin set `ourPrice`, that exact fixed price is used.
+  1. If admin set `ourPrice` for normal users or `vendorPrice` for vendors,
+     that exact fixed price is used for that audience.
   2. Otherwise, a matching user/vendor percentage tier is used.
   3. If no tier matches, the flat user/vendor percentage is used.
   
@@ -124,8 +125,8 @@ docs {
   No tier matched, so backend used `userMarkupPercent` or `vendorMarkupPercent`.
   
   `pricingModel: "custom"`
-  Admin set a fixed `ourPrice` for this individual plan. Percentage markup is
-  not added to that plan.
+  Admin set a fixed `ourPrice` or `vendorPrice` for this individual plan.
+  Percentage markup is not added for that audience.
   
   ## Expected Response
   
@@ -172,6 +173,7 @@ docs {
         "validityDays": 7,
         "costPrice": 255,
         "ourPrice": 300,
+        "vendorPrice": null,
         "sellingPrice": 300,
         "profit": 45,
         "markupPercent": 15,

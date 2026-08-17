@@ -1,0 +1,60 @@
+meta {
+  name: 10. Admin Price and Enable Cable TV Package
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/services/cable-tv/packages/{{cableTvPackageId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "ourPrice": 4500,
+    "vendorPrice": 4450,
+    "isEnabled": true
+  }
+}
+
+vars:pre-request {
+  cableTvPackageId: 6a832b2d8260ff903a08a237
+  authToken: paste-admin-token-here
+}
+
+docs {
+  # Admin Price and Enable Cable TV Package
+  
+  Updates BillXpress-controlled pricing for one saved cable TV package.
+  
+  `ourPrice`
+  Fixed selling price for normal app users.
+  
+  `vendorPrice`
+  Fixed selling price for API/vendor users.
+  
+  `isEnabled`
+  Controls whether the package is visible. The backend rejects enabling a
+  provider-unavailable package.
+  
+  ## Clear Fixed Prices
+  
+  ```json
+  {
+    "ourPrice": null,
+    "vendorPrice": null
+  }
+  ```
+  
+  Clearing a price returns that audience to the cable service fallback markup.
+}

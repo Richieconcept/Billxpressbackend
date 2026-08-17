@@ -1,0 +1,27 @@
+meta {
+  name: 6. Get Cable TV Purchase
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/cable-tv/purchase/{{reference}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}
+
+vars:pre-request {
+  reference: merchant-order-1001
+  vendorApiKey: paste-vendor-api-key-here
+}
+
+docs {
+  # Vendor Get Cable TV Purchase
+  
+  Fetches a vendor cable TV transaction by BillXpress reference, provider
+  reference, or `customerReference`.
+}

@@ -22,14 +22,16 @@ auth:bearer {
 body:json {
   {
     "provider": "DSTV",
-    "packageCode": "dstv-padi"
+    "packageCode": "6a832b2d8260ff903a08a237"
   }
 }
 
 docs {
   # Quote Cable TV
 
-  Use this endpoint after package selection. The frontend sends only package code, not amount.
+  Use this endpoint after package selection. The frontend sends only package id
+  or package code, not amount.
 
-  The backend fetches the real package amount from VTpass and calculates BillXpress selling price.
+  The backend reads the saved enabled package, applies `ourPrice` or fallback
+  markup, and returns BillXpress selling price.
 }

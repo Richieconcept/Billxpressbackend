@@ -29,9 +29,9 @@ vars:pre-request {
 docs {
   # Admin List Saved Provider Plans
   
-  Returns enabled and disabled SMEAPI, SME Plug, Autopilot, UjayData, or Ogdams
-  plans. Copy a plan's `id` into the `dataPlanId` Bruno environment variable
-  before running the update request.
+  Returns enabled and disabled SMEAPI, SME Plug, Autopilot, UjayData, Ogdams,
+  2Fast, or VTpass plans. Copy a plan's `id` into the `dataPlanId` Bruno
+  environment variable before running the update request.
   
   Optional query filters:
   
@@ -65,7 +65,8 @@ docs {
   - provider and network;
   - provider plan name/type/validity;
   - `networkPrice`, `providerPrice`, and `costPrice`;
-  - editable `ourPrice`;
+  - editable `ourPrice` for normal app users;
+  - editable `vendorPrice` for API/vendor users;
   - `isEnabled`;
   - `providerAvailable`;
   - `lastSyncedAt`.
@@ -73,6 +74,10 @@ docs {
   `isEnabled` is BillXpress's choice. `providerAvailable` is the upstream
   provider's current status. A plan must satisfy both before customers can see
   it.
+  
+  `ourPrice` and `vendorPrice` are optional fixed selling prices. When either is
+  set, that exact amount is used for that audience instead of percentage/tier
+  markup. Clear a price with `null` to return that audience to fallback markup.
   
   Price fields:
   

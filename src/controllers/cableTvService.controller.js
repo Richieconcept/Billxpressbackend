@@ -2,11 +2,15 @@ import {
   getCableTvPackagesForUser,
   getCableTvProvidersForUser,
   getOrCreateCableTvServiceSetting,
+  listAdminCableTvPackages,
   purchaseCableTvForUser,
   quoteCableTvForUser,
+  serializeAdminCableTvPackage,
   serializeCableTvPurchaseResult,
   serializeCableTvServiceSetting,
   serializeFailedCableTvPurchase,
+  syncCableTvPackages,
+  updateAdminCableTvPackage,
   updateCableTvServiceSetting,
   verifyCableTvSmartcardForUser,
 } from "../services/cableTvService.service.js";
@@ -135,5 +139,69 @@ export const updateAdminCableTvSettings = async (req, res) => {
       "Could not update cable TV service settings",
       error
     );
+  }
+};
+
+const parseOptionalBoolean = (value) => {
+  if (value === undefined) return undefined;
+  return String(value).toLowerCase() === "true";
+};
+
+export const getAdminCableTvPackages = async (req, res) => {
+  try {
+    const packages = await listAdminCableTvPackages({
+      provider: req.query.provider,
+      tvProvider: req.query.tvProvider || req.query.providerCode,
+      isEnabled: parseOptionalBoolean(req.query.isEnabled),
+      providerAvailable: parseOptionalBoolean(req.query.providerAvailable),
+    });
+
+    res.json({
+      packages: packages.map(serializeAdminCableTvPackage),
+      count: packages.length,
+    });
+  } catch (error) {
+    sendCableTvServiceError(
+      res,
+      "Could not fetch admin cable TV packages",
+      error
+    );
+  }
+};
+
+export const syncAdminCableTvPackages = async (req, res) => {
+  try {
+    const result = await syncCableTvPackages({
+      providerName: req.body?.provider,
+      adminUserId: req.user._id,
+    });
+
+    res.json({
+      message: "Cable TV packages synchronized successfully",
+      sync: result,
+    });
+  } catch (error) {
+    sendCableTvServiceError(
+      res,
+      "Could not synchronize cable TV packages",
+      error
+    );
+  }
+};
+
+export const updateAdminCableTvPackageById = async (req, res) => {
+  try {
+    const item = await updateAdminCableTvPackage({
+      packageId: req.params.packageId,
+      payload: req.body || {},
+      adminUserId: req.user._id,
+    });
+
+    res.json({
+      message: "Cable TV package updated successfully",
+      package: serializeAdminCableTvPackage(item),
+    });
+  } catch (error) {
+    sendCableTvServiceError(res, "Could not update cable TV package", error);
   }
 };

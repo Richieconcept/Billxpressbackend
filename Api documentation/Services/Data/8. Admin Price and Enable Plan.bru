@@ -22,6 +22,7 @@ auth:bearer {
 body:json {
   {
     "ourPrice": 250,
+    "vendorPrice": 240,
     "isEnabled": true,
     "dataType": "CORPORATE",
     "allowHostedSim": false,
@@ -45,27 +46,35 @@ docs {
   availability, and delivery controls belong to BillXpress and are preserved
   during synchronization.
   
+  `ourPrice` is the fixed selling price for normal app users. `vendorPrice` is
+  the fixed selling price for active vendors/API users.
+  
   ## Fixed Price
   
   ```json
   {
     "ourPrice": 450,
+    "vendorPrice": 430,
     "isEnabled": true
   }
   ```
   
-  `ourPrice` becomes the exact customer selling price. No percentage is added.
+  `ourPrice` becomes the exact normal-user selling price. `vendorPrice` becomes
+  the exact vendor/API selling price. No percentage is added for the audience
+  whose fixed price is set.
   
   ## Percentage Fallback
   
   ```json
   {
     "ourPrice": null,
+    "vendorPrice": null,
     "isEnabled": true
   }
   ```
   
-  Clearing `ourPrice` restores tier/percentage pricing. The plan can remain
+  Clearing `ourPrice` restores normal-user tier/percentage pricing. Clearing
+  `vendorPrice` restores vendor tier/percentage pricing. The plan can remain
   enabled.
   
   The backend rejects enabling a provider-unavailable plan.

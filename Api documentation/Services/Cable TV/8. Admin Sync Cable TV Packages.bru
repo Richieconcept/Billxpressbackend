@@ -1,0 +1,52 @@
+meta {
+  name: 8. Admin Sync Cable TV Packages
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/v1/admin/services/cable-tv/packages/sync
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "provider": "vtpass"
+  }
+}
+
+vars:pre-request {
+  authToken: paste-admin-token-here
+}
+
+docs {
+  # Admin Sync Cable TV Packages
+  
+  Syncs DSTV, GOTV, and Startimes packages from VTpass into the saved
+  BillXpress catalogue.
+  
+  New packages are created with:
+  
+  ```json
+  {
+    "isEnabled": false,
+    "ourPrice": null,
+    "vendorPrice": null
+  }
+  ```
+  
+  Admin must set `ourPrice`, optionally set `vendorPrice`, and enable packages
+  before customers or vendors can see them.
+  
+  Existing package prices and enabled choices are preserved during sync.
+}
