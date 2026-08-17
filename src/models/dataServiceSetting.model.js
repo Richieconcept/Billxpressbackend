@@ -31,6 +31,7 @@ const providerNames = [
   "smeplug",
   "ogdams",
   "2fast",
+  "vtpass",
 ];
 
 const networkProviderSchema = new mongoose.Schema(

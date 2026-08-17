@@ -11,6 +11,7 @@ const CATALOG_PROVIDERS = new Set([
   "smeplug",
   "ujaydata",
   "ogdams",
+  "vtpass",
 ]);
 
 let intervalHandle = null;

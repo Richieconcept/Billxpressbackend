@@ -22,7 +22,10 @@ const TV_PROVIDERS = [
 ].map((provider) => ({ ...provider, available: true }));
 
 const getBaseUrl = () =>
-  (process.env.VTPASS_BASE_URL || "https://vtpass.com/api").replace(/\/+$/, "");
+  String(process.env.VTPASS_BASE_URL || "https://vtpass.com/api")
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .replace(/\/+$/, "");
 
 const getVtpassConfig = () => {
   const apiKey = process.env.VTPASS_API_KEY;

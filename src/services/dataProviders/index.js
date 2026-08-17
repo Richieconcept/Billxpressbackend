@@ -4,6 +4,7 @@ import smeapiProvider from "./smeapi.provider.js";
 import smeplugProvider from "./smeplug.provider.js";
 import twofastProvider from "./twofast.provider.js";
 import ujaydataProvider from "./ujaydata.provider.js";
+import vtpassProvider from "./vtpass.provider.js";
 
 const providers = {
   "2fast": twofastProvider,
@@ -12,6 +13,7 @@ const providers = {
   smeapi: smeapiProvider,
   smeplug: smeplugProvider,
   ujaydata: ujaydataProvider,
+  vtpass: vtpassProvider,
 };
 
 export const getDataProvider = (providerName) => {

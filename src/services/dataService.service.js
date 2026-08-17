@@ -29,6 +29,7 @@ const CATALOG_PROVIDERS = new Set([
   "smeplug",
   "ujaydata",
   "ogdams",
+  "vtpass",
 ]);
 
 const normalizePricingTiers = (tiers = []) =>
