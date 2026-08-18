@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Wallet from "../models/wallet.model.js";
 import Notification from "../models/notification.model.js";
 import Transaction from "../models/transaction.model.js";
 import {
@@ -8,6 +9,7 @@ import {
 import { getDataProvider } from "../services/dataProviders/index.js";
 import { generateApiKey } from "../utils/generateApiKey.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
+import { fromMinorUnit, serializeTransaction } from "../services/wallet.service.js";
 
 const generateUniqueApiKey = async () => {
   let apiKey = generateApiKey();
@@ -268,6 +270,176 @@ const getProviderBalanceBestEffort = async (providerName) => {
   }
 };
 
+const summarizeTopCustomers = async ({ startDate, limit = 10 } = {}) => {
+  const match = {
+    type: "service_payment",
+    direction: "debit",
+    status: "successful",
+  };
+
+  if (startDate) {
+    match.createdAt = { $gte: startDate };
+  }
+
+  const rows = await Transaction.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: "$user",
+        transactionCount: { $sum: 1 },
+        totalSpent: { $sum: "$amount" },
+        lastTransactionAt: { $max: "$createdAt" },
+      },
+    },
+    { $sort: { totalSpent: -1, transactionCount: -1, lastTransactionAt: -1 } },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: "users",
+        localField: "_id",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+    { $unwind: "$user" },
+    {
+      $project: {
+        _id: 0,
+        user: {
+          _id: "$user._id",
+          firstName: "$user.firstName",
+          lastName: "$user.lastName",
+          username: "$user.username",
+          email: "$user.email",
+          phone: "$user.phone",
+          role: "$user.role",
+          discountRate: "$user.discountRate",
+          isVendorActive: "$user.isVendorActive",
+          vendorApprovedAt: "$user.vendorApprovedAt",
+          referralCode: "$user.referralCode",
+          referredBy: "$user.referredBy",
+          isActive: "$user.isActive",
+          emailVerified: "$user.emailVerified",
+          authTier: "$user.authTier",
+          kycLevel: "$user.kycLevel",
+          createdAt: "$user.createdAt",
+        },
+        transactionCount: 1,
+        totalSpent: 1,
+        lastTransactionAt: 1,
+      },
+    },
+  ]);
+
+  return rows.map((row, index) => ({
+    rank: index + 1,
+    user: sanitizeUser(row.user),
+    transactionCount: row.transactionCount,
+    totalSpent: fromMinorUnit(row.totalSpent),
+    rawTotalSpent: row.totalSpent,
+    lastTransactionAt: row.lastTransactionAt,
+  }));
+};
+
+const summarizeWalletBalances = async () => {
+  const summaries = await Wallet.aggregate([
+    {
+      $group: {
+        _id: "$currency",
+        walletCount: { $sum: 1 },
+        mainBalance: { $sum: "$mainBalance" },
+        referralBalance: { $sum: "$referralBalance" },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+  const summary =
+    summaries.find((item) => item._id === "NGN") || summaries[0] || null;
+
+  const mainBalance = summary?.mainBalance || 0;
+  const referralBalance = summary?.referralBalance || 0;
+  const totalBalance = mainBalance + referralBalance;
+
+  return {
+    currency: summary?._id || "NGN",
+    walletCount: summary?.walletCount || 0,
+    totalBalance: fromMinorUnit(totalBalance),
+    mainBalance: fromMinorUnit(mainBalance),
+    referralBalance: fromMinorUnit(referralBalance),
+    rawBalances: {
+      total: totalBalance,
+      main: mainBalance,
+      referral: referralBalance,
+    },
+    byCurrency: summaries.map((item) => {
+      const itemMainBalance = item.mainBalance || 0;
+      const itemReferralBalance = item.referralBalance || 0;
+      const itemTotalBalance = itemMainBalance + itemReferralBalance;
+
+      return {
+        currency: item._id || "NGN",
+        walletCount: item.walletCount || 0,
+        totalBalance: fromMinorUnit(itemTotalBalance),
+        mainBalance: fromMinorUnit(itemMainBalance),
+        referralBalance: fromMinorUnit(itemReferralBalance),
+        rawBalances: {
+          total: itemTotalBalance,
+          main: itemMainBalance,
+          referral: itemReferralBalance,
+        },
+      };
+    }),
+  };
+};
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const getAdminTransactionQuery = async (req) => {
+  const query = {};
+
+  if (req.query.userId) {
+    query.user = req.query.userId;
+  }
+
+  for (const field of ["type", "status", "direction", "walletType"]) {
+    if (req.query[field]) {
+      query[field] = req.query[field];
+    }
+  }
+
+  if (req.query.provider) {
+    query.provider = String(req.query.provider).trim();
+  }
+
+  if (req.query.search) {
+    const search = String(req.query.search).trim();
+    const regex = new RegExp(escapeRegex(search), "i");
+    const matchedUsers = await User.find({
+      $or: [
+        { firstName: regex },
+        { lastName: regex },
+        { username: regex },
+        { email: regex },
+        { phone: regex },
+      ],
+    })
+      .select("_id")
+      .limit(100)
+      .lean();
+    const userIds = matchedUsers.map((user) => user._id);
+
+    query.$or = [
+      { reference: regex },
+      { providerReference: regex },
+      { provider: regex },
+      { narration: regex },
+      ...(userIds.length ? [{ user: { $in: userIds } }] : []),
+    ];
+  }
+
+  return query;
+};
+
 export const getAdminDashboardEarnings = async (req, res) => {
   try {
     const now = new Date();
@@ -290,12 +462,14 @@ export const getAdminDashboardEarnings = async (req, res) => {
     );
     const providerBalances = {
       smeapi: await getProviderBalanceBestEffort("smeapi"),
+      smeplug: await getProviderBalanceBestEffort("smeplug"),
     };
 
     res.json({
       currency: "NGN",
       generatedAt: now.toISOString(),
       providerBalances,
+      wallets: await summarizeWalletBalances(),
       summary: {
         allTime: summarizeTransactions(transactions),
         today: summarizeTransactions(
@@ -309,6 +483,13 @@ export const getAdminDashboardEarnings = async (req, res) => {
         ),
       },
       services: summarizeByService(transactions),
+      topCustomers: {
+        allTime: await summarizeTopCustomers({ limit: 10 }),
+        thisMonth: await summarizeTopCustomers({
+          startDate: startOfMonth,
+          limit: 10,
+        }),
+      },
       series: {
         daily: makeSeries({
           transactions: seriesTransactions,
@@ -332,6 +513,45 @@ export const getAdminDashboardEarnings = async (req, res) => {
     });
   } catch (error) {
     sendAdminError(res, "Could not fetch dashboard earnings", error);
+  }
+};
+
+export const listAdminTransactions = async (req, res) => {
+  try {
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
+    const skip = (page - 1) * limit;
+    const query = await getAdminTransactionQuery(req);
+    const [transactions, total] = await Promise.all([
+      Transaction.find(query)
+        .populate("user", "firstName lastName username email phone role")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Transaction.countDocuments(query),
+    ]);
+
+    res.json({
+      transactions: transactions.map((transaction) => {
+        const serialized = serializeTransaction(transaction);
+
+        return {
+          ...serialized,
+          user:
+            transaction.user && typeof transaction.user === "object"
+              ? sanitizeUser(transaction.user)
+              : serialized.user,
+        };
+      }),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    sendAdminError(res, "Could not fetch transactions", error);
   }
 };
 

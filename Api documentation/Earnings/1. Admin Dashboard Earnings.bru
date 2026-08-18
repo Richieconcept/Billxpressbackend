@@ -21,7 +21,7 @@ auth:bearer {
 docs {
   # Admin Dashboard Earnings
 
-  Admin dashboard endpoint for revenue, cost price, selling price, profit, loss, service breakdown, provider balances, and chart series.
+  Admin dashboard endpoint for revenue, cost price, selling price, profit, loss, service breakdown, provider balances, total customer wallet balances, top customers, and chart series.
 
   This endpoint is designed for the admin dashboard earnings/profit cards and charts.
 
@@ -85,7 +85,29 @@ docs {
   `providerBalances`
   Current external provider wallet balances for admin visibility.
 
-  The dashboard currently includes SMEAPI:
+  `wallets`
+  Total money currently held in customer wallets. This is the liability/admin balance card for "total balance that people have on their wallet".
+
+  ```json
+  {
+    "wallets": {
+      "currency": "NGN",
+      "walletCount": 250,
+      "totalBalance": 1250000,
+      "mainBalance": 1175000,
+      "referralBalance": 75000,
+      "rawBalances": {
+        "total": 125000000,
+        "main": 117500000,
+        "referral": 7500000
+      }
+    }
+  }
+  ```
+
+  Frontend should show `wallets.totalBalance` as the main "Customer Wallet Balance" card, with optional split cards for main balance and referral balance.
+
+  The dashboard currently includes SMEAPI and SMEPlug balance checks:
 
   ```json
   {
@@ -98,12 +120,20 @@ docs {
         "status": "success",
         "available": true,
         "checkedAt": "2026-06-15T04:58:00.000Z"
+      },
+      "smeplug": {
+        "provider": "smeplug",
+        "available": false,
+        "error": "Provider balance is not supported",
+        "checkedAt": "2026-08-18T08:00:00.000Z"
       }
     }
   }
   ```
 
-  If SMEAPI balance check fails, the dashboard endpoint still succeeds and returns:
+  SMEAPI is supported by the backend through the provider `/user/` API response. SMEPlug is included in the dashboard response, but it returns unavailable until SMEPlug provides a confirmed balance/profile endpoint for the current API token integration.
+
+  If a provider balance check fails, the dashboard endpoint still succeeds and returns:
 
   ```json
   {
@@ -118,7 +148,7 @@ docs {
   }
   ```
 
-  Frontend should display `providerBalances.smeapi.balance` as the SMEAPI wallet balance when `available` is `true`. If `available` is `false`, show a small unavailable/error state instead of hiding the whole dashboard.
+  Frontend should display `providerBalances.smeapi.balance` as the SMEAPI wallet balance when `available` is `true`. For any provider where `available` is `false`, show a small unavailable/error state instead of hiding the whole dashboard.
 
   ## Summary Fields
 
@@ -198,6 +228,38 @@ docs {
 
   `series.monthly`
   Last 12 monthly buckets for charts.
+
+  `topCustomers.allTime`
+  Top customers ranked by total successful service purchase amount, then by transaction count.
+
+  `topCustomers.thisMonth`
+  Same ranking, limited to successful service purchases from the current month.
+
+  Use this for "highest buyer", "second highest buyer", "third highest buyer", and a full leaderboard table.
+
+  ```json
+  {
+    "topCustomers": {
+      "allTime": [
+        {
+          "rank": 1,
+          "user": {
+            "id": "user_id",
+            "firstName": "Ada",
+            "lastName": "Lovelace",
+            "username": "ada",
+            "email": "ada@example.com"
+          },
+          "transactionCount": 42,
+          "totalSpent": 125000,
+          "rawTotalSpent": 12500000,
+          "lastTransactionAt": "2026-08-18T08:00:00.000Z"
+        }
+      ],
+      "thisMonth": []
+    }
+  }
+  ```
 
   ## Expected Success Response
 

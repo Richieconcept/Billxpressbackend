@@ -108,14 +108,27 @@ export const listUsers = async (req, res) => {
     const [users, total] = await Promise.all([
       User.find(query)
         .select("-password -transactionPin -emailVerificationOtp")
+        .lean()
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
       User.countDocuments(query),
     ]);
+    const userIds = users.map((user) => user._id);
+    const wallets = await Wallet.find({ user: { $in: userIds } }).lean();
+    const walletsByUserId = new Map(
+      wallets.map((wallet) => [String(wallet.user), wallet])
+    );
 
     res.json({
-      users: users.map((user) => sanitizeUser(user)),
+      users: users.map((user) => {
+        const wallet = walletsByUserId.get(String(user._id));
+
+        return {
+          ...sanitizeUser(user),
+          wallet: wallet ? serializeWallet(wallet) : null,
+        };
+      }),
       pagination: {
         page,
         limit,

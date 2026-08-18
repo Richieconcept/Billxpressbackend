@@ -3,6 +3,7 @@ import {
   bootstrapFirstAdmin,
   createAdminNotification,
   getAdminDashboardEarnings,
+  listAdminTransactions,
   listAdmins,
   listAdminNotifications,
   makeAdmin,
@@ -76,6 +77,12 @@ router.get(
   getAdminDashboardEarnings
 );
 router.get("/users", protect, authorizeRoles("admin"), listUsers);
+router.get(
+  "/transactions",
+  protect,
+  authorizeRoles("admin"),
+  listAdminTransactions
+);
 router.post("/users", protect, authorizeRoles("admin"), createUser);
 router.get("/users/:userId", protect, authorizeRoles("admin"), getUser);
 router.patch("/users/:userId", protect, authorizeRoles("admin"), updateUser);

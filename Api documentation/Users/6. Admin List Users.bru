@@ -26,6 +26,7 @@ docs {
   # Admin List Users
   
   Admin lists and searches users.
+  Each user item now includes the user's wallet balance so the admin users table can show balance beside the credit/debit actions.
   
   ## Endpoint
   
@@ -47,4 +48,32 @@ docs {
   
   `page`, `limit`
   Pagination.
+
+  ## Response Notes
+
+  Each `users[]` item includes:
+
+  ```json
+  {
+    "id": "user_id",
+    "firstName": "Ada",
+    "lastName": "Lovelace",
+    "email": "ada@example.com",
+    "wallet": {
+      "currency": "NGN",
+      "mainBalance": 2500,
+      "referralBalance": 300,
+      "balances": {
+        "main": 2500,
+        "referral": 300
+      },
+      "rawBalances": {
+        "main": 250000,
+        "referral": 30000
+      }
+    }
+  }
+  ```
+
+  Use `wallet.mainBalance` for the main wallet balance in the users table. Use `wallet.referralBalance` if the admin can also credit/debit referral balance.
 }

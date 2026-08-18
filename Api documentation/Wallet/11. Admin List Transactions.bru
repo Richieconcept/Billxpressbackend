@@ -1,0 +1,112 @@
+meta {
+  name: 11. Admin List Transactions
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/transactions?limit=20&page=1
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin List Transactions
+
+  Admin transaction feed for the dashboard and transactions page.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/transactions`
+
+  ## Authentication Required
+
+  Admin JWT only.
+
+  ## Query Params
+
+  `page`, `limit`
+  Pagination. Limit max is 100.
+
+  `search`
+  Searches transaction reference, provider reference, provider, narration, and basic user fields.
+
+  `userId`
+  Filter transactions for one user.
+
+  `type`
+  Optional: `funding`, `credit`, `debit`, `transfer`, `referral_earning`, `referral_redeem`, `service_payment`, or `reversal`.
+
+  `status`
+  Optional: `pending`, `successful`, `failed`, or `reversed`.
+
+  `direction`
+  Optional: `credit` or `debit`.
+
+  `walletType`
+  Optional: `main` or `referral`.
+
+  `provider`
+  Optional provider filter, for example `billxpress_admin`, `maplerad`, `monnify`, or service provider keys.
+
+  ## Frontend Usage
+
+  Show this on the admin dashboard as "Recent Transactions" and on a full transactions page with filters.
+
+  For credit/debit audit, filter by:
+
+  `provider=billxpress_admin`
+
+  or:
+
+  `type=credit` / `type=debit`
+
+  ## Response Shape
+
+  ```json
+  {
+    "transactions": [
+      {
+        "id": "transaction_id",
+        "user": {
+          "id": "user_id",
+          "firstName": "Ada",
+          "lastName": "Lovelace",
+          "username": "ada",
+          "email": "ada@example.com"
+        },
+        "type": "credit",
+        "walletType": "main",
+        "direction": "credit",
+        "amount": 5000,
+        "balanceBefore": 1000,
+        "balanceAfter": 6000,
+        "currency": "NGN",
+        "reference": "ADMINCR_...",
+        "provider": "billxpress_admin",
+        "status": "successful",
+        "narration": "Manual admin credit",
+        "metadata": {
+          "adjustmentType": "admin_credit",
+          "reason": "Manual admin credit"
+        },
+        "createdAt": "2026-08-18T08:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 250,
+      "pages": 13
+    }
+  }
+  ```
+}
