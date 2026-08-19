@@ -19,6 +19,7 @@ const extractTextValues = (value) => {
 const PROVIDER_FUNDS_PATTERNS = [
   /fund\s+(your\s+)?wallet/i,
   /(insufficient|low|not enough)\s+(fund|funds|balance|wallet|account)/i,
+  /(insufficient|low|not enough)[\s\S]{0,40}(fund|funds|balance|wallet|account)/i,
   /(wallet|account)\s+(balance|funds?)\s+(is\s+)?(low|insufficient)/i,
   /top\s*up/i,
   /out\s+of\s+funds/i,
@@ -235,6 +236,14 @@ export const getPublicProviderFailure = (error, serviceName) => {
   }
 
   if (isProviderFundsError(error)) {
+    if (serviceKey.includes("data")) {
+      return {
+        code: "provider_insufficient_funds",
+        statusCode: 503,
+        message: `Data purchase could not be completed at the moment. Please try again later.${refundSuffix}`,
+      };
+    }
+
     return {
       code: "provider_insufficient_funds",
       statusCode: 503,
@@ -243,10 +252,26 @@ export const getPublicProviderFailure = (error, serviceName) => {
   }
 
   if (matchesAny(text, TEMPORARY_PROVIDER_PATTERNS)) {
+    if (serviceKey.includes("data")) {
+      return {
+        code: "plan_unavailable",
+        statusCode: 409,
+        message: `This data plan isn't available at the moment. Please try another plan.${refundSuffix}`,
+      };
+    }
+
     return {
       code: "provider_temporarily_unavailable",
       statusCode: 503,
       message: `${service} is temporarily unavailable. Please try again later.${refundSuffix}`,
+    };
+  }
+
+  if (serviceKey.includes("data")) {
+    return {
+      code: "plan_unavailable",
+      statusCode: 409,
+      message: `This data plan isn't available at the moment. Please try another plan.${refundSuffix}`,
     };
   }
 
