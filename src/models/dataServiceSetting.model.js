@@ -37,24 +37,40 @@ const providerNames = [
 const networkProviderSchema = new mongoose.Schema(
   {
     MTN: {
-      type: String,
+      type: [String],
       enum: providerNames,
-      default: null,
+      default: undefined,
+      validate: {
+        validator: (providers) => !providers || providers.length <= 2,
+        message: "MTN can have at most two data providers",
+      },
     },
     AIRTEL: {
-      type: String,
+      type: [String],
       enum: providerNames,
-      default: null,
+      default: undefined,
+      validate: {
+        validator: (providers) => !providers || providers.length <= 2,
+        message: "AIRTEL can have at most two data providers",
+      },
     },
     GLO: {
-      type: String,
+      type: [String],
       enum: providerNames,
-      default: null,
+      default: undefined,
+      validate: {
+        validator: (providers) => !providers || providers.length <= 2,
+        message: "GLO can have at most two data providers",
+      },
     },
     "9MOBILE": {
-      type: String,
+      type: [String],
       enum: providerNames,
-      default: null,
+      default: undefined,
+      validate: {
+        validator: (providers) => !providers || providers.length <= 2,
+        message: "9MOBILE can have at most two data providers",
+      },
     },
   },
   { _id: false }

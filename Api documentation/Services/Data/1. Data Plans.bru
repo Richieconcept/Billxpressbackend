@@ -25,8 +25,9 @@ vars:pre-request {
 docs {
   # Data Plans
   
-  Returns enabled plans from the provider assigned to each requested network,
-  with final BillXpress selling prices.
+  Returns enabled plans from the provider or providers assigned to each requested
+  network, with final BillXpress selling prices. Provider routing is hidden from
+  the customer app.
   
   ## Endpoint
   
@@ -48,7 +49,7 @@ docs {
   ```
   
   When `network` is omitted, the endpoint returns enabled plans for all
-  networks using each network's configured provider.
+  networks using each network's configured provider list.
   
   ## Authentication
   
@@ -132,13 +133,6 @@ docs {
   
   ```json
   {
-    "provider": "mixed",
-    "networkProviders": {
-      "MTN": "smeapi",
-      "AIRTEL": "smeplug",
-      "GLO": "smeplug",
-      "9MOBILE": "smeplug"
-    },
     "pricing": {
       "userMarkupPercent": 15,
       "vendorMarkupPercent": 10,
@@ -162,11 +156,7 @@ docs {
     "plans": [
       {
         "id": "66f1234567890abcdef1234",
-        "provider": "smeapi",
-        "providerPlanId": "1",
-        "providerPlanCode": "1",
         "network": "MTN",
-        "networkCode": "1",
         "name": "500MB",
         "type": "SME",
         "validity": "7days",
@@ -185,9 +175,6 @@ docs {
     "count": 1
   }
   ```
-  
-  `provider: "mixed"` is normal when different networks use different
-  providers. Frontend should not branch purchase logic by provider.
   
   ## Empty Plans
   

@@ -7,20 +7,20 @@ docs {
   # Data Service
 
   BillXpress exposes one stable frontend API while the backend can route each
-  network to a different provider.
+  network to one or two providers.
 
   ## Current Recommended Provider Routing
 
   ```txt
-  MTN     -> SMEAPI
+  MTN     -> SMEAPI + 2Fast
   AIRTEL  -> SME Plug
   GLO     -> SME Plug
   9MOBILE -> SME Plug
   ```
 
-  Admin can switch any network between configured providers without requiring a
-  frontend release. For example, MTN can switch from SMEAPI to SME Plug and back
-  again. Each provider keeps its own enabled plans and BillXpress prices.
+  Admin can switch any network between configured providers, or enable two
+  providers on the same network, without requiring a frontend release. Each
+  provider keeps its own enabled plans and BillXpress prices.
 
   ## Frontend Endpoints
 
@@ -69,21 +69,22 @@ docs {
   - synchronization updates provider prices and availability without deleting
     BillXpress prices, type, or enabled status;
   - customers only receive plans that are enabled, provider-available, and
-    belong to the provider currently selected for that network.
+    belong to a provider currently selected for that network;
+  - customers do not receive provider names in the plan list.
 
-  ## Safe Provider Switching
+  ## Safe Provider Routing
 
-  Switching a network does not delete configuration.
+  Switching or adding providers for a network does not delete configuration.
 
   Example:
 
   1. SMEAPI MTN plans are synchronized, priced, and enabled.
   2. SME Plug or Autopilot MTN plans are synchronized, priced, and enabled separately.
-  3. Admin sets `networkProviders.MTN` to `smeapi`.
-  4. Customers see SMEAPI MTN plans.
-  5. Admin changes only `networkProviders.MTN` to `smeplug` or `autopilot`.
-  6. Customers immediately see the previously configured plans for that provider.
-  7. Switching back restores the previously configured SMEAPI MTN plans.
+  3. Admin sets `networkProviders.MTN` to `["smeapi", "2fast"]`.
+  4. Customers see enabled MTN plans from both providers without provider names.
+  5. Admin changes only `networkProviders.MTN` to `["smeplug"]`.
+  6. Customers immediately see the previously configured SME Plug MTN plans.
+  7. Switching back restores the previously configured SMEAPI and 2Fast MTN plans.
 
   Frontend routes and payloads remain unchanged throughout.
 }

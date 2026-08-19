@@ -22,6 +22,16 @@ import { getPublicProviderFailure } from "./providerFailure.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
 const DATA_NETWORKS = ["MTN", "AIRTEL", "GLO", "9MOBILE"];
+const DATA_PROVIDER_NAMES = [
+  "smeapi",
+  "ujaydata",
+  "autopilot",
+  "smeplug",
+  "ogdams",
+  "2fast",
+  "vtpass",
+];
+const DATA_PROVIDER_NAME_SET = new Set(DATA_PROVIDER_NAMES);
 const CATALOG_PROVIDERS = new Set([
   "2fast",
   "autopilot",
@@ -86,6 +96,47 @@ const roundSellingPrice = (amount, roundingMode) => {
   return Math.ceil(amount);
 };
 
+const normalizeProviderName = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
+
+const normalizeProviderList = (value, fallbackProvider) => {
+  const rawProviders = Array.isArray(value) ? value : value ? [value] : [];
+  const providers = rawProviders
+    .map(normalizeProviderName)
+    .filter(Boolean)
+    .filter((provider, index, self) => self.indexOf(provider) === index);
+
+  const finalProviders = providers.length > 0 ? providers : [fallbackProvider];
+
+  return finalProviders;
+};
+
+const assertSupportedProviderList = (providers, network) => {
+  if (providers.length === 0) {
+    const error = new Error(`${network} must have at least one data provider`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (providers.length > 2) {
+    const error = new Error(`${network} can have at most two data providers`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const unsupportedProvider = providers.find(
+    (provider) => !DATA_PROVIDER_NAME_SET.has(provider)
+  );
+
+  if (unsupportedProvider) {
+    const error = new Error(`${unsupportedProvider} is not a supported data provider`);
+    error.statusCode = 400;
+    throw error;
+  }
+};
+
 const calculateSellingPrice = ({ costPrice, markupPercent, roundingMode }) => {
   const sellingPrice = roundSellingPrice(
     costPrice + costPrice * (markupPercent / 100),
@@ -114,8 +165,10 @@ export const serializeDataServiceSetting = (settings) => ({
   isEnabled: settings.isEnabled,
   activeProvider: settings.activeProvider,
   networkProviders: DATA_NETWORKS.reduce((providers, network) => {
-    providers[network] =
-      settings.networkProviders?.[network] || settings.activeProvider;
+    providers[network] = normalizeProviderList(
+      settings.networkProviders?.[network],
+      settings.activeProvider
+    );
     return providers;
   }, {}),
   availableProviders: listDataProviders(),
@@ -178,7 +231,12 @@ export const updateDataServiceSetting = async (payload, adminUserId) => {
 
       DATA_NETWORKS.forEach((network) => {
         if (source[field][network] !== undefined) {
-          settings.networkProviders[network] = source[field][network] || null;
+          const providers = normalizeProviderList(
+            source[field][network],
+            settings.activeProvider
+          );
+          assertSupportedProviderList(providers, network);
+          settings.networkProviders[network] = providers;
         }
       });
     } else {
@@ -192,7 +250,12 @@ export const updateDataServiceSetting = async (payload, adminUserId) => {
   return settings;
 };
 
-export const serializeDataPlanForUser = ({ plan, settings, user }) => {
+export const serializeDataPlanForUser = ({
+  plan,
+  settings,
+  user,
+  includeProvider = false,
+}) => {
   const pricingConfig = getPricingForUser(settings, user, plan.costPrice);
   const vendor = isVendorUser(user);
   const customPrice = vendor ? plan.vendorPrice : plan.ourPrice;
@@ -209,13 +272,9 @@ export const serializeDataPlanForUser = ({ plan, settings, user }) => {
         roundingMode: settings.roundingMode,
       });
 
-  return {
+  const serialized = {
     id: plan.catalogId || plan.providerPlanId,
-    provider: plan.provider,
-    providerPlanId: plan.providerPlanId,
-    providerPlanCode: plan.providerPlanCode,
     network: plan.network,
-    networkCode: plan.networkCode,
     name: plan.name,
     type: plan.type,
     validity: plan.validity,
@@ -240,6 +299,15 @@ export const serializeDataPlanForUser = ({ plan, settings, user }) => {
     pricingTier: pricingConfig.pricingTier,
     available: plan.available,
   };
+
+  if (includeProvider) {
+    serialized.provider = plan.provider;
+    serialized.providerPlanId = plan.providerPlanId;
+    serialized.providerPlanCode = plan.providerPlanCode;
+    serialized.networkCode = plan.networkCode;
+  }
+
+  return serialized;
 };
 
 const normalizePlanFilter = (value) =>
@@ -247,13 +315,15 @@ const normalizePlanFilter = (value) =>
     .trim()
     .toUpperCase();
 
-const getProviderNameForNetwork = (settings, network) =>
-  settings.networkProviders?.[normalizePlanFilter(network)] ||
-  settings.activeProvider;
+const getProviderNamesForNetwork = (settings, network) =>
+  normalizeProviderList(
+    settings.networkProviders?.[normalizePlanFilter(network)],
+    settings.activeProvider
+  );
 
 const getNetworkProviderMap = (settings) =>
   DATA_NETWORKS.reduce((providers, network) => {
-    providers[network] = getProviderNameForNetwork(settings, network);
+    providers[network] = getProviderNamesForNetwork(settings, network);
     return providers;
   }, {});
 
@@ -425,12 +495,40 @@ export const listAdminDataPlans = async (filters = {}) => {
     query.providerAvailable = filters.providerAvailable;
   }
 
-  return DataPlan.find(query).sort({
+  if (filters.customerVisible) {
+    const settings = await getOrCreateDataServiceSetting();
+    const networkProviders = getNetworkProviderMap(settings);
+    const providerNetworkPairs = DATA_NETWORKS.flatMap((network) =>
+      networkProviders[network].map((provider) => ({ provider, network }))
+    ).filter(
+      (pair) => !query.provider || pair.provider === query.provider
+    );
+
+    if (providerNetworkPairs.length === 0) {
+      return [];
+    }
+
+    query.isEnabled = true;
+    query.$or = providerNetworkPairs;
+  }
+
+  const sortDirection =
+    String(filters.sortDirection || "").toLowerCase() === "desc" ? -1 : 1;
+  const sortOptions = {
+    provider: { provider: sortDirection, network: 1, dataType: 1, networkPrice: 1 },
+    network: { network: sortDirection, provider: 1, dataType: 1, networkPrice: 1 },
+    price: { networkPrice: sortDirection, provider: 1, network: 1, dataType: 1 },
+    name: { name: sortDirection, provider: 1, network: 1, dataType: 1 },
+  };
+  const sort = sortOptions[String(filters.sortBy || "provider").toLowerCase()] || {
+    provider: 1,
     network: 1,
     dataType: 1,
     networkPrice: 1,
     name: 1,
-  });
+  };
+
+  return DataPlan.find(query).sort(sort);
 };
 
 export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
@@ -529,19 +627,24 @@ export const getDataPlansForUser = async (user, filters = {}) => {
     ? [requestedNetwork]
     : DATA_NETWORKS;
   const plans = [];
+  const providerNetworks = new Map();
 
-  for (const providerName of new Set(
-    selectedNetworks.map((network) => networkProviders[network])
-  )) {
+  selectedNetworks.forEach((network) => {
+    networkProviders[network].forEach((providerName) => {
+      providerNetworks.set(providerName, [
+        ...(providerNetworks.get(providerName) || []),
+        network,
+      ]);
+    });
+  });
+
+  for (const [providerName, configuredNetworks] of providerNetworks.entries()) {
     const provider = getDataProvider(providerName);
-    const providerNetworks = selectedNetworks.filter(
-      (network) => networkProviders[network] === providerName
-    );
 
     if (CATALOG_PROVIDERS.has(provider.name)) {
       const documents = await DataPlan.find({
         provider: provider.name,
-        network: { $in: providerNetworks },
+        network: { $in: configuredNetworks },
         ...(filters.dataType
           ? { dataType: normalizePlanFilter(filters.dataType) }
           : {}),
@@ -553,7 +656,7 @@ export const getDataPlansForUser = async (user, filters = {}) => {
       const livePlans = await provider.fetchPlans();
       plans.push(
         ...livePlans.filter((plan) =>
-          providerNetworks.includes(normalizePlanFilter(plan.network))
+          configuredNetworks.includes(normalizePlanFilter(plan.network))
         )
       );
     }
@@ -569,12 +672,18 @@ export const getDataPlansForUser = async (user, filters = {}) => {
         normalizePlanFilter(plan.type) === normalizePlanFilter(filters.dataType))
   );
 
+  const selectedProviders = [
+    ...new Set(selectedNetworks.flatMap((network) => networkProviders[network])),
+  ];
+
   return {
     settings,
     provider: requestedNetwork
-      ? networkProviders[requestedNetwork]
-      : new Set(Object.values(networkProviders)).size === 1
-        ? Object.values(networkProviders)[0]
+      ? selectedProviders.length === 1
+        ? selectedProviders[0]
+        : "mixed"
+      : selectedProviders.length === 1
+        ? selectedProviders[0]
         : "mixed",
     networkProviders,
     plans: filteredPlans.map((plan) =>
@@ -750,18 +859,17 @@ export const purchaseDataForUser = async ({
     });
 
     catalogPlan =
-      catalogCandidates.find(
-        (candidate) =>
-          networkProviders[candidate.network] === candidate.provider
+      catalogCandidates.find((candidate) =>
+        (networkProviders[candidate.network] || []).includes(candidate.provider)
       ) || null;
   }
 
   if (catalogPlan) {
-    const routedProviderName = networkProviders[catalogPlan.network];
+    const routedProviderNames = networkProviders[catalogPlan.network] || [];
 
-    if (catalogPlan.provider !== routedProviderName) {
+    if (!routedProviderNames.includes(catalogPlan.provider)) {
       const error = new Error(
-        `Selected plan is not active for ${catalogPlan.network}; the network currently uses ${routedProviderName}`
+        `Selected plan is not active for ${catalogPlan.network}`
       );
       error.statusCode = 409;
       throw error;
@@ -770,7 +878,7 @@ export const purchaseDataForUser = async ({
     provider = getDataProvider(catalogPlan.provider);
     plan = catalogDocumentToProviderPlan(catalogPlan);
   } else {
-    for (const providerName of new Set(Object.values(networkProviders))) {
+    for (const providerName of new Set(Object.values(networkProviders).flat())) {
       const candidateProvider = getDataProvider(providerName);
 
       if (CATALOG_PROVIDERS.has(candidateProvider.name)) continue;
@@ -780,8 +888,9 @@ export const purchaseDataForUser = async ({
 
       if (
         candidatePlan &&
-        networkProviders[normalizePlanFilter(candidatePlan.network)] ===
-          candidateProvider.name
+        (
+          networkProviders[normalizePlanFilter(candidatePlan.network)] || []
+        ).includes(candidateProvider.name)
       ) {
         provider = candidateProvider;
         plan = candidatePlan;

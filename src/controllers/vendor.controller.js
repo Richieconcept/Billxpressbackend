@@ -212,7 +212,6 @@ export const getVendorDataPlans = async (req, res) => {
     const result = await getDataPlansForUser(req.user);
 
     success(res, "Data plans fetched successfully", {
-      provider: result.provider,
       plans: result.plans,
       count: result.plans.length,
     });

@@ -24,10 +24,10 @@ body:json {
     "isEnabled": true,
     "activeProvider": "smeapi",
     "networkProviders": {
-      "MTN": "smeapi",
-      "AIRTEL": "smeplug",
-      "GLO": "smeplug",
-      "9MOBILE": "smeplug"
+      "MTN": ["smeapi", "2fast"],
+      "AIRTEL": ["smeplug"],
+      "GLO": ["smeplug"],
+      "9MOBILE": ["smeplug"]
     },
     "userMarkupPercent": 15,
     "vendorMarkupPercent": 10,
@@ -60,7 +60,7 @@ docs {
   
   Use this request when admin wants to:
   
-  - choose a provider independently for each mobile network
+  - choose one or two providers independently for each mobile network
   - change normal user fallback percentage
   - change vendor fallback percentage
   - configure tiered margins so small plans stay profitable and big plans stay affordable
@@ -91,25 +91,26 @@ docs {
   in `networkProviders`.
   
   `networkProviders`
-  Optional object with `MTN`, `AIRTEL`, `GLO`, and `9MOBILE`. Supported provider
-  values are `smeapi`, `smeplug`, `autopilot`, `ujaydata`, and `ogdams`.
+  Optional object with `MTN`, `AIRTEL`, `GLO`, and `9MOBILE`. Each network can
+  be one provider string or an array with up to two providers. Supported provider
+  values are `smeapi`, `smeplug`, `autopilot`, `ujaydata`, `ogdams`, `2fast`,
+  and `vtpass`.
   
   Example: route MTN through SMEAPI while Airtel, Glo, and 9mobile use SME Plug:
   
   ```json
   {
     "networkProviders": {
-      "MTN": "smeapi",
-      "AIRTEL": "smeplug",
-      "GLO": "smeplug",
-      "9MOBILE": "smeplug"
+      "MTN": ["smeapi", "2fast"],
+      "AIRTEL": ["smeplug"],
+      "GLO": ["smeplug"],
+      "9MOBILE": ["smeplug"]
     }
   }
   ```
   
-  Switching `MTN` to `smeplug` immediately exposes the previously enabled SME
-  Plug MTN catalogue. Switching it back restores the SMEAPI MTN catalogue and
-  its saved prices.
+  If MTN has two providers, enabled MTN catalogue plans from both providers are
+  shown to customers. Customers do not see which provider supplies a plan.
   
   `userMarkupPercent`
   Fallback percentage for normal users. Backend uses this only when no `userPricingTiers` range matches the provider `costPrice`.
@@ -245,10 +246,10 @@ docs {
       "isEnabled": true,
       "activeProvider": "ujaydata",
       "networkProviders": {
-        "MTN": "smeapi",
-        "AIRTEL": "smeplug",
-        "GLO": "smeplug",
-        "9MOBILE": "smeplug"
+        "MTN": ["smeapi", "2fast"],
+        "AIRTEL": ["smeplug"],
+        "GLO": ["smeplug"],
+        "9MOBILE": ["smeplug"]
       },
       "userMarkupPercent": 15,
       "vendorMarkupPercent": 10,

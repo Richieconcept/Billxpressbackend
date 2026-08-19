@@ -40,6 +40,11 @@ const normalizeProviderNames = (value) =>
     .map((provider) => provider.trim().toLowerCase())
     .filter(Boolean);
 
+const normalizeProviderList = (value) =>
+  (Array.isArray(value) ? value : value ? [value] : [])
+    .map((provider) => String(provider || "").trim().toLowerCase())
+    .filter(Boolean);
+
 const getConfiguredProviders = async () => {
   const envProviders = normalizeProviderNames(process.env.DATA_PLAN_SYNC_PROVIDERS);
 
@@ -50,7 +55,9 @@ const getConfiguredProviders = async () => {
   const settings = await getOrCreateDataServiceSetting();
   const providers = [
     settings.activeProvider,
-    ...DATA_NETWORKS.map((network) => settings.networkProviders?.[network]),
+    ...DATA_NETWORKS.flatMap((network) =>
+      normalizeProviderList(settings.networkProviders?.[network])
+    ),
   ].filter(Boolean);
 
   return [...new Set(providers.map((provider) => provider.toLowerCase()))];

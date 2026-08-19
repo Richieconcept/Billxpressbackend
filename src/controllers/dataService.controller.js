@@ -30,7 +30,6 @@ export const getDataPlans = async (req, res) => {
     });
 
     res.json({
-      provider: result.provider,
       pricing: {
         userMarkupPercent: result.settings.userMarkupPercent,
         vendorMarkupPercent: result.settings.vendorMarkupPercent,
@@ -43,7 +42,6 @@ export const getDataPlans = async (req, res) => {
           : "flat",
         roundingMode: result.settings.roundingMode,
       },
-      networkProviders: result.networkProviders,
       plans: result.plans,
       count: result.plans.length,
     });
@@ -65,6 +63,11 @@ export const getAdminDataPlans = async (req, res) => {
       dataType: req.query.dataType || req.query.type,
       isEnabled: parseOptionalBoolean(req.query.isEnabled),
       providerAvailable: parseOptionalBoolean(req.query.providerAvailable),
+      customerVisible:
+        parseOptionalBoolean(req.query.customerVisible) ??
+        parseOptionalBoolean(req.query.visible),
+      sortBy: req.query.sortBy,
+      sortDirection: req.query.sortDirection,
     });
 
     res.json({

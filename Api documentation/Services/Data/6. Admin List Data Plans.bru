@@ -40,6 +40,10 @@ docs {
   type=AWOOF|GIFTING|SME|CORPORATE GIFTING|SOCIAL|OTHER
   isEnabled=true|false
   providerAvailable=true|false
+  customerVisible=true|false
+  provider=smeapi|smeplug|autopilot|ujaydata|ogdams|2fast|vtpass
+  sortBy=provider|network|price|name
+  sortDirection=asc|desc
   ```
   
   Example:
@@ -52,6 +56,18 @@ docs {
   
   ```txt
   /api/v1/admin/services/data/plans?provider=smeapi&network=MTN
+  ```
+
+  For all plans currently visible to customers across the configured providers:
+
+  ```txt
+  /api/v1/admin/services/data/plans?customerVisible=true&sortBy=provider
+  ```
+
+  For customer-visible plans from one provider:
+
+  ```txt
+  /api/v1/admin/services/data/plans?customerVisible=true&provider=2fast
   ```
   
   For Autopilot MTN plans:
