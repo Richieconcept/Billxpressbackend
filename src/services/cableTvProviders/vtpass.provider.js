@@ -99,6 +99,15 @@ const getTvProvider = (tvProvider) =>
 
 const getTransaction = (response) => response?.content?.transactions || {};
 
+const getProviderMessage = (response, fallback) =>
+  pickFirst(
+    response?.response_description,
+    response?.message,
+    response?.content?.error,
+    response?.content?.message,
+    fallback
+  );
+
 const isSuccessfulPurchase = (response) => {
   const code = String(response?.code || "");
   const description = String(response?.response_description || "").toLowerCase();
@@ -197,6 +206,19 @@ export const verifySmartcard = async ({ tvProvider, smartcardNumber }) => {
     body: JSON.stringify(payload),
   });
   const content = response.content || response.data || response;
+
+  if (String(response?.code || "") !== "000") {
+    const error = new Error(
+      getProviderMessage(
+        response,
+        "The smartcard number could not be verified. Please check the TV provider and smartcard number, then try again"
+      )
+    );
+    error.statusCode = 400;
+    error.providerResponse = response;
+    throw error;
+  }
+
   const customerName = pickFirst(
     content.Customer_Name,
     content.customerName,
@@ -205,7 +227,12 @@ export const verifySmartcard = async ({ tvProvider, smartcardNumber }) => {
   );
 
   if (!customerName) {
-    const error = new Error("Could not verify smartcard details");
+    const error = new Error(
+      getProviderMessage(
+        response,
+        "The smartcard number could not be verified. Please check the TV provider and smartcard number, then try again"
+      )
+    );
     error.statusCode = 404;
     error.providerResponse = response;
     throw error;
@@ -270,9 +297,7 @@ export const purchaseCableTv = async ({
 
   if (!isSuccessfulPurchase(response)) {
     const error = new Error(
-      response?.response_description ||
-        response?.message ||
-        "VTpass cable TV purchase failed"
+      getProviderMessage(response, "VTpass cable TV purchase failed")
     );
     error.statusCode = 502;
     error.providerResponse = response;

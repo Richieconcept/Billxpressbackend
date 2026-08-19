@@ -28,10 +28,58 @@ docs {
   Admin checks the active data provider and markup settings.
   
   Use this request after updating data settings to confirm what is active.
+
+  This endpoint is for the admin dashboard only. Unlike the customer data-plan
+  endpoint, it exposes provider routing so admin can see which providers are
+  enabled for each network.
   
   If `userPricingTiers` or `vendorPricingTiers` is not empty, tiered pricing is enabled.
   
   If a plan does not match any tier, backend falls back to `userMarkupPercent` or `vendorMarkupPercent`.
+
+  ## Provider Routing Meaning
+
+  `activeProvider`
+  Global fallback provider. If a network has no explicit value in
+  `networkProviders`, backend uses this provider for that network.
+
+  `networkProviders`
+  Object keyed by network. Each network returns an array with one or two provider
+  names.
+
+  Example:
+
+  ```json
+  {
+    "networkProviders": {
+      "MTN": ["smeapi", "2fast"],
+      "AIRTEL": ["smeplug"],
+      "GLO": ["smeplug"],
+      "9MOBILE": ["smeplug"]
+    }
+  }
+  ```
+
+  This means:
+
+  - MTN customer plans come from enabled SMEAPI MTN plans and enabled 2Fast MTN
+    plans.
+  - Airtel, Glo, and 9mobile customer plans come from enabled SME Plug plans.
+  - Customers still do not see provider names.
+
+  ## Admin Dashboard Usage
+
+  Use this endpoint to populate provider selectors on the data settings screen.
+  For each network, allow admin to select either one provider or two providers.
+
+  Use `availableProviders` to build the provider dropdown/checkbox list.
+
+  To see the actual plans that are visible to customers after this routing is
+  applied, call:
+
+  ```txt
+  GET /api/v1/admin/services/data/plans?customerVisible=true&sortBy=provider
+  ```
   
   ## Endpoint
   

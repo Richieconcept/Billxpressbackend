@@ -22,6 +22,25 @@ docs {
   providers on the same network, without requiring a frontend release. Each
   provider keeps its own enabled plans and BillXpress prices.
 
+  ## Multi-Provider Network Routing
+
+  Each network can use one provider or two providers. Example:
+
+  ```json
+  {
+    "networkProviders": {
+      "MTN": ["smeapi", "2fast"],
+      "AIRTEL": ["smeplug"],
+      "GLO": ["smeplug"],
+      "9MOBILE": ["smeplug"]
+    }
+  }
+  ```
+
+  With this setup, customers see enabled MTN plans from both SMEAPI and 2Fast,
+  but they do not see provider names. Provider names are shown only on admin
+  endpoints.
+
   ## Frontend Endpoints
 
   ```txt
@@ -41,6 +60,7 @@ docs {
      purchase endpoint.
   6. Refresh wallet and transaction history after success or failure.
   7. Never debit, credit, calculate markup, or refund on the frontend.
+  8. Never display provider names on the customer data-plan list.
 
   ## Admin Endpoints
 
@@ -51,6 +71,21 @@ docs {
   GET   /api/v1/admin/services/data/plans
   PATCH /api/v1/admin/services/data/plans/:planId
   ```
+
+  Admin dashboard should use:
+
+  ```txt
+  GET /api/v1/admin/services/data/settings
+  ```
+
+  to show which providers are selected per network, and:
+
+  ```txt
+  GET /api/v1/admin/services/data/plans?customerVisible=true&sortBy=provider
+  ```
+
+  to preview the plans customers can currently see, grouped by provider for
+  admin clarity.
 
   ## Catalogue And Pricing Rules
 

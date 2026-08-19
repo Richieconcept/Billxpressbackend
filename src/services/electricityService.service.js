@@ -274,6 +274,19 @@ export const purchaseElectricityForUser = async ({
     meterNumber: normalizedMeterNumber,
     meterType: normalizedMeterType,
   });
+  const providerMinimumAmount = Number(verifiedMeter.minimumAmount || 0);
+
+  if (
+    providerMinimumAmount > 0 &&
+    Number(amount) < providerMinimumAmount
+  ) {
+    const error = new Error(
+      `Minimum electricity amount for this meter is NGN ${providerMinimumAmount.toLocaleString("en-NG")}`
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
   const quote = await quoteElectricityForUser({ user, amount });
   const amountInMinorUnit = toMinorUnit(quote.sellingPrice);
   const reference = generateTransactionReference("ELEC");

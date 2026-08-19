@@ -28,6 +28,11 @@ docs {
   Returns enabled plans from the provider or providers assigned to each requested
   network, with final BillXpress selling prices. Provider routing is hidden from
   the customer app.
+
+  This endpoint is for the normal mobile app/customer experience. It deliberately
+  does not return provider names, provider plan IDs, provider plan codes, or the
+  per-network provider routing map. The user should only see BillXpress data
+  bundles and prices.
   
   ## Endpoint
   
@@ -50,6 +55,11 @@ docs {
   
   When `network` is omitted, the endpoint returns enabled plans for all
   networks using each network's configured provider list.
+
+  If admin configured two providers for the same network, for example MTN using
+  both `smeapi` and `2fast`, this endpoint merges all enabled MTN plans from
+  both providers into one normal plan list. The app should render them together
+  the same way it renders any other data plans.
   
   ## Authentication
   
@@ -62,6 +72,13 @@ docs {
   ## Important For Frontend
   
   Display `sellingPrice` to the user.
+
+  Do not show provider names anywhere on the customer app. The user should not
+  know whether a plan comes from SMEAPI, 2Fast, SME Plug, UjayData, Ogdams,
+  Autopilot, or VTpass.
+
+  Do not expect `provider`, `providerPlanId`, `providerPlanCode`, or
+  `networkProviders` in this customer response. Those fields are admin-only.
   
   Do not display `costPrice` as the amount to pay. `costPrice` is included only so admins/testers can understand pricing.
   
@@ -89,7 +106,9 @@ docs {
   ## Fields Frontend Should Use
   
   `id`
-  Send this value as `planId` when buying data.
+  Send this value as `planId` when buying data. This is the most important
+  field for purchase. It identifies the exact saved BillXpress plan, including
+  the hidden provider behind it.
   
   `network`
   Use this to group plans under MTN, GLO, AIRTEL, or 9MOBILE.
@@ -105,8 +124,42 @@ docs {
   
   `sellingPrice`
   This is the amount the user will pay from their BillXpress wallet.
+
+  ## Purchase Flow
+
+  1. User selects network in the app, for example MTN.
+  2. App calls `GET /api/v1/services/data/plans?network=MTN`.
+  3. App displays returned plans without provider names.
+  4. User selects one plan.
+  5. App sends the selected plan `id` as `planId` to:
+
+  ```txt
+  POST /api/v1/services/data/purchase
+  ```
+
+  The backend uses the selected plan `id` to find the correct provider
+  internally. The frontend must not try to decide which provider to use.
+
+  ## Duplicate-Looking Plans
+
+  When two providers are active for one network, two plans may look similar,
+  for example two MTN `1GB 30 days` bundles with different prices or types. The
+  app can display both, because their `id` values are different. The user still
+  only sees bundle details and price, not the provider.
   
   ## Fields Frontend Should Not Use For Payment
+
+  `provider`
+  Not returned on this endpoint. Do not build customer logic around it.
+
+  `providerPlanId`
+  Not returned on this endpoint. Use `id` for purchase.
+
+  `providerPlanCode`
+  Not returned on this endpoint. Use `id` for purchase.
+
+  `networkProviders`
+  Not returned on this endpoint. Routing is admin-only.
   
   `costPrice`
   Provider cost price. Do not charge the user this amount.
@@ -183,7 +236,9 @@ docs {
   - no matching plan is enabled;
   - provider catalogue has not been synchronized;
   - the selected provider marked its plans unavailable;
-  - admin switched the network to a provider whose plans are not configured.
+  - admin switched the network to a provider whose plans are not configured;
+  - admin configured two providers but no enabled plans match the requested
+    network/type.
   
   Show a friendly unavailable state. Do not fall back to calling a provider
   directly.

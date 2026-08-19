@@ -32,6 +32,10 @@ docs {
   Returns enabled and disabled SMEAPI, SME Plug, Autopilot, UjayData, Ogdams,
   2Fast, or VTpass plans. Copy a plan's `id` into the `dataPlanId` Bruno
   environment variable before running the update request.
+
+  This endpoint is for admin only. It returns provider names and provider plan
+  details so admin can price, enable, disable, filter, and audit plans per
+  provider.
   
   Optional query filters:
   
@@ -45,6 +49,40 @@ docs {
   sortBy=provider|network|price|name
   sortDirection=asc|desc
   ```
+
+  ## Filter Meaning
+
+  `provider`
+  Returns plans from one provider only. Use this when admin wants to manage
+  SMEAPI, 2Fast, SME Plug, UjayData, Ogdams, Autopilot, or VTpass separately.
+
+  `network`
+  Returns plans for one mobile network only.
+
+  `isEnabled`
+  Filters by BillXpress enablement. `isEnabled=true` means admin enabled the
+  plan in BillXpress, but it does not always mean the customer can see it. The
+  provider also has to be active for that network in data settings.
+
+  `providerAvailable`
+  Filters by upstream provider availability from the last sync. A plan must be
+  provider-available before customers can see or buy it.
+
+  `customerVisible`
+  Returns plans that are visible to customers right now. This combines:
+
+  - `isEnabled=true`;
+  - the plan's provider is selected for that plan's network in data settings;
+  - if the provider marked the plan unavailable, `available` will be false.
+
+  Use `customerVisible=true` for the admin screen that previews what users can
+  currently see in the app. This is different from `isEnabled=true`, because
+  `isEnabled=true` can include enabled plans from providers that are saved but
+  not currently selected for the network.
+
+  `sortBy`
+  Sorts the admin list. Recommended default is `provider`, so all enabled plans
+  are grouped by provider when more than one provider is active.
   
   Example:
   
@@ -69,6 +107,25 @@ docs {
   ```txt
   /api/v1/admin/services/data/plans?customerVisible=true&provider=2fast
   ```
+
+  For all BillXpress-enabled plans from every provider, whether or not the
+  provider is currently selected for that network:
+
+  ```txt
+  /api/v1/admin/services/data/plans?isEnabled=true&sortBy=provider
+  ```
+
+  For all enabled MTN plans from every provider:
+
+  ```txt
+  /api/v1/admin/services/data/plans?network=MTN&isEnabled=true&sortBy=provider
+  ```
+
+  For customer-visible MTN plans only:
+
+  ```txt
+  /api/v1/admin/services/data/plans?network=MTN&customerVisible=true&sortBy=provider
+  ```
   
   For Autopilot MTN plans:
   
@@ -86,6 +143,16 @@ docs {
   - `isEnabled`;
   - `providerAvailable`;
   - `lastSyncedAt`.
+
+  The normal customer app must not use this endpoint. It should use:
+
+  ```txt
+  GET /api/v1/services/data/plans
+  ```
+
+  The customer endpoint hides provider fields. This admin endpoint shows them
+  intentionally so admin can understand which provider each saved plan belongs
+  to.
   
   `isEnabled` is BillXpress's choice. `providerAvailable` is the upstream
   provider's current status. A plan must satisfy both before customers can see

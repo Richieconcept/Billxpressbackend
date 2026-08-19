@@ -470,8 +470,10 @@ export const quoteCableTvForUser = async ({ user, tvProvider, packageCode }) => 
   });
 
   if (!selectedPackage) {
-    const error = new Error("Selected cable TV package is not available");
-    error.statusCode = 404;
+    const error = new Error(
+      "This cable TV package isn't available at the moment. Please try another package"
+    );
+    error.statusCode = 409;
     throw error;
   }
 

@@ -105,6 +105,15 @@ const getTransaction = (response) => response?.content?.transactions || {};
 const pickFirst = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "");
 
+const getProviderMessage = (response, fallback) =>
+  pickFirst(
+    response?.response_description,
+    response?.message,
+    response?.content?.error,
+    response?.content?.message,
+    fallback
+  );
+
 const isSuccessfulPurchase = (response) => {
   const code = String(response?.code || "");
   const description = String(response?.response_description || "").toLowerCase();
@@ -158,6 +167,19 @@ export const verifyMeter = async ({ disco, meterNumber, meterType }) => {
     body: JSON.stringify(payload),
   });
   const content = response.content || response.data || response;
+
+  if (String(response?.code || "") !== "000") {
+    const error = new Error(
+      getProviderMessage(
+        response,
+        "The meter number could not be verified. Please check the meter number, disco, and meter type, then try again"
+      )
+    );
+    error.statusCode = 400;
+    error.providerResponse = response;
+    throw error;
+  }
+
   const customerName = pickFirst(
     content.Customer_Name,
     content.customerName,
@@ -166,7 +188,12 @@ export const verifyMeter = async ({ disco, meterNumber, meterType }) => {
   );
 
   if (!customerName) {
-    const error = new Error("Could not verify meter details");
+    const error = new Error(
+      getProviderMessage(
+        response,
+        "The meter number could not be verified. Please check the meter number, disco, and meter type, then try again"
+      )
+    );
     error.statusCode = 404;
     error.providerResponse = response;
     throw error;
@@ -189,7 +216,15 @@ export const verifyMeter = async ({ disco, meterNumber, meterType }) => {
     customerName,
     address: pickFirst(content.Address, content.address),
     minimumAmount: Number(
-      pickFirst(content.Minimum_Amount, content.minimumAmount, content.minimum_amount, 0)
+      pickFirst(
+        content.Minimum_Amount,
+        content.Min_Purchase_Amount,
+        content.minimumAmount,
+        content.minimum_amount,
+        content.minPurchaseAmount,
+        content.min_purchase_amount,
+        0
+      )
     ),
     raw: response,
     requestPayload: payload,

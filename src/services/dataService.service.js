@@ -869,7 +869,7 @@ export const purchaseDataForUser = async ({
 
     if (!routedProviderNames.includes(catalogPlan.provider)) {
       const error = new Error(
-        `Selected plan is not active for ${catalogPlan.network}`
+        "This data plan isn't available at the moment. Please try another plan"
       );
       error.statusCode = 409;
       throw error;
@@ -900,13 +900,17 @@ export const purchaseDataForUser = async ({
   }
 
   if (!provider) {
-    const error = new Error("Selected data plan is not available");
+    const error = new Error(
+      "This data plan isn't available at the moment. Please try another plan"
+    );
     error.statusCode = 404;
     throw error;
   }
 
   if (!plan || !plan.available) {
-    const error = new Error("Selected data plan is not available");
+    const error = new Error(
+      "This data plan isn't available at the moment. Please try another plan"
+    );
     error.statusCode = 404;
     throw error;
   }

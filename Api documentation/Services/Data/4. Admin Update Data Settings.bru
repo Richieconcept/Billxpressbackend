@@ -88,13 +88,51 @@ docs {
   
   `activeProvider`
   Global fallback provider used when a network does not have an explicit entry
-  in `networkProviders`.
+  in `networkProviders`. Keep this set to a supported provider even when every
+  network has its own explicit provider list.
   
   `networkProviders`
   Optional object with `MTN`, `AIRTEL`, `GLO`, and `9MOBILE`. Each network can
   be one provider string or an array with up to two providers. Supported provider
   values are `smeapi`, `smeplug`, `autopilot`, `ujaydata`, `ogdams`, `2fast`,
   and `vtpass`.
+
+  The backend stores and returns each network as an array. A string is accepted
+  for backward compatibility, but the admin dashboard should send arrays.
+
+  Valid:
+
+  ```json
+  {
+    "networkProviders": {
+      "MTN": ["smeapi"],
+      "AIRTEL": ["smeplug", "2fast"]
+    }
+  }
+  ```
+
+  Also accepted for backward compatibility:
+
+  ```json
+  {
+    "networkProviders": {
+      "MTN": "smeapi"
+    }
+  }
+  ```
+
+  Invalid:
+
+  ```json
+  {
+    "networkProviders": {
+      "MTN": ["smeapi", "2fast", "vtpass"]
+    }
+  }
+  ```
+
+  A network can have at most two providers. If more than two are sent, backend
+  returns a validation error.
   
   Example: route MTN through SMEAPI while Airtel, Glo, and 9mobile use SME Plug:
   
@@ -111,6 +149,37 @@ docs {
   
   If MTN has two providers, enabled MTN catalogue plans from both providers are
   shown to customers. Customers do not see which provider supplies a plan.
+
+  If a provider is removed from a network, its saved plans and prices are not
+  deleted. They simply stop showing to customers for that network until the
+  provider is selected again.
+
+  ## Admin Dashboard Control Recommendation
+
+  For each network, show a provider multi-select with a maximum of two selected
+  providers. Example:
+
+  ```txt
+  MTN:     [smeapi] [2fast]
+  AIRTEL:  [smeplug]
+  GLO:     [smeplug]
+  9MOBILE: [smeplug]
+  ```
+
+  The admin dashboard should prevent selecting more than two providers before
+  submitting. Backend also enforces this rule.
+
+  After saving, refresh:
+
+  ```txt
+  GET /api/v1/admin/services/data/settings
+  ```
+
+  Then optionally show customer-visible plans with:
+
+  ```txt
+  GET /api/v1/admin/services/data/plans?customerVisible=true&sortBy=provider
+  ```
   
   `userMarkupPercent`
   Fallback percentage for normal users. Backend uses this only when no `userPricingTiers` range matches the provider `costPrice`.
@@ -235,6 +304,11 @@ docs {
   ```
   
   The frontend should display `sellingPrice` only. Backend already calculates markup, profit, and tier matching.
+
+  Provider information is intentionally hidden from the normal user app. The
+  normal user app should not show provider names, should not ask users to choose
+  a provider, and should not send a provider during purchase. It sends only the
+  selected plan `id` as `planId`.
   
   ## Expected Response
   
