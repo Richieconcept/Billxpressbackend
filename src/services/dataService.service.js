@@ -19,6 +19,7 @@ import {
 } from "./notification.service.js";
 import { getDataProvider, listDataProviders } from "./dataProviders/index.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
+import { withServicePurchaseLock } from "./servicePurchaseLock.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
 const DATA_NETWORKS = ["MTN", "AIRTEL", "GLO", "9MOBILE"];
@@ -793,7 +794,7 @@ const confirmUnclearDataPurchase = async ({ provider, reference }) => {
   }
 };
 
-export const purchaseDataForUser = async ({
+const purchaseDataForUserUnlocked = async ({
   userId,
   planId,
   phone,
@@ -1123,6 +1124,13 @@ export const purchaseDataForUser = async ({
     throw error;
   }
 };
+
+export const purchaseDataForUser = (payload) =>
+  withServicePurchaseLock({
+    userId: payload.userId,
+    service: "data",
+    operation: () => purchaseDataForUserUnlocked(payload),
+  });
 
 export const reconcileDataTransaction = async (reference) => {
   const transaction = await Transaction.findOne({

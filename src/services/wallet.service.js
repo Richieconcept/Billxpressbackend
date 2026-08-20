@@ -95,10 +95,19 @@ export const creditWallet = async ({
 }) => {
   const normalizedAmount = amountInMinorUnit || toMinorUnit(amount);
   const balanceField = getBalanceField(walletType);
-  const wallet = await getOrCreateWallet(userId);
+  await getOrCreateWallet(userId);
+  const wallet = await Wallet.findOneAndUpdate(
+    { user: userId },
+    { $inc: { [balanceField]: normalizedAmount } },
+    { new: false }
+  );
+
+  if (!wallet) {
+    throw new Error("Wallet not found");
+  }
+
   const balanceBefore = wallet[balanceField];
-  wallet[balanceField] += normalizedAmount;
-  await wallet.save();
+  const balanceAfter = balanceBefore + normalizedAmount;
 
   const transaction = await Transaction.create({
     user: userId,
@@ -107,13 +116,15 @@ export const creditWallet = async ({
     direction: "credit",
     amount: normalizedAmount,
     balanceBefore,
-    balanceAfter: wallet[balanceField],
+    balanceAfter,
     reference,
     provider,
     providerReference,
     narration,
     metadata,
   });
+
+  wallet[balanceField] = balanceAfter;
 
   return { wallet, transaction };
 };
@@ -132,17 +143,24 @@ export const debitWallet = async ({
 }) => {
   const normalizedAmount = amountInMinorUnit || toMinorUnit(amount);
   const balanceField = getBalanceField(walletType);
-  const wallet = await getOrCreateWallet(userId);
-  const balanceBefore = wallet[balanceField];
+  await getOrCreateWallet(userId);
+  const wallet = await Wallet.findOneAndUpdate(
+    {
+      user: userId,
+      [balanceField]: { $gte: normalizedAmount },
+    },
+    { $inc: { [balanceField]: -normalizedAmount } },
+    { new: false }
+  );
 
-  if (balanceBefore < normalizedAmount) {
+  if (!wallet) {
     const error = new Error("Insufficient wallet balance");
     error.statusCode = 400;
     throw error;
   }
 
-  wallet[balanceField] -= normalizedAmount;
-  await wallet.save();
+  const balanceBefore = wallet[balanceField];
+  const balanceAfter = balanceBefore - normalizedAmount;
 
   const transaction = await Transaction.create({
     user: userId,
@@ -151,13 +169,15 @@ export const debitWallet = async ({
     direction: "debit",
     amount: normalizedAmount,
     balanceBefore,
-    balanceAfter: wallet[balanceField],
+    balanceAfter,
     reference,
     provider,
     providerReference,
     narration,
     metadata,
   });
+
+  wallet[balanceField] = balanceAfter;
 
   return { wallet, transaction };
 };

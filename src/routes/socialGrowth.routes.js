@@ -7,12 +7,23 @@ import {
   quoteSocialGrowth,
 } from "../controllers/socialGrowth.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
+import { authenticatedRateLimit } from "../middlewares/rateLimit.middleware.js";
 
 const router = express.Router();
+const quoteLimiter = authenticatedRateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: "Too many social growth quote requests, please try again shortly",
+});
+const purchaseLimiter = authenticatedRateLimit({
+  windowMs: 60 * 1000,
+  max: 8,
+  message: "Too many social growth order requests, please slow down",
+});
 
 router.get("/social-growth/services", protect, getSocialGrowthServices);
-router.post("/social-growth/quote", protect, quoteSocialGrowth);
-router.post("/social-growth/orders", protect, purchaseSocialGrowth);
+router.post("/social-growth/quote", protect, quoteLimiter, quoteSocialGrowth);
+router.post("/social-growth/orders", protect, purchaseLimiter, purchaseSocialGrowth);
 router.get("/social-growth/orders", protect, listSocialGrowthOrders);
 router.get("/social-growth/orders/:orderId", protect, getSocialGrowthOrder);
 

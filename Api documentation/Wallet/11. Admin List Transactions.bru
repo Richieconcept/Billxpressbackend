@@ -57,9 +57,41 @@ docs {
   `provider`
   Optional provider filter, for example `billxpress_admin`, `maplerad`, `monnify`, or service provider keys.
 
+  `service`
+  Optional service filter from transaction metadata. Useful values include
+  `data`, `airtime`, `electricity`, `cable_tv`, `social_growth`, and card-related
+  service names stored in transaction metadata.
+
+  `dateFrom`, `dateTo`
+  Optional ISO date filters on `createdAt`. Aliases: `startDate`, `endDate`.
+
+  `amountMin`, `amountMax`
+  Optional naira amount filters. Example: `amountMin=1000&amountMax=5000`.
+
   ## Frontend Usage
 
   Show this on the admin dashboard as "Recent Transactions" and on a full transactions page with filters.
+
+  Dashboard table recommended columns:
+
+  - date/time;
+  - user name/email/phone;
+  - service;
+  - transaction type and direction;
+  - amount;
+  - status;
+  - provider;
+  - BillXpress reference;
+  - provider reference;
+  - narration.
+
+  Use `details` for service-specific display without parsing raw metadata:
+
+  - data: `details.network`, `details.planName`, `details.phone`;
+  - airtime: `details.network`, `details.airtimeValue`, `details.phone`;
+  - electricity: `details.disco`, `details.meterNumber`, `details.token`;
+  - cable TV: `details.tvProvider`, `details.smartcardNumber`,
+    `details.packageName`.
 
   For credit/debit audit, filter by:
 
@@ -94,6 +126,11 @@ docs {
         "provider": "billxpress_admin",
         "status": "successful",
         "narration": "Manual admin credit",
+        "service": null,
+        "details": {
+          "service": null,
+          "reason": "Manual admin credit"
+        },
         "metadata": {
           "adjustmentType": "admin_credit",
           "reason": "Manual admin credit"
@@ -101,6 +138,22 @@ docs {
         "createdAt": "2026-08-18T08:00:00.000Z"
       }
     ],
+    "summary": {
+      "totalCount": 250,
+      "totalAmount": 500000,
+      "byStatus": {
+        "successful": {
+          "count": 200,
+          "amount": 450000,
+          "rawAmount": 45000000
+        },
+        "reversed": {
+          "count": 50,
+          "amount": 50000,
+          "rawAmount": 5000000
+        }
+      }
+    },
     "pagination": {
       "page": 1,
       "limit": 20,

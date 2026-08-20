@@ -17,6 +17,7 @@ import {
   getBankTransferQuote,
   serializeBankTransferQuote,
 } from "./bankTransferFee.service.js";
+import { withServicePurchaseLock } from "./servicePurchaseLock.service.js";
 
 const normalizeName = (value) =>
   String(value || "")
@@ -34,7 +35,7 @@ const isFailedTransferStatus = (status) =>
     String(status || "").toUpperCase()
   );
 
-export const sendMapleradBankTransfer = async ({
+const sendMapleradBankTransferUnlocked = async ({
   userId,
   amount,
   accountNumber,
@@ -235,6 +236,13 @@ export const sendMapleradBankTransfer = async ({
     throw error;
   }
 };
+
+export const sendMapleradBankTransfer = (payload) =>
+  withServicePurchaseLock({
+    userId: payload.userId,
+    service: "bank_transfer",
+    operation: () => sendMapleradBankTransferUnlocked(payload),
+  });
 
 export const serializeBankTransferResult = (result) => ({
   status: result.status,

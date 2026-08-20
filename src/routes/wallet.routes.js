@@ -21,28 +21,60 @@ import {
   requireAuthTier,
   requireVerifiedEmail,
 } from "../middlewares/auth.middleware.js";
+import { authenticatedRateLimit } from "../middlewares/rateLimit.middleware.js";
 
 const router = express.Router();
+const fundingLimiter = authenticatedRateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: "Too many funding requests, please try again shortly",
+});
+const transferLookupLimiter = authenticatedRateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: "Too many transfer lookup requests, please try again shortly",
+});
+const transferLimiter = authenticatedRateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: "Too many transfer requests, please slow down",
+});
 
 router.get("/", protect, getWallet);
 router.get("/transactions", protect, getTransactions);
 router.get("/virtual-account", protect, getVirtualAccount);
-router.post("/virtual-account", protect, createVirtualAccount);
-router.post("/funding-intents", protect, createFundingIntent);
-router.post("/funding/quote", protect, previewFundingFee);
-router.post("/funding-intents/:fundingIntentId/confirm", protect, confirmFundingIntent);
+router.post("/virtual-account", protect, fundingLimiter, createVirtualAccount);
+router.post("/funding-intents", protect, fundingLimiter, createFundingIntent);
+router.post("/funding/quote", protect, fundingLimiter, previewFundingFee);
+router.post(
+  "/funding-intents/:fundingIntentId/confirm",
+  protect,
+  fundingLimiter,
+  confirmFundingIntent
+);
 router.get("/transfers/banks", protect, getTransferBankList);
-router.post("/transfers/suggest-banks", protect, suggestTransferBankList);
-router.post("/transfers/resolve-account", protect, resolveTransferAccount);
-router.post("/transfers/quote", protect, previewBankTransfer);
+router.post(
+  "/transfers/suggest-banks",
+  protect,
+  transferLookupLimiter,
+  suggestTransferBankList
+);
+router.post(
+  "/transfers/resolve-account",
+  protect,
+  transferLookupLimiter,
+  resolveTransferAccount
+);
+router.post("/transfers/quote", protect, transferLimiter, previewBankTransfer);
 router.post(
   "/transfers",
   protect,
+  transferLimiter,
   requireVerifiedEmail,
   requireAuthTier("tier_3"),
   createBankTransfer
 );
-router.post("/referral/redeem", protect, redeemReferralBalance);
+router.post("/referral/redeem", protect, transferLimiter, redeemReferralBalance);
 router.post(
   "/admin/referral-credit",
   protect,

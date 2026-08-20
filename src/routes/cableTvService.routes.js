@@ -7,13 +7,29 @@ import {
   verifyCableTvSmartcard,
 } from "../controllers/cableTvService.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
+import { authenticatedRateLimit } from "../middlewares/rateLimit.middleware.js";
 
 const router = express.Router();
+const providerLookupLimiter = authenticatedRateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: "Too many cable TV lookup requests, please try again shortly",
+});
+const purchaseLimiter = authenticatedRateLimit({
+  windowMs: 60 * 1000,
+  max: 8,
+  message: "Too many cable TV purchase requests, please slow down",
+});
 
 router.get("/cable-tv/providers", protect, getCableTvProviders);
 router.get("/cable-tv/packages", protect, getCableTvPackages);
-router.post("/cable-tv/verify-smartcard", protect, verifyCableTvSmartcard);
-router.post("/cable-tv/quote", protect, quoteCableTv);
-router.post("/cable-tv/purchase", protect, purchaseCableTv);
+router.post(
+  "/cable-tv/verify-smartcard",
+  protect,
+  providerLookupLimiter,
+  verifyCableTvSmartcard
+);
+router.post("/cable-tv/quote", protect, providerLookupLimiter, quoteCableTv);
+router.post("/cable-tv/purchase", protect, purchaseLimiter, purchaseCableTv);
 
 export default router;

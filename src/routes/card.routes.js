@@ -19,25 +19,42 @@ import {
   requireAuthTier,
   requireVerifiedEmail,
 } from "../middlewares/auth.middleware.js";
+import { authenticatedRateLimit } from "../middlewares/rateLimit.middleware.js";
 
 const router = express.Router();
 const cardAccess = [protect, requireVerifiedEmail, requireAuthTier("tier_3")];
+const cardQuoteLimiter = authenticatedRateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: "Too many card quote requests, please try again shortly",
+});
+const cardActionLimiter = authenticatedRateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: "Too many card requests, please slow down",
+});
 
 router.get("/configuration", ...cardAccess, getCardConfiguration);
 router.get("/", ...cardAccess, getCards);
-router.post("/creation-quote", ...cardAccess, quoteCardCreation);
-router.post("/", ...cardAccess, createCard);
+router.post("/creation-quote", ...cardAccess, cardQuoteLimiter, quoteCardCreation);
+router.post("/", ...cardAccess, cardActionLimiter, createCard);
 router.get("/:cardId", ...cardAccess, getCard);
-router.post("/:cardId/funding-quote", ...cardAccess, quoteCardFunding);
-router.post("/:cardId/fund", ...cardAccess, fundCard);
-router.post("/:cardId/withdrawal-quote", ...cardAccess, quoteCardWithdrawal);
-router.post("/:cardId/withdraw", ...cardAccess, withdrawCard);
-router.patch("/:cardId/freeze", ...cardAccess, freezeCard);
-router.patch("/:cardId/unfreeze", ...cardAccess, unfreezeCard);
+router.post("/:cardId/funding-quote", ...cardAccess, cardQuoteLimiter, quoteCardFunding);
+router.post("/:cardId/fund", ...cardAccess, cardActionLimiter, fundCard);
+router.post(
+  "/:cardId/withdrawal-quote",
+  ...cardAccess,
+  cardQuoteLimiter,
+  quoteCardWithdrawal
+);
+router.post("/:cardId/withdraw", ...cardAccess, cardActionLimiter, withdrawCard);
+router.patch("/:cardId/freeze", ...cardAccess, cardActionLimiter, freezeCard);
+router.patch("/:cardId/unfreeze", ...cardAccess, cardActionLimiter, unfreezeCard);
 router.get("/:cardId/transactions", ...cardAccess, getCardTransactions);
 router.post(
   "/:cardId/maintenance/pay",
   ...cardAccess,
+  cardActionLimiter,
   payCardMaintenance
 );
 

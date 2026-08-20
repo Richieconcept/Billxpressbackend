@@ -19,6 +19,7 @@ import {
   listCableTvProviders,
 } from "./cableTvProviders/index.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
+import { withServicePurchaseLock } from "./servicePurchaseLock.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
 const getMarkupPercentForUser = (settings, user) =>
@@ -516,7 +517,7 @@ export const quoteCableTvForUser = async ({ user, tvProvider, packageCode }) => 
   };
 };
 
-export const purchaseCableTvForUser = async ({
+const purchaseCableTvForUserUnlocked = async ({
   userId,
   tvProvider,
   smartcardNumber,
@@ -741,6 +742,13 @@ export const purchaseCableTvForUser = async ({
     throw error;
   }
 };
+
+export const purchaseCableTvForUser = (payload) =>
+  withServicePurchaseLock({
+    userId: payload.userId,
+    service: "cable_tv",
+    operation: () => purchaseCableTvForUserUnlocked(payload),
+  });
 
 export const serializeCableTvPurchaseResult = (result) => ({
   status: result.status,

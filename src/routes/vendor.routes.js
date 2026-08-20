@@ -24,19 +24,30 @@ import {
   verifyVendorCableTvSmartcard,
 } from "../controllers/vendor.controller.js";
 import { protectVendorApi } from "../middlewares/auth.middleware.js";
-import { rateLimit } from "../middlewares/rateLimit.middleware.js";
+import {
+  authenticatedRateLimit,
+  rateLimit,
+} from "../middlewares/rateLimit.middleware.js";
 
 const router = express.Router();
 
 router.use(
   rateLimit({
     windowMs: 60 * 1000,
-    max: 120,
+    max: 300,
     message: "Too many vendor API requests, please try again shortly",
     code: "RATE_LIMITED",
   })
 );
 router.use(protectVendorApi);
+router.use(
+  authenticatedRateLimit({
+    windowMs: 60 * 1000,
+    max: 120,
+    message: "Too many vendor API requests, please try again shortly",
+    code: "RATE_LIMITED",
+  })
+);
 
 router.get("/me", getVendorProfile);
 router.get("/wallet", getVendorWallet);

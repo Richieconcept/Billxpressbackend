@@ -18,6 +18,7 @@ import {
   listAirtimeProviders,
 } from "./airtimeProviders/index.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
+import { withServicePurchaseLock } from "./servicePurchaseLock.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
 const getMarkupPercentForUser = (settings, user) =>
@@ -152,7 +153,7 @@ export const quoteAirtimeForUser = async ({ user, amount }) => {
   };
 };
 
-export const purchaseAirtimeForUser = async ({
+const purchaseAirtimeForUserUnlocked = async ({
   userId,
   network,
   phone,
@@ -359,6 +360,13 @@ export const purchaseAirtimeForUser = async ({
     throw error;
   }
 };
+
+export const purchaseAirtimeForUser = (payload) =>
+  withServicePurchaseLock({
+    userId: payload.userId,
+    service: "airtime",
+    operation: () => purchaseAirtimeForUserUnlocked(payload),
+  });
 
 export const serializeAirtimePurchaseResult = (result) => ({
   status: result.status,

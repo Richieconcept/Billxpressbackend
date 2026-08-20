@@ -15,6 +15,7 @@ import {
   notifyAdminsOfServiceFailureBestEffort,
 } from "./notification.service.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
+import { withServicePurchaseLock } from "./servicePurchaseLock.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 import {
   getSocialGrowthProvider,
@@ -326,7 +327,7 @@ export const quoteSocialGrowthForUser = async ({ user, serviceId, quantity }) =>
   });
 };
 
-export const purchaseSocialGrowthForUser = async ({
+const purchaseSocialGrowthForUserUnlocked = async ({
   userId,
   serviceId,
   link,
@@ -542,6 +543,13 @@ export const purchaseSocialGrowthForUser = async ({
     throw error;
   }
 };
+
+export const purchaseSocialGrowthForUser = (payload) =>
+  withServicePurchaseLock({
+    userId: payload.userId,
+    service: "social_growth",
+    operation: () => purchaseSocialGrowthForUserUnlocked(payload),
+  });
 
 export const serializeSocialGrowthOrder = (order) => ({
   id: order._id,

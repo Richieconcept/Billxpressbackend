@@ -1,13 +1,14 @@
 const buckets = new Map();
 
 const getClientIp = (req) => {
-  const forwardedFor = req.headers["x-forwarded-for"];
-
-  if (typeof forwardedFor === "string" && forwardedFor.trim()) {
-    return forwardedFor.split(",")[0].trim();
-  }
-
   return req.ip || req.socket?.remoteAddress || "unknown";
+};
+
+const getRequestPath = (req) => {
+  const baseUrl = req.baseUrl || "";
+  const path = req.path || String(req.originalUrl || "").split("?")[0] || "/";
+
+  return `${baseUrl}${path}`;
 };
 
 const getRequestKey = (req, keyFields = []) => {
@@ -39,6 +40,7 @@ export const rateLimit = ({
   max,
   message = "Too many requests, please try again later",
   keyFields = [],
+  keyGenerator,
   code,
 }) => {
   if (!windowMs || !max) {
@@ -49,7 +51,11 @@ export const rateLimit = ({
     cleanupExpiredBuckets();
 
     const now = Date.now();
-    const key = `${req.method}:${req.originalUrl}:${getRequestKey(req, keyFields)}`;
+    const requestKey =
+      typeof keyGenerator === "function"
+        ? keyGenerator(req)
+        : getRequestKey(req, keyFields);
+    const key = `${req.method}:${getRequestPath(req)}:${requestKey}`;
     const currentBucket = buckets.get(key);
 
     if (!currentBucket || currentBucket.resetAt <= now) {
@@ -79,3 +85,15 @@ export const rateLimit = ({
     return next();
   };
 };
+
+export const authenticatedRateLimit = (options) =>
+  rateLimit({
+    ...options,
+    keyGenerator: (req) => {
+      if (req.user?._id) {
+        return `user:${req.user._id}`;
+      }
+
+      return getRequestKey(req, options.keyFields || []);
+    },
+  });

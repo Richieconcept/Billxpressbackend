@@ -18,6 +18,7 @@ import {
   listElectricityProviders,
 } from "./electricityProviders/index.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
+import { withServicePurchaseLock } from "./servicePurchaseLock.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
 const getMarkupPercentForUser = (settings, user) =>
@@ -206,7 +207,7 @@ export const verifyElectricityMeterForUser = async ({
   return provider.verifyMeter({ disco, meterNumber, meterType });
 };
 
-export const purchaseElectricityForUser = async ({
+const purchaseElectricityForUserUnlocked = async ({
   userId,
   disco,
   meterNumber,
@@ -440,6 +441,13 @@ export const purchaseElectricityForUser = async ({
     throw error;
   }
 };
+
+export const purchaseElectricityForUser = (payload) =>
+  withServicePurchaseLock({
+    userId: payload.userId,
+    service: "electricity",
+    operation: () => purchaseElectricityForUserUnlocked(payload),
+  });
 
 export const serializeElectricityPurchaseResult = (result) => ({
   status: result.status,

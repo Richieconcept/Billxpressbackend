@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import Wallet from "../models/wallet.model.js";
 import Notification from "../models/notification.model.js";
@@ -394,11 +395,27 @@ const summarizeWalletBalances = async () => {
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+const parseDate = (value) => {
+  const date = value ? new Date(value) : null;
+
+  return date && !Number.isNaN(date.getTime()) ? date : null;
+};
+
+const parseAmountToMinorUnit = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+
+  const amount = Number(value);
+
+  return Number.isFinite(amount) && amount >= 0 ? Math.round(amount * 100) : null;
+};
+
 const getAdminTransactionQuery = async (req) => {
   const query = {};
 
   if (req.query.userId) {
-    query.user = req.query.userId;
+    query.user = mongoose.Types.ObjectId.isValid(req.query.userId)
+      ? new mongoose.Types.ObjectId(req.query.userId)
+      : req.query.userId;
   }
 
   for (const field of ["type", "status", "direction", "walletType"]) {
@@ -409,6 +426,30 @@ const getAdminTransactionQuery = async (req) => {
 
   if (req.query.provider) {
     query.provider = String(req.query.provider).trim();
+  }
+
+  if (req.query.service) {
+    query["metadata.service"] = String(req.query.service).trim();
+  }
+
+  const dateFrom = parseDate(req.query.dateFrom || req.query.startDate);
+  const dateTo = parseDate(req.query.dateTo || req.query.endDate);
+
+  if (dateFrom || dateTo) {
+    query.createdAt = {
+      ...(dateFrom ? { $gte: dateFrom } : {}),
+      ...(dateTo ? { $lte: dateTo } : {}),
+    };
+  }
+
+  const amountMin = parseAmountToMinorUnit(req.query.amountMin);
+  const amountMax = parseAmountToMinorUnit(req.query.amountMax);
+
+  if (amountMin !== null || amountMax !== null) {
+    query.amount = {
+      ...(amountMin !== null ? { $gte: amountMin } : {}),
+      ...(amountMax !== null ? { $lte: amountMax } : {}),
+    };
   }
 
   if (req.query.search) {
@@ -433,11 +474,99 @@ const getAdminTransactionQuery = async (req) => {
       { providerReference: regex },
       { provider: regex },
       { narration: regex },
+      { "metadata.service": regex },
+      { "metadata.customerReference": regex },
       ...(userIds.length ? [{ user: { $in: userIds } }] : []),
     ];
   }
 
   return query;
+};
+
+const getTransactionDetails = (transaction) => {
+  const metadata = transaction.metadata || {};
+  const service = metadata.service || null;
+
+  if (service === "data") {
+    return {
+      service,
+      phone: metadata.phone,
+      network: metadata.plan?.network,
+      planName: metadata.plan?.name,
+      planType: metadata.plan?.type,
+      planId: metadata.plan?.id,
+      sellingPrice: metadata.sellingPrice,
+      costPrice: metadata.costPrice,
+      profit: metadata.profit,
+      customerReference: metadata.customerReference,
+    };
+  }
+
+  if (service === "airtime") {
+    return {
+      service,
+      phone: metadata.phone,
+      network: metadata.network,
+      airtimeValue: metadata.amount,
+      sellingPrice: metadata.sellingPrice,
+      profit: metadata.profit,
+      customerReference: metadata.customerReference,
+    };
+  }
+
+  if (service === "electricity") {
+    return {
+      service,
+      disco: metadata.disco,
+      meterNumber: metadata.meterNumber,
+      meterType: metadata.meterType,
+      phone: metadata.phone,
+      electricityValue: metadata.amount,
+      sellingPrice: metadata.sellingPrice,
+      token: metadata.token,
+      units: metadata.units,
+      customerName: metadata.verifiedMeter?.customerName,
+      customerReference: metadata.customerReference,
+    };
+  }
+
+  if (service === "cable_tv") {
+    return {
+      service,
+      tvProvider: metadata.tvProvider,
+      smartcardNumber: metadata.smartcardNumber,
+      packageCode: metadata.packageCode,
+      packageName: metadata.packageName,
+      subscriptionType: metadata.subscriptionType,
+      phone: metadata.phone,
+      cableTvValue: metadata.amount,
+      sellingPrice: metadata.sellingPrice,
+      customerName: metadata.verifiedSmartcard?.customerName,
+      customerReference: metadata.customerReference,
+    };
+  }
+
+  return {
+    service,
+    customerReference: metadata.customerReference,
+    reason: metadata.reason,
+    originalReference: metadata.originalReference,
+    failureCode: metadata.providerFailureCode,
+  };
+};
+
+const serializeAdminTransaction = (transaction) => {
+  const serialized = serializeTransaction(transaction);
+
+  return {
+    ...serialized,
+    user:
+      transaction.user && typeof transaction.user === "object"
+        ? sanitizeUser(transaction.user)
+        : serialized.user,
+    service: transaction.metadata?.service || null,
+    details: getTransactionDetails(transaction),
+  };
 };
 
 export const getAdminDashboardEarnings = async (req, res) => {
@@ -522,27 +651,45 @@ export const listAdminTransactions = async (req, res) => {
     const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
     const skip = (page - 1) * limit;
     const query = await getAdminTransactionQuery(req);
-    const [transactions, total] = await Promise.all([
+    const [transactions, total, summaryRows] = await Promise.all([
       Transaction.find(query)
         .populate("user", "firstName lastName username email phone role")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
       Transaction.countDocuments(query),
+      Transaction.aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: "$status",
+            count: { $sum: 1 },
+            amount: { $sum: "$amount" },
+          },
+        },
+      ]),
     ]);
+    const summary = summaryRows.reduce(
+      (acc, row) => {
+        const status = row._id || "unknown";
+        acc.byStatus[status] = {
+          count: row.count,
+          amount: fromMinorUnit(row.amount || 0),
+          rawAmount: row.amount || 0,
+        };
+        acc.totalCount += row.count;
+        acc.totalAmount += row.amount || 0;
+        return acc;
+      },
+      { totalCount: 0, totalAmount: 0, byStatus: {} }
+    );
 
     res.json({
-      transactions: transactions.map((transaction) => {
-        const serialized = serializeTransaction(transaction);
-
-        return {
-          ...serialized,
-          user:
-            transaction.user && typeof transaction.user === "object"
-              ? sanitizeUser(transaction.user)
-              : serialized.user,
-        };
-      }),
+      transactions: transactions.map(serializeAdminTransaction),
+      summary: {
+        ...summary,
+        totalAmount: fromMinorUnit(summary.totalAmount),
+      },
       pagination: {
         page,
         limit,
