@@ -6,6 +6,7 @@ import {
 } from "../controllers/airtimeService.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { authenticatedRateLimit } from "../middlewares/rateLimit.middleware.js";
+import { enforceServicePurchaseRestriction } from "../middlewares/servicePurchaseRestriction.middleware.js";
 
 const router = express.Router();
 const quoteLimiter = authenticatedRateLimit({
@@ -21,6 +22,12 @@ const purchaseLimiter = authenticatedRateLimit({
 
 router.get("/airtime/networks", protect, getAirtimeNetworks);
 router.post("/airtime/quote", protect, quoteLimiter, quoteAirtime);
-router.post("/airtime/purchase", protect, purchaseLimiter, purchaseAirtime);
+router.post(
+  "/airtime/purchase",
+  protect,
+  enforceServicePurchaseRestriction,
+  purchaseLimiter,
+  purchaseAirtime
+);
 
 export default router;

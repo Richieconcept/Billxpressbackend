@@ -7,6 +7,7 @@ import {
 } from "../controllers/electricityService.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { authenticatedRateLimit } from "../middlewares/rateLimit.middleware.js";
+import { enforceServicePurchaseRestriction } from "../middlewares/servicePurchaseRestriction.middleware.js";
 
 const router = express.Router();
 const providerLookupLimiter = authenticatedRateLimit({
@@ -28,6 +29,12 @@ router.post(
   verifyElectricityMeter
 );
 router.post("/electricity/quote", protect, providerLookupLimiter, quoteElectricity);
-router.post("/electricity/purchase", protect, purchaseLimiter, purchaseElectricity);
+router.post(
+  "/electricity/purchase",
+  protect,
+  enforceServicePurchaseRestriction,
+  purchaseLimiter,
+  purchaseElectricity
+);
 
 export default router;

@@ -28,6 +28,7 @@ import {
   authenticatedRateLimit,
   rateLimit,
 } from "../middlewares/rateLimit.middleware.js";
+import { enforceServicePurchaseRestriction } from "../middlewares/servicePurchaseRestriction.middleware.js";
 
 const router = express.Router();
 
@@ -69,24 +70,44 @@ router.get("/transactions", listVendorTransactions);
 router.get("/transactions/:reference", getVendorTransaction);
 
 router.get("/data/plans", getVendorDataPlans);
-router.post("/data/purchase", vendorPurchaseLimiter, purchaseVendorData);
+router.post(
+  "/data/purchase",
+  enforceServicePurchaseRestriction,
+  vendorPurchaseLimiter,
+  purchaseVendorData
+);
 router.get("/data/purchase/:reference", getVendorDataPurchase);
 
 router.get("/airtime/networks", getVendorAirtimeNetworks);
 router.post("/airtime/quote", vendorQuoteLimiter, quoteVendorAirtime);
-router.post("/airtime/purchase", vendorPurchaseLimiter, purchaseVendorAirtime);
+router.post(
+  "/airtime/purchase",
+  enforceServicePurchaseRestriction,
+  vendorPurchaseLimiter,
+  purchaseVendorAirtime
+);
 router.get("/airtime/purchase/:reference", getVendorAirtimePurchase);
 
 router.get("/cable-tv/providers", getVendorCableTvProviders);
 router.get("/cable-tv/packages", getVendorCableTvPackages);
 router.post("/cable-tv/verify-smartcard", verifyVendorCableTvSmartcard);
 router.post("/cable-tv/quote", vendorQuoteLimiter, quoteVendorCableTv);
-router.post("/cable-tv/purchase", vendorPurchaseLimiter, purchaseVendorCableTv);
+router.post(
+  "/cable-tv/purchase",
+  enforceServicePurchaseRestriction,
+  vendorPurchaseLimiter,
+  purchaseVendorCableTv
+);
 router.get("/cable-tv/purchase/:reference", getVendorCableTvPurchase);
 
 router.get("/social-growth/services", getVendorSocialGrowthServices);
 router.post("/social-growth/quote", vendorQuoteLimiter, quoteVendorSocialGrowth);
-router.post("/social-growth/orders", vendorPurchaseLimiter, purchaseVendorSocialGrowth);
+router.post(
+  "/social-growth/orders",
+  enforceServicePurchaseRestriction,
+  vendorPurchaseLimiter,
+  purchaseVendorSocialGrowth
+);
 router.get("/social-growth/orders", listVendorSocialGrowthOrders);
 router.get("/social-growth/orders/:orderId", getVendorSocialGrowthOrder);
 

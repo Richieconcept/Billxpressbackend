@@ -5,6 +5,7 @@ import {
 } from "../controllers/dataService.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { authenticatedRateLimit } from "../middlewares/rateLimit.middleware.js";
+import { enforceServicePurchaseRestriction } from "../middlewares/servicePurchaseRestriction.middleware.js";
 
 const router = express.Router();
 const purchaseLimiter = authenticatedRateLimit({
@@ -14,6 +15,12 @@ const purchaseLimiter = authenticatedRateLimit({
 });
 
 router.get("/data/plans", protect, getDataPlans);
-router.post("/data/purchase", protect, purchaseLimiter, purchaseData);
+router.post(
+  "/data/purchase",
+  protect,
+  enforceServicePurchaseRestriction,
+  purchaseLimiter,
+  purchaseData
+);
 
 export default router;

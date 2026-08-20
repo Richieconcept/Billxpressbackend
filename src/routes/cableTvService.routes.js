@@ -8,6 +8,7 @@ import {
 } from "../controllers/cableTvService.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { authenticatedRateLimit } from "../middlewares/rateLimit.middleware.js";
+import { enforceServicePurchaseRestriction } from "../middlewares/servicePurchaseRestriction.middleware.js";
 
 const router = express.Router();
 const providerLookupLimiter = authenticatedRateLimit({
@@ -30,6 +31,12 @@ router.post(
   verifyCableTvSmartcard
 );
 router.post("/cable-tv/quote", protect, providerLookupLimiter, quoteCableTv);
-router.post("/cable-tv/purchase", protect, purchaseLimiter, purchaseCableTv);
+router.post(
+  "/cable-tv/purchase",
+  protect,
+  enforceServicePurchaseRestriction,
+  purchaseLimiter,
+  purchaseCableTv
+);
 
 export default router;
