@@ -16,9 +16,9 @@ const providerLookupLimiter = authenticatedRateLimit({
   message: "Too many cable TV lookup requests, please try again shortly",
 });
 const purchaseLimiter = authenticatedRateLimit({
-  windowMs: 60 * 1000,
-  max: 8,
-  message: "Too many cable TV purchase requests, please slow down",
+  windowMs: 15 * 1000,
+  max: 1,
+  message: "Another cable TV purchase was just submitted, please wait a moment",
 });
 
 router.get("/cable-tv/providers", protect, getCableTvProviders);

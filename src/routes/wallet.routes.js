@@ -25,9 +25,9 @@ import { authenticatedRateLimit } from "../middlewares/rateLimit.middleware.js";
 
 const router = express.Router();
 const fundingLimiter = authenticatedRateLimit({
-  windowMs: 60 * 1000,
-  max: 10,
-  message: "Too many funding requests, please try again shortly",
+  windowMs: 15 * 1000,
+  max: 1,
+  message: "Another funding request was just submitted, please wait a moment",
 });
 const transferLookupLimiter = authenticatedRateLimit({
   windowMs: 60 * 1000,
@@ -35,9 +35,9 @@ const transferLookupLimiter = authenticatedRateLimit({
   message: "Too many transfer lookup requests, please try again shortly",
 });
 const transferLimiter = authenticatedRateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  message: "Too many transfer requests, please slow down",
+  windowMs: 15 * 1000,
+  max: 1,
+  message: "Another transfer request was just submitted, please wait a moment",
 });
 
 router.get("/", protect, getWallet);

@@ -16,9 +16,9 @@ const quoteLimiter = authenticatedRateLimit({
   message: "Too many social growth quote requests, please try again shortly",
 });
 const purchaseLimiter = authenticatedRateLimit({
-  windowMs: 60 * 1000,
-  max: 8,
-  message: "Too many social growth order requests, please slow down",
+  windowMs: 15 * 1000,
+  max: 1,
+  message: "Another social growth order was just submitted, please wait a moment",
 });
 
 router.get("/social-growth/services", protect, getSocialGrowthServices);

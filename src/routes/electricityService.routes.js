@@ -15,9 +15,9 @@ const providerLookupLimiter = authenticatedRateLimit({
   message: "Too many electricity lookup requests, please try again shortly",
 });
 const purchaseLimiter = authenticatedRateLimit({
-  windowMs: 60 * 1000,
-  max: 8,
-  message: "Too many electricity purchase requests, please slow down",
+  windowMs: 15 * 1000,
+  max: 1,
+  message: "Another electricity purchase was just submitted, please wait a moment",
 });
 
 router.get("/electricity/discos", protect, getElectricityDiscos);

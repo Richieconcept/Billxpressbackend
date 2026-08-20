@@ -24,14 +24,14 @@ import { authenticatedRateLimit } from "../middlewares/rateLimit.middleware.js";
 const router = express.Router();
 const cardAccess = [protect, requireVerifiedEmail, requireAuthTier("tier_3")];
 const cardQuoteLimiter = authenticatedRateLimit({
-  windowMs: 60 * 1000,
-  max: 10,
+  windowMs: 15 * 1000,
+  max: 1,
   message: "Too many card quote requests, please try again shortly",
 });
 const cardActionLimiter = authenticatedRateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  message: "Too many card requests, please slow down",
+  windowMs: 15 * 1000,
+  max: 1,
+  message: "Another card request was just submitted, please wait a moment",
 });
 
 router.get("/configuration", ...cardAccess, getCardConfiguration);

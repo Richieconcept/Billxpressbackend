@@ -8,9 +8,9 @@ import { authenticatedRateLimit } from "../middlewares/rateLimit.middleware.js";
 
 const router = express.Router();
 const purchaseLimiter = authenticatedRateLimit({
-  windowMs: 60 * 1000,
-  max: 8,
-  message: "Too many data purchase requests, please slow down",
+  windowMs: 15 * 1000,
+  max: 1,
+  message: "Another data purchase was just submitted, please wait a moment",
 });
 
 router.get("/data/plans", protect, getDataPlans);
