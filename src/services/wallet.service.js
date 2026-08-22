@@ -49,6 +49,9 @@ export const serializeTransaction = (transaction) => ({
   providerReference: transaction.providerReference,
   status: transaction.status,
   narration: transaction.narration,
+  token: transaction.metadata?.token,
+  tokenNumber: transaction.metadata?.token,
+  units: transaction.metadata?.units,
   metadata: transaction.metadata,
   createdAt: transaction.createdAt,
 });

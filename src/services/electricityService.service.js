@@ -21,6 +21,18 @@ import { getPublicProviderFailure } from "./providerFailure.service.js";
 import { withServicePurchaseLock } from "./servicePurchaseLock.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
+const ELECTRICITY_SERVICE_TEMPORARILY_DISABLED = true;
+const ELECTRICITY_SERVICE_DISABLED_MESSAGE =
+  "Electricity service is currently unavailable";
+
+const ensureElectricityServiceAvailable = (settings) => {
+  if (ELECTRICITY_SERVICE_TEMPORARILY_DISABLED || !settings.isEnabled) {
+    const error = new Error(ELECTRICITY_SERVICE_DISABLED_MESSAGE);
+    error.statusCode = 503;
+    throw error;
+  }
+};
+
 const getMarkupPercentForUser = (settings, user) =>
   user.role === "vendor" && user.isVendorActive
     ? settings.vendorMarkupPercent
@@ -63,7 +75,9 @@ export const getOrCreateElectricityServiceSetting = async () => {
 export const serializeElectricityServiceSetting = (settings) => ({
   id: settings._id,
   service: settings.service,
-  isEnabled: settings.isEnabled,
+  isEnabled: ELECTRICITY_SERVICE_TEMPORARILY_DISABLED
+    ? false
+    : settings.isEnabled,
   activeProvider: settings.activeProvider,
   availableProviders: listElectricityProviders(),
   userMarkupPercent: settings.userMarkupPercent,
@@ -130,11 +144,7 @@ export const updateElectricityServiceSetting = async (payload, adminUserId) => {
 export const getElectricityDiscosForUser = async (user) => {
   const settings = await getOrCreateElectricityServiceSetting();
 
-  if (!settings.isEnabled) {
-    const error = new Error("Electricity service is currently unavailable");
-    error.statusCode = 503;
-    throw error;
-  }
+  ensureElectricityServiceAvailable(settings);
 
   const provider = getElectricityProvider(settings.activeProvider);
 
@@ -148,6 +158,8 @@ export const getElectricityDiscosForUser = async (user) => {
 
 export const quoteElectricityForUser = async ({ user, amount }) => {
   const settings = await getOrCreateElectricityServiceSetting();
+  ensureElectricityServiceAvailable(settings);
+
   const numericAmount = Number(amount);
 
   if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
@@ -196,11 +208,7 @@ export const verifyElectricityMeterForUser = async ({
 }) => {
   const settings = await getOrCreateElectricityServiceSetting();
 
-  if (!settings.isEnabled) {
-    const error = new Error("Electricity service is currently unavailable");
-    error.statusCode = 503;
-    throw error;
-  }
+  ensureElectricityServiceAvailable(settings);
 
   const provider = getElectricityProvider(settings.activeProvider);
 
@@ -263,11 +271,7 @@ const purchaseElectricityForUserUnlocked = async ({
 
   const settings = await getOrCreateElectricityServiceSetting();
 
-  if (!settings.isEnabled) {
-    const error = new Error("Electricity service is currently unavailable");
-    error.statusCode = 503;
-    throw error;
-  }
+  ensureElectricityServiceAvailable(settings);
 
   const provider = getElectricityProvider(settings.activeProvider);
   const verifiedMeter = await provider.verifyMeter({
