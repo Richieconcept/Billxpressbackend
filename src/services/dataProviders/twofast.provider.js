@@ -148,6 +148,7 @@ const fetchPlansForNetwork = async (networkCode, type) => {
     const networkPrice = toNumber(
       plan.telecom_price ?? plan.telecomPrice ?? plan.network_price
     );
+    const costPrice = networkPrice || providerPrice;
     const validity = plan.validity || null;
 
     return {
@@ -161,10 +162,10 @@ const fetchPlansForNetwork = async (networkCode, type) => {
       providerDataType: String(plan.type || type || ""),
       validity,
       validityDays: parseValidityDays(validity),
-      networkPrice: providerPrice,
+      networkPrice: costPrice,
       providerPrice,
-      costPrice: providerPrice,
-      available: providerPrice > 0 && isPlanAvailable(plan),
+      costPrice,
+      available: costPrice > 0 && isPlanAvailable(plan),
       raw: {
         ...plan,
         telecom_price: networkPrice || plan.telecom_price,
