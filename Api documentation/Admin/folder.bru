@@ -1,0 +1,25 @@
+meta {
+  name: Admin
+  type: folder
+  seq: 13
+}
+
+docs {
+  # Admin APIs
+
+  Admin-only endpoints for dashboard operations, audits, and back-office workflows.
+
+  Every endpoint in this folder requires:
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  The authenticated user must have:
+
+  ```json
+  {
+    "role": "admin"
+  }
+  ```
+}

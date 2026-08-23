@@ -193,6 +193,9 @@ docs {
   `summary.today`
   All service earnings from today.
 
+  `summary.yesterday`
+  All service earnings from yesterday only. This is bounded from the start of yesterday to the start of today.
+
   `summary.thisWeek`
   All service earnings for the current week.
 
@@ -296,6 +299,38 @@ docs {
         "reversedCount": 0,
         "totalCount": 10,
         "averageSellingPrice": 1500
+      },
+      "today": {
+        "earned": 5000,
+        "revenue": 5000,
+        "costPrice": 4200,
+        "sellingPrice": 5000,
+        "profit": 800,
+        "lossAmount": 0,
+        "lostProfit": 0,
+        "lossPercentage": 0,
+        "profitMarginPercentage": 16,
+        "successfulCount": 3,
+        "failedCount": 0,
+        "reversedCount": 0,
+        "totalCount": 3,
+        "averageSellingPrice": 1666.67
+      },
+      "yesterday": {
+        "earned": 3000,
+        "revenue": 3000,
+        "costPrice": 2600,
+        "sellingPrice": 3000,
+        "profit": 400,
+        "lossAmount": 0,
+        "lostProfit": 0,
+        "lossPercentage": 0,
+        "profitMarginPercentage": 13.33,
+        "successfulCount": 2,
+        "failedCount": 0,
+        "reversedCount": 0,
+        "totalCount": 2,
+        "averageSellingPrice": 1500
       }
     },
     "services": [
@@ -380,7 +415,7 @@ docs {
 
   ## Frontend Usage Notes
 
-  Use `summary.today`, `summary.thisWeek`, and `summary.thisMonth` for the main dashboard cards.
+  Use `summary.today`, `summary.yesterday`, `summary.thisWeek`, and `summary.allTime` for the main dashboard cards when the design asks for Today, Yesterday, This Week, and All Time.
 
   Use `providerBalances.smeapi` for the admin card that shows our SMEAPI wallet balance:
 

@@ -215,6 +215,12 @@ const addTransactionToBucket = (bucket, transaction) => {
 const filterTransactionsFrom = (transactions, startDate) =>
   transactions.filter((transaction) => transaction.createdAt >= startDate);
 
+const filterTransactionsBetween = (transactions, startDate, endDate) =>
+  transactions.filter(
+    (transaction) =>
+      transaction.createdAt >= startDate && transaction.createdAt < endDate
+  );
+
 const summarizeTransactions = (transactions) => {
   const bucket = createMetricBucket();
 
@@ -573,6 +579,7 @@ export const getAdminDashboardEarnings = async (req, res) => {
   try {
     const now = new Date();
     const startOfToday = getStartOfDay(now);
+    const startOfYesterday = addDays(startOfToday, -1);
     const startOfWeek = getStartOfWeek(now);
     const startOfMonth = getStartOfMonth(now);
     const oldestSeriesStart = addMonths(startOfMonth, -11);
@@ -603,6 +610,9 @@ export const getAdminDashboardEarnings = async (req, res) => {
         allTime: summarizeTransactions(transactions),
         today: summarizeTransactions(
           filterTransactionsFrom(transactions, startOfToday)
+        ),
+        yesterday: summarizeTransactions(
+          filterTransactionsBetween(transactions, startOfYesterday, startOfToday)
         ),
         thisWeek: summarizeTransactions(
           filterTransactionsFrom(transactions, startOfWeek)

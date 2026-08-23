@@ -1,0 +1,191 @@
+meta {
+  name: 1. Get All Transactions
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/transactions?page=1&limit=20
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin Get All Transactions
+
+  Fetches all wallet and service transactions across every user for the admin dashboard or admin transactions page.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/transactions`
+
+  ## Authentication
+
+  Admin JWT required.
+
+  ```txt
+  Authorization: Bearer {{authToken}}
+  ```
+
+  ## Query Params
+
+  `page`
+  Optional page number. Default is `1`.
+
+  `limit`
+  Optional page size. Default is `20`, maximum is `100`.
+
+  `search`
+  Optional search across transaction reference, provider reference, provider, narration, service, customer reference, and basic user fields.
+
+  `userId`
+  Optional. Return transactions for one user only.
+
+  `type`
+  Optional. Supported values include `funding`, `credit`, `debit`, `transfer`, `referral_earning`, `referral_redeem`, `service_payment`, and `reversal`.
+
+  `status`
+  Optional. Supported values: `pending`, `successful`, `failed`, `reversed`.
+
+  `direction`
+  Optional. Supported values: `credit`, `debit`.
+
+  `walletType`
+  Optional. Supported values: `main`, `referral`.
+
+  `provider`
+  Optional provider filter, for example `billxpress_admin`, `maplerad`, `monnify`, `vtpass`, `smeapi`, or another provider key.
+
+  `service`
+  Optional service filter from transaction metadata. Useful values include `data`, `airtime`, `electricity`, `cable_tv`, and `social_growth`.
+
+  `dateFrom`, `dateTo`
+  Optional ISO date filters on `createdAt`. Aliases: `startDate`, `endDate`.
+
+  `amountMin`, `amountMax`
+  Optional naira amount filters. Example: `amountMin=1000&amountMax=5000`.
+
+  ## Examples
+
+  Latest transactions:
+
+  ```txt
+  GET /api/v1/admin/transactions?page=1&limit=20
+  ```
+
+  Successful data purchases:
+
+  ```txt
+  GET /api/v1/admin/transactions?service=data&status=successful
+  ```
+
+  Search by user, reference, provider, or customer reference:
+
+  ```txt
+  GET /api/v1/admin/transactions?search=BXP_123
+  ```
+
+  ## Frontend Usage
+
+  Recommended table columns:
+
+  - date/time
+  - user name/email/phone
+  - service
+  - transaction type
+  - direction
+  - amount
+  - status
+  - provider
+  - BillXpress reference
+  - provider reference
+  - narration
+
+  Use `details` for service-specific display without parsing raw metadata:
+
+  - data: `details.network`, `details.planName`, `details.phone`
+  - airtime: `details.network`, `details.airtimeValue`, `details.phone`
+  - electricity: `details.disco`, `details.meterNumber`, `details.token`, `details.units`
+  - cable TV: `details.tvProvider`, `details.smartcardNumber`, `details.packageName`
+
+  ## Success Response
+
+  ```json
+  {
+    "transactions": [
+      {
+        "id": "transaction_id",
+        "user": {
+          "id": "user_id",
+          "firstName": "Ada",
+          "lastName": "Lovelace",
+          "username": "ada",
+          "email": "ada@example.com",
+          "phone": "08012345678",
+          "role": "user"
+        },
+        "type": "service_payment",
+        "walletType": "main",
+        "direction": "debit",
+        "amount": 1000,
+        "balanceBefore": 5000,
+        "balanceAfter": 4000,
+        "currency": "NGN",
+        "reference": "ELEC_...",
+        "provider": "vtpass",
+        "providerReference": "provider_ref",
+        "status": "successful",
+        "narration": "Electricity purchase: IKEDC NGN 1000",
+        "token": "1234-5678-9012-3456",
+        "tokenNumber": "1234-5678-9012-3456",
+        "units": "12.4",
+        "service": "electricity",
+        "details": {
+          "service": "electricity",
+          "disco": "IKEDC",
+          "meterNumber": "12345678901",
+          "meterType": "prepaid",
+          "phone": "08012345678",
+          "electricityValue": 1000,
+          "sellingPrice": 1000,
+          "token": "1234-5678-9012-3456",
+          "units": "12.4",
+          "customerName": "Ada Lovelace",
+          "customerReference": "customer-order-1001"
+        },
+        "metadata": {
+          "service": "electricity",
+          "token": "1234-5678-9012-3456",
+          "units": "12.4"
+        },
+        "createdAt": "2026-08-22T08:00:00.000Z"
+      }
+    ],
+    "summary": {
+      "totalCount": 250,
+      "totalAmount": 500000,
+      "byStatus": {
+        "successful": {
+          "count": 200,
+          "amount": 450000,
+          "rawAmount": 45000000
+        }
+      }
+    },
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 250,
+      "pages": 13
+    }
+  }
+  ```
+}
