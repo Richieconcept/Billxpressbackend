@@ -1,0 +1,57 @@
+meta {
+  name: Internal - Flutterwave Webhook
+  type: http
+  seq: 93
+}
+
+post {
+  url: {{baseUrl}}/api/v1/webhooks/flutterwave
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  verif-hash: {{flutterwaveWebhookHash}}
+}
+
+body:json {
+  {
+    "event": "charge.completed",
+    "data": {
+      "id": 123456789,
+      "tx_ref": "FLWFUND_...",
+      "flw_ref": "FLW-MOCK-REFERENCE",
+      "amount": 2000,
+      "currency": "NGN",
+      "status": "successful",
+      "account_number": "1234567890"
+    }
+  }
+}
+
+docs {
+  # Internal - Flutterwave Webhook
+
+  Flutterwave calls this endpoint when a one-time dynamic virtual account transfer is paid.
+
+  ## Endpoint
+
+  `POST /api/v1/webhooks/flutterwave`
+
+  ## Provider Setup
+
+  Configure the Flutterwave dashboard webhook URL as:
+
+  ```txt
+  {{baseUrl}}/api/v1/webhooks/flutterwave
+  ```
+
+  Configure the Flutterwave webhook verification hash in backend env:
+
+  ```txt
+  FLUTTERWAVE_WEBHOOK_SECRET_HASH=...
+  ```
+
+  This is internal backend/provider traffic. The frontend should not call this endpoint.
+}

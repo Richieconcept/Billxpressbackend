@@ -2,8 +2,13 @@ import { fromMinorUnit } from "./wallet.service.js";
 import FundingFeeSetting from "../models/fundingFeeSetting.model.js";
 import FundingProviderSetting from "../models/fundingProviderSetting.model.js";
 
-const SUPPORTED_FUNDING_PROVIDERS = ["pocketfi", "monnify", "maplerad"];
-const SUPPORTED_ONE_TIME_PROVIDERS = ["monnify", "maplerad"];
+const SUPPORTED_FUNDING_PROVIDERS = [
+  "pocketfi",
+  "monnify",
+  "maplerad",
+  "flutterwave",
+];
+const SUPPORTED_ONE_TIME_PROVIDERS = ["monnify", "maplerad", "flutterwave"];
 
 const readNumberEnv = (name, fallback = 0) => {
   const value = Number(process.env[name]);

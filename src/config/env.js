@@ -10,6 +10,7 @@ const mapleradEnv = [
   "MAPLERAD_SECRET_KEY",
   "MAPLERAD_WEBHOOK_SECRET",
 ];
+const flutterwaveEnv = ["FLUTTERWAVE_SECRET_KEY"];
 const vtpassEnv = ["VTPASS_API_KEY", "VTPASS_SECRET_KEY"];
 const exosupplierEnv = ["EXOSUPPLIER_API_KEY"];
 
@@ -35,6 +36,7 @@ export const validateEnv = () => {
   warnIfMissing("PocketFi integration", pocketFiEnv);
   warnIfMissing("Monnify one-time funding", monnifyEnv);
   warnIfMissing("Maplerad one-time funding", mapleradEnv);
+  warnIfMissing("Flutterwave one-time funding", flutterwaveEnv);
   warnIfMissing("VTpass services", vtpassEnv);
   warnIfMissing("Exosupplier social growth", exosupplierEnv);
 };

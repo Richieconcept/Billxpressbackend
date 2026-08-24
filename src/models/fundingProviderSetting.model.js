@@ -12,7 +12,7 @@ const fundingProviderSettingSchema = new mongoose.Schema(
 
     provider: {
       type: String,
-      enum: ["monnify", "maplerad"],
+      enum: ["monnify", "maplerad", "flutterwave"],
       required: true,
       default: "maplerad",
     },

@@ -29,6 +29,7 @@ docs {
   # Create One-Time Funding Account
   
   Use this when the user enters an amount and wants a temporary transfer account like a checkout screen.
+  The backend can switch the provider between Maplerad, Monnify, and Flutterwave without changing the frontend response shape.
   
   ## Endpoint
   
@@ -120,4 +121,16 @@ docs {
   - `fundingIntent.status`
   
   Ignore any extra fields returned by the backend.
+
+  ## Backend Provider Switch
+
+  Admin/backend can set the one-time funding provider to:
+
+  ```txt
+  maplerad
+  monnify
+  flutterwave
+  ```
+
+  The frontend should keep using this same endpoint and display the same fields.
 }

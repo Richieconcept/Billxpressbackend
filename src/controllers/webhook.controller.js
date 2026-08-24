@@ -15,6 +15,7 @@ import { calculateFundingFee } from "../services/fundingFee.service.js";
 import { createNotificationBestEffort } from "../services/notification.service.js";
 import { processFirstDepositReferralRewardBestEffort } from "../services/referral.service.js";
 import { verifyMapleradTransaction } from "../services/maplerad.service.js";
+import { verifyFlutterwaveTransaction } from "../services/flutterwave.service.js";
 
 const getRawPayload = (req) => {
   if (Buffer.isBuffer(req.body)) {
@@ -33,6 +34,12 @@ const getMonnifySignature = (req) =>
   req.headers["monnify-signature"] || req.headers["x-monnify-signature"];
 
 const getMapleradSignature = (req) => req.headers["svix-signature"];
+
+const getFlutterwaveVerificationHash = (req) =>
+  req.headers["verif-hash"] || req.headers["x-flutterwave-signature"];
+
+const getFlutterwaveHmacSignature = (req) =>
+  req.headers["flutterwave-signature"] || req.headers["x-flutterwave-hmac-sha256"];
 
 const isValidPocketFiSignature = (payload, signature) => {
   const secret = process.env.POCKETFI_SECRET_KEY;
@@ -118,6 +125,40 @@ const isValidMapleradSignature = (payload, req) => {
       crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
     );
   });
+};
+
+const isValidFlutterwaveSignature = (payload, req) => {
+  const verificationHash = process.env.FLUTTERWAVE_WEBHOOK_SECRET_HASH;
+  const receivedHash = getFlutterwaveVerificationHash(req);
+
+  if (verificationHash && receivedHash) {
+    const expectedBuffer = Buffer.from(String(verificationHash));
+    const receivedBuffer = Buffer.from(String(receivedHash));
+
+    return (
+      expectedBuffer.length === receivedBuffer.length &&
+      crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+    );
+  }
+
+  const hmacSecret = process.env.FLUTTERWAVE_WEBHOOK_SECRET;
+  const receivedSignature = getFlutterwaveHmacSignature(req);
+
+  if (!hmacSecret || !receivedSignature) {
+    return false;
+  }
+
+  const expectedSignature = crypto
+    .createHmac("sha256", hmacSecret)
+    .update(payload)
+    .digest("hex");
+  const expectedBuffer = Buffer.from(expectedSignature);
+  const receivedBuffer = Buffer.from(String(receivedSignature));
+
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
 };
 
 const pickFirst = (...values) =>
@@ -240,6 +281,66 @@ const extractMapleradFundingDetails = (payload) => {
     accountId,
     accountNumber,
     amount,
+  };
+};
+
+const extractFlutterwaveFundingDetails = (payload) => {
+  const data = payload.data || payload.eventData || payload;
+  const customer = data.customer || payload.customer || {};
+  const account = data.account || data.virtual_account || payload.account || {};
+  const event = String(payload.event || payload.type || "").toLowerCase();
+  const status = String(
+    pickFirst(data.status, payload.status, data.processor_response, "")
+  ).toLowerCase();
+  const transactionId = pickFirst(
+    data.id,
+    data.transaction_id,
+    data.transactionId,
+    payload.id,
+    payload.transaction_id
+  );
+  const paymentReference = pickFirst(
+    data.tx_ref,
+    data.txRef,
+    data.reference,
+    payload.tx_ref,
+    payload.txRef,
+    payload.reference
+  );
+  const providerReference = pickFirst(
+    data.flw_ref,
+    data.flwRef,
+    data.reference,
+    data.id,
+    payload.flw_ref,
+    payload.flwRef,
+    payload.id
+  );
+  const accountNumber = pickFirst(
+    data.account_number,
+    data.accountNumber,
+    account.account_number,
+    account.accountNumber
+  );
+  const amount = pickFirst(
+    data.amount,
+    data.charged_amount,
+    data.chargedAmount,
+    payload.amount
+  );
+  const currency = pickFirst(data.currency, payload.currency);
+  const customerEmail = pickFirst(customer.email, data.customer_email);
+
+  return {
+    event,
+    status,
+    transactionId,
+    paymentReference,
+    providerReference,
+    accountNumber,
+    amount,
+    currency,
+    customerEmail,
   };
 };
 
@@ -1114,6 +1215,223 @@ export const handleMapleradWebhook = async (req, res) => {
       qualifyingAmountInMinorUnit: intent.amount,
       fundingTransaction: creditResult.transaction,
       provider: "maplerad",
+      providerReference: finalProviderReference,
+    });
+
+    intent.providerReference = finalProviderReference;
+    intent.status = "paid";
+    intent.paidAt = new Date();
+    intent.fee = feeResult.fee;
+    await intent.save();
+
+    webhookEvent.processed = true;
+    await webhookEvent.save();
+
+    res.json({
+      message: "Webhook processed successfully",
+    });
+  } catch (error) {
+    webhookEvent.processingError = error.message;
+    await webhookEvent.save();
+
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+export const handleFlutterwaveWebhook = async (req, res) => {
+  const rawPayload = getRawPayload(req);
+  const signature =
+    getFlutterwaveVerificationHash(req) || getFlutterwaveHmacSignature(req);
+
+  if (!isValidFlutterwaveSignature(rawPayload, req)) {
+    await WebhookEvent.create({
+      provider: "flutterwave",
+      signature,
+      payload: Buffer.isBuffer(req.body)
+        ? { rawPayload }
+        : req.body || {},
+      processingError: "Invalid signature",
+    });
+
+    return res.status(400).json({
+      message: "Invalid signature",
+    });
+  }
+
+  const payload = Buffer.isBuffer(req.body)
+    ? JSON.parse(rawPayload || "{}")
+    : req.body || {};
+  const initialFundingDetails = extractFlutterwaveFundingDetails(payload);
+  const webhookEvent = await WebhookEvent.create({
+    provider: "flutterwave",
+    signature,
+    eventReference:
+      initialFundingDetails.providerReference ||
+      initialFundingDetails.paymentReference ||
+      initialFundingDetails.transactionId,
+    payload,
+  });
+
+  try {
+    const allowedEvents = ["charge.completed", "transfer.completed", ""];
+
+    if (
+      initialFundingDetails.event &&
+      !allowedEvents.includes(initialFundingDetails.event)
+    ) {
+      webhookEvent.processed = true;
+      await webhookEvent.save();
+
+      return res.json({
+        message: "Webhook ignored",
+      });
+    }
+
+    let fundingDetails = initialFundingDetails;
+
+    if (fundingDetails.transactionId) {
+      const verification = await verifyFlutterwaveTransaction(
+        fundingDetails.transactionId
+      );
+      fundingDetails = extractFlutterwaveFundingDetails({
+        ...payload,
+        data: {
+          ...(payload.data || {}),
+          ...verification,
+        },
+      });
+      webhookEvent.payload = {
+        ...payload,
+        providerVerification: verification,
+      };
+      await webhookEvent.save();
+    }
+
+    const {
+      status,
+      paymentReference,
+      providerReference,
+      accountNumber,
+      amount,
+      currency,
+    } = fundingDetails;
+
+    if (
+      currency &&
+      String(currency).toUpperCase() !== "NGN"
+    ) {
+      throw new Error("Unsupported Flutterwave funding currency");
+    }
+
+    if (
+      status &&
+      !["successful", "success", "completed", "paid"].includes(status)
+    ) {
+      webhookEvent.processed = true;
+      await webhookEvent.save();
+
+      return res.json({
+        message: "Webhook ignored",
+      });
+    }
+
+    const intentMatchConditions = [
+      ...(paymentReference ? [{ paymentReference }] : []),
+      ...(providerReference ? [{ providerReference }] : []),
+      ...(accountNumber ? [{ accountNumber: String(accountNumber) }] : []),
+    ];
+
+    if (intentMatchConditions.length === 0) {
+      throw new Error("Webhook payload is missing funding intent identifiers");
+    }
+
+    const intent = await FundingIntent.findOne({
+      provider: "flutterwave",
+      $or: intentMatchConditions,
+    });
+
+    if (!intent) {
+      throw new Error("Could not match webhook to a funding intent");
+    }
+
+    const finalProviderReference =
+      providerReference ||
+      paymentReference ||
+      accountNumber ||
+      intent.providerReference;
+    const existingTransaction = await Transaction.findOne({
+      provider: "flutterwave",
+      providerReference: finalProviderReference,
+    });
+
+    if (existingTransaction || intent.status === "paid") {
+      webhookEvent.processed = true;
+      await webhookEvent.save();
+
+      return res.json({
+        message: "Webhook already processed",
+      });
+    }
+
+    const paidAmountInMinorUnit = toMinorUnit(amount || 0);
+
+    if (paidAmountInMinorUnit < intent.amount) {
+      throw new Error("Paid amount is less than expected funding amount");
+    }
+
+    const feeResult = await calculateFundingFee(
+      paidAmountInMinorUnit,
+      "flutterwave"
+    );
+    intent.amountToReceive = feeResult.amountToReceive;
+
+    const creditResult = await creditWallet({
+      userId: intent.user,
+      amountInMinorUnit: feeResult.amountToReceive,
+      walletType: "main",
+      type: "funding",
+      reference: generateTransactionReference("FLW"),
+      provider: "flutterwave",
+      providerReference: finalProviderReference,
+      narration: "Wallet funding via Flutterwave one-time transfer",
+      metadata: {
+        ...payload,
+        fee: feeResult.fee,
+        grossAmount: intent.amount,
+        amountPaid: paidAmountInMinorUnit,
+        amountCredited: feeResult.amountToReceive,
+        feePaidBy: feeResult.creditPolicy === "net" ? "user" : "platform",
+      },
+    });
+
+    await createNotificationBestEffort({
+      userId: intent.user,
+      title: "Wallet funded successfully",
+      message: `Your wallet has been credited with NGN ${fromMinorUnit(
+        feeResult.amountToReceive
+      )}.`,
+      type: "wallet_funding_success",
+      channel: "both",
+      priority: "normal",
+      data: {
+        provider: "flutterwave",
+        amount: fromMinorUnit(feeResult.amountToReceive),
+        grossAmount: fromMinorUnit(intent.amount),
+        fee: fromMinorUnit(feeResult.fee),
+        userReceivesFullAmount: feeResult.creditPolicy !== "net",
+        reference: creditResult.transaction.reference,
+        providerReference: finalProviderReference,
+        paymentReference: intent.paymentReference,
+      },
+    });
+
+    await processFirstDepositReferralRewardBestEffort({
+      referredUserId: intent.user,
+      qualifyingAmountInMinorUnit: intent.amount,
+      fundingTransaction: creditResult.transaction,
+      provider: "flutterwave",
       providerReference: finalProviderReference,
     });
 

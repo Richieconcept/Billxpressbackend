@@ -4,7 +4,7 @@ const fundingFeeSettingSchema = new mongoose.Schema(
   {
     provider: {
       type: String,
-      enum: ["pocketfi", "monnify", "maplerad"],
+      enum: ["pocketfi", "monnify", "maplerad", "flutterwave"],
       required: true,
       unique: true,
       index: true,

@@ -12,6 +12,7 @@ import {
   getMonnifyTransactionStatus,
 } from "./monnify.service.js";
 import { createMapleradDynamicAccount } from "./maplerad.service.js";
+import { createFlutterwaveDynamicAccount } from "./flutterwave.service.js";
 import {
   calculateFundingFee,
   getOneTimeFundingProvider,
@@ -137,11 +138,55 @@ export const createMapleradFundingIntent = async (user, amount) => {
   return intent;
 };
 
+export const createFlutterwaveFundingIntent = async (user, amount) => {
+  const amountInMinorUnit = toMinorUnit(amount);
+  const minimumFundingAmount = getMinimumFundingAmount("flutterwave");
+  const minimumAmount = toMinorUnit(minimumFundingAmount);
+
+  if (amountInMinorUnit < minimumAmount) {
+    const error = new Error(`Minimum funding amount is ${minimumFundingAmount}`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const feeResult = await calculateFundingFee(amountInMinorUnit, "flutterwave");
+  const { fee, amountToReceive } = feeResult;
+  const paymentReference = generateTransactionReference("FLWFUND");
+  const providerIntent = await createFlutterwaveDynamicAccount({
+    amount: fromMinorUnit(amountInMinorUnit),
+    customerName: `${user.firstName} ${user.lastName}`.trim() || user.username,
+    customerEmail: user.email,
+    paymentReference,
+  });
+
+  const intent = await FundingIntent.create({
+    user: user._id,
+    provider: "flutterwave",
+    providerReference: providerIntent.providerReference,
+    paymentReference,
+    amount: amountInMinorUnit,
+    fee,
+    amountToReceive,
+    accountNumber: providerIntent.accountNumber,
+    accountName: providerIntent.accountName,
+    bankName: providerIntent.bankName,
+    bankCode: providerIntent.bankCode,
+    expiresAt: providerIntent.expiresAt || getFundingExpiryDate(),
+    providerResponse: providerIntent.providerResponse,
+  });
+
+  return intent;
+};
+
 export const createOneTimeFundingIntent = async (user, amount) => {
   const provider = await getOneTimeFundingProvider();
 
   if (provider === "monnify") {
     return createMonnifyFundingIntent(user, amount);
+  }
+
+  if (provider === "flutterwave") {
+    return createFlutterwaveFundingIntent(user, amount);
   }
 
   return createMapleradFundingIntent(user, amount);
