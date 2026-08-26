@@ -42,6 +42,7 @@ const CATALOG_PROVIDERS = new Set([
   "ogdams",
   "vtpass",
 ]);
+const TWOFAST_MANUAL_PLAN_IDS = ["519", "5188", "520", "521", "522"];
 
 const normalizePricingTiers = (tiers = []) =>
   (Array.isArray(tiers) ? tiers : [])
@@ -374,9 +375,7 @@ const isStoredTwoFastManualPlan = (plan) => {
   }
 
   const planId = String(plan.providerPlanId || plan.providerPlanCode || "");
-  const isKnownManualPlan = ["519", "5188", "520", "521", "522"].includes(
-    planId
-  );
+  const isKnownManualPlan = TWOFAST_MANUAL_PLAN_IDS.includes(planId);
   const hasManualRoute =
     isEnabledText(plan.raw?.sim) ||
     isEnabledText(plan.raw?.wallet) ||
@@ -469,6 +468,9 @@ export const syncDataPlans = async ({ providerName, adminUserId } = {}) => {
     {
       provider: provider.name,
       lastSyncedAt: { $ne: syncedAt },
+      ...(provider.name === "2fast"
+        ? { providerPlanId: { $nin: TWOFAST_MANUAL_PLAN_IDS } }
+        : {}),
     },
     { $set: { providerAvailable: false } }
   );
