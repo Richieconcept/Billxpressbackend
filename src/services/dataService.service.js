@@ -350,6 +350,15 @@ const getPlanCostPrice = (plan) => {
   return providerPrice || networkPrice;
 };
 
+const isEnabledText = (value) => {
+  const text = String(value ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (!text) return true;
+  return ["active", "yes", "true", "1", "enabled", "available"].includes(text);
+};
+
 const isStoredTwoFastManualPlan = (plan) => {
   const text = [
     plan.dataType,
