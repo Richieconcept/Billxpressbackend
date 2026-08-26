@@ -350,7 +350,7 @@ const getPlanCostPrice = (plan) => {
   return providerPrice || networkPrice;
 };
 
-const isStoredTwoFastAwoofPlan = (plan) => {
+const isStoredTwoFastManualPlan = (plan) => {
   const text = [
     plan.dataType,
     plan.providerDataType,
@@ -360,11 +360,28 @@ const isStoredTwoFastAwoofPlan = (plan) => {
     .filter(Boolean)
     .join(" ");
 
-  return plan.provider === "2fast" && /\bAWOOF\b/i.test(text);
+  if (plan.provider !== "2fast") {
+    return false;
+  }
+
+  const planId = String(plan.providerPlanId || plan.providerPlanCode || "");
+  const isKnownManualPlan = ["519", "5188", "520", "521", "522"].includes(
+    planId
+  );
+  const hasManualRoute =
+    isEnabledText(plan.raw?.sim) ||
+    isEnabledText(plan.raw?.wallet) ||
+    isEnabledText(plan.raw?.device);
+  const isActive = isEnabledText(plan.raw?.status);
+
+  return (
+    /\bAWOOF\b/i.test(text) ||
+    (isKnownManualPlan && hasManualRoute && isActive)
+  );
 };
 
 const isCatalogPlanSellable = (plan) =>
-  plan.providerAvailable || isStoredTwoFastAwoofPlan(plan);
+  plan.providerAvailable || isStoredTwoFastManualPlan(plan);
 
 const catalogDocumentToProviderPlan = (document) => ({
   catalogId: String(document._id),
