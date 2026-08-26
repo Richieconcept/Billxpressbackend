@@ -117,6 +117,7 @@ export const createFlutterwaveDynamicAccount = async ({
     data.expires_at,
     data.expiresAt
   );
+  const expectedAmount = pickFirst(data.amount, data.expected_amount, amount);
 
   if (!accountNumber || !accountName || !bankName) {
     const error = new Error("Flutterwave did not return virtual account details");
@@ -128,6 +129,7 @@ export const createFlutterwaveDynamicAccount = async ({
   return {
     providerReference,
     paymentReference,
+    amount: expectedAmount,
     accountNumber,
     accountName,
     bankName,

@@ -21,7 +21,7 @@ auth:bearer {
 
 body:json {
   {
-    "oneTimeFundingProvider": "maplerad"
+    "oneTimeFundingProvider": "flutterwave"
   }
 }
 
@@ -35,6 +35,7 @@ docs {
   - `pocketfi` permanent virtual-account funding
   - `monnify` one-time funding account
   - `maplerad` one-time funding account
+  - `flutterwave` one-time funding account
 
   ## Endpoint
 
@@ -51,10 +52,10 @@ docs {
   ## Body Fields
 
   `oneTimeFundingProvider`
-  Optional. Use `maplerad` or `monnify` to switch the provider used by `POST /api/v1/wallet/funding-intents`.
+  Optional. Use `flutterwave`, `maplerad`, or `monnify` to switch the provider used by `POST /api/v1/wallet/funding-intents`.
 
   `provider`
-  Required when updating fees. Use `pocketfi`, `monnify`, or `maplerad`.
+  Required when updating fees. Use `pocketfi`, `monnify`, `maplerad`, or `flutterwave`.
 
   `percent`
   Optional. Percentage funding charge. Use `1` for 1%.
@@ -72,7 +73,7 @@ docs {
 
   ```json
   {
-    "oneTimeFundingProvider": "maplerad"
+    "oneTimeFundingProvider": "flutterwave"
   }
   ```
 
@@ -108,13 +109,25 @@ docs {
   }
   ```
 
+  To update Flutterwave fees:
+
+  ```json
+  {
+    "provider": "flutterwave",
+    "percent": 1,
+    "flat": 0,
+    "cap": 0,
+    "creditPolicy": "gross"
+  }
+  ```
+
   ## Expected Response
 
   ```json
   {
     "message": "One-time funding provider updated successfully",
     "providerSettings": {
-      "oneTimeFundingProvider": "maplerad"
+      "oneTimeFundingProvider": "flutterwave"
     }
   }
   ```

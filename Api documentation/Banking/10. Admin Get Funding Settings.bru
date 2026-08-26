@@ -21,7 +21,7 @@ auth:bearer {
 docs {
   # Admin Get Funding Settings
 
-  Admin uses this endpoint to see the current wallet funding provider and charge settings for PocketFi, Monnify, and Maplerad.
+  Admin uses this endpoint to see the current wallet funding provider and charge settings for PocketFi, Monnify, Maplerad, and Flutterwave.
 
   ## Endpoint
 
@@ -40,7 +40,7 @@ docs {
   ```json
   {
     "providerSettings": {
-      "oneTimeFundingProvider": "maplerad"
+      "oneTimeFundingProvider": "flutterwave"
     },
     "settings": [
       {
@@ -79,11 +79,11 @@ docs {
 
   Read `creditPolicy` for each provider. `gross` means the platform pays the fee and the full transfer is credited. `net` means the fee is deducted before wallet credit.
 
-  Maplerad pay-in example:
+  Flutterwave pay-in example:
 
   - User transfers: `N2,000`
-  - Funding charge setting: `0.5%`, capped at `N500`
-  - Fee: `N10`
+  - Funding charge setting: `1%`
+  - Fee: `N20`
   - Wallet credit: `N2,000`
 
   The frontend should display the `message` from `feePolicy` when showing funding account details.

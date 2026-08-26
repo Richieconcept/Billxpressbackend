@@ -149,8 +149,6 @@ export const createFlutterwaveFundingIntent = async (user, amount) => {
     throw error;
   }
 
-  const feeResult = await calculateFundingFee(amountInMinorUnit, "flutterwave");
-  const { fee, amountToReceive } = feeResult;
   const paymentReference = generateTransactionReference("FLWFUND");
   const providerIntent = await createFlutterwaveDynamicAccount({
     amount: fromMinorUnit(amountInMinorUnit),
@@ -158,21 +156,32 @@ export const createFlutterwaveFundingIntent = async (user, amount) => {
     customerEmail: user.email,
     paymentReference,
   });
+  const providerAmountInMinorUnit = toMinorUnit(providerIntent.amount);
+  const expectedAmountInMinorUnit =
+    providerAmountInMinorUnit > 0 ? providerAmountInMinorUnit : amountInMinorUnit;
+  const expectedFeeResult = await calculateFundingFee(
+    expectedAmountInMinorUnit,
+    "flutterwave"
+  );
 
   const intent = await FundingIntent.create({
     user: user._id,
     provider: "flutterwave",
     providerReference: providerIntent.providerReference,
     paymentReference,
-    amount: amountInMinorUnit,
-    fee,
-    amountToReceive,
+    amount: expectedAmountInMinorUnit,
+    fee: expectedFeeResult.fee,
+    amountToReceive: expectedFeeResult.amountToReceive,
     accountNumber: providerIntent.accountNumber,
     accountName: providerIntent.accountName,
     bankName: providerIntent.bankName,
     bankCode: providerIntent.bankCode,
     expiresAt: providerIntent.expiresAt || getFundingExpiryDate(),
-    providerResponse: providerIntent.providerResponse,
+    providerResponse: {
+      ...providerIntent.providerResponse,
+      requestedAmount: fromMinorUnit(amountInMinorUnit),
+      providerExpectedAmount: fromMinorUnit(expectedAmountInMinorUnit),
+    },
   });
 
   return intent;

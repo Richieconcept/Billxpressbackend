@@ -80,7 +80,7 @@ export const getOneTimeFundingProvider = async () => {
 
   if (!setting) {
     const envProvider = String(
-      process.env.ONE_TIME_FUNDING_PROVIDER || "maplerad"
+      process.env.ONE_TIME_FUNDING_PROVIDER || "flutterwave"
     )
       .trim()
       .toLowerCase();
@@ -88,7 +88,7 @@ export const getOneTimeFundingProvider = async () => {
       key: "one_time_funding",
       provider: SUPPORTED_ONE_TIME_PROVIDERS.includes(envProvider)
         ? envProvider
-        : "maplerad",
+        : "flutterwave",
     });
   }
 
