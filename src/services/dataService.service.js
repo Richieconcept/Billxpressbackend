@@ -554,20 +554,7 @@ export const listAdminDataPlans = async (filters = {}) => {
   }
 
   if (filters.customerVisible) {
-    const settings = await getOrCreateDataServiceSetting();
-    const networkProviders = getNetworkProviderMap(settings);
-    const providerNetworkPairs = DATA_NETWORKS.flatMap((network) =>
-      networkProviders[network].map((provider) => ({ provider, network }))
-    ).filter(
-      (pair) => !query.provider || pair.provider === query.provider
-    );
-
-    if (providerNetworkPairs.length === 0) {
-      return [];
-    }
-
     query.isEnabled = true;
-    query.$or = providerNetworkPairs;
   }
 
   const sortDirection =
@@ -702,6 +689,17 @@ export const getDataPlansForUser = async (user, filters = {}) => {
   const plans = [];
   const providerNetworks = new Map();
 
+  const catalogDocuments = await DataPlan.find({
+    provider: { $in: Array.from(CATALOG_PROVIDERS) },
+    network: { $in: selectedNetworks },
+    ...(filters.dataType
+      ? { dataType: normalizePlanFilter(filters.dataType) }
+      : {}),
+    isEnabled: true,
+  }).sort({ network: 1, dataType: 1, ourPrice: 1 });
+
+  plans.push(...catalogDocuments.map(catalogDocumentToProviderPlan));
+
   selectedNetworks.forEach((network) => {
     networkProviders[network].forEach((providerName) => {
       providerNetworks.set(providerName, [
@@ -714,18 +712,7 @@ export const getDataPlansForUser = async (user, filters = {}) => {
   for (const [providerName, configuredNetworks] of providerNetworks.entries()) {
     const provider = getDataProvider(providerName);
 
-    if (CATALOG_PROVIDERS.has(provider.name)) {
-      const documents = await DataPlan.find({
-        provider: provider.name,
-        network: { $in: configuredNetworks },
-        ...(filters.dataType
-          ? { dataType: normalizePlanFilter(filters.dataType) }
-          : {}),
-        isEnabled: true,
-      }).sort({ network: 1, dataType: 1, ourPrice: 1 });
-
-      plans.push(...documents.map(catalogDocumentToProviderPlan));
-    } else {
+    if (!CATALOG_PROVIDERS.has(provider.name)) {
       const livePlans = await provider.fetchPlans();
       plans.push(
         ...livePlans.filter((plan) =>
@@ -1011,22 +998,16 @@ const purchaseDataForUserUnlocked = async ({
     });
 
     catalogPlan =
-      catalogCandidates.find((candidate) =>
-        (networkProviders[candidate.network] || []).includes(candidate.provider)
-      ) || null;
+      catalogCandidates.find(
+        (candidate) =>
+          candidate.isEnabled &&
+          (networkProviders[candidate.network] || []).includes(candidate.provider)
+      ) ||
+      catalogCandidates.find((candidate) => candidate.isEnabled) ||
+      null;
   }
 
   if (catalogPlan) {
-    const routedProviderNames = networkProviders[catalogPlan.network] || [];
-
-    if (!routedProviderNames.includes(catalogPlan.provider)) {
-      const error = new Error(
-        "This data plan isn't available at the moment. Please try another plan"
-      );
-      error.statusCode = 409;
-      throw error;
-    }
-
     provider = getDataProvider(catalogPlan.provider);
     plan = catalogDocumentToProviderPlan(catalogPlan);
   } else {
