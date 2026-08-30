@@ -1,0 +1,62 @@
+meta {
+  name: 6. Admin Add DataShare Stock
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/admin/services/data/datashare/batches
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "simPhoneNumber": "2348160424228",
+    "groupName": "Group A",
+    "totalData": "10GB",
+    "totalCost": 3000,
+    "validity": "7Days",
+    "activeFrom": "2026-08-30T00:00:00.000Z",
+    "expiresAt": "2026-09-06T23:59:59.000Z",
+    "note": "Loaded for first 10-day rotation"
+  }
+}
+
+docs {
+  # Admin Add DataShare Stock
+
+  Adds a stock batch to an existing SIM.
+
+  The backend calculates:
+
+  ```txt
+  totalMb
+  costPerMb = totalCost / totalMb
+  remainingMb = totalMb
+  ```
+
+  Accepted data input:
+
+  ```json
+  { "totalData": "10GB" }
+  ```
+
+  or:
+
+  ```json
+  { "totalMb": 10240 }
+  ```
+
+  `totalCost` is the real amount BillXpress paid to load the data on the SIM.
+  This is what makes profit calculation accurate.
+}

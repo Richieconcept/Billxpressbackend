@@ -1,0 +1,79 @@
+meta {
+  name: 2. Admin List DataShare SIMs
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/services/data/datashare/sims
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin List DataShare SIMs
+
+  Returns all MTN datashare SIMs with live stock and usage summaries.
+
+  Optional filters:
+
+  ```txt
+  status=active|paused|retired
+  groupName=Group A
+  phoneNumber=2348160424228
+  ```
+
+  ## Endpoint
+
+  ```txt
+  GET /api/v1/admin/services/data/datashare/sims
+  ```
+
+  ## Success Response
+
+  ```json
+  {
+    "sims": [
+      {
+        "id": "sim_id",
+        "phoneNumber": "2348160424228",
+        "label": "SIM A1",
+        "groupName": "Group A",
+        "activeFromDay": 1,
+        "activeToDay": 10,
+        "dailyLimitMb": 5120,
+        "dailyLimit": "5GB",
+        "todaySharedMb": 1024,
+        "todayShared": "1GB",
+        "todayShareCount": 1,
+        "monthlyShareLimit": 10,
+        "monthShareCount": 4,
+        "monthSharedMb": 4096,
+        "monthShared": "4GB",
+        "remainingMb": 10240,
+        "remaining": "10GB",
+        "totalMb": 15360,
+        "total": "15GB",
+        "soldMb": 5120,
+        "sold": "5GB",
+        "revenue": 2000,
+        "costSpent": 1000,
+        "profit": 1000,
+        "status": "active",
+        "note": "",
+        "createdAt": "2026-08-30T12:00:00.000Z",
+        "updatedAt": "2026-08-30T12:00:00.000Z"
+      }
+    ],
+    "count": 1
+  }
+  ```
+}

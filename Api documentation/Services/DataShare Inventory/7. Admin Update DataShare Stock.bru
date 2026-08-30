@@ -1,0 +1,42 @@
+meta {
+  name: 7. Admin Update DataShare Stock
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/services/data/datashare/batches/{{dataShareBatchId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "status": "active",
+    "validity": "7Days",
+    "expiresAt": "2026-09-06T23:59:59.000Z",
+    "note": ""
+  }
+}
+
+vars:pre-request {
+  dataShareBatchId: paste_batch_id_here
+}
+
+docs {
+  # Admin Update DataShare Stock
+
+  Updates stock metadata/status.
+
+  This endpoint does not manually change sold or remaining data. Those values
+  are updated automatically from successful 2Fast datashare transactions.
+}

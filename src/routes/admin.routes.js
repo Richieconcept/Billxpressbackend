@@ -30,6 +30,16 @@ import {
   updateAdminDataSettings,
 } from "../controllers/dataService.controller.js";
 import {
+  createAdminDataShareBatch,
+  createAdminDataShareSim,
+  getAdminDataShareBatches,
+  getAdminDataShareSims,
+  getAdminDataShareSummary,
+  getAdminDataShareUsages,
+  updateAdminDataShareBatch,
+  updateAdminDataShareSim,
+} from "../controllers/dataShareInventory.controller.js";
+import {
   getAdminElectricitySettings,
   updateAdminElectricitySettings,
 } from "../controllers/electricityService.controller.js";
@@ -189,6 +199,54 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminDataPlanById
+);
+router.get(
+  "/services/data/datashare/summary",
+  protect,
+  authorizeRoles("admin"),
+  getAdminDataShareSummary
+);
+router.get(
+  "/services/data/datashare/sims",
+  protect,
+  authorizeRoles("admin"),
+  getAdminDataShareSims
+);
+router.post(
+  "/services/data/datashare/sims",
+  protect,
+  authorizeRoles("admin"),
+  createAdminDataShareSim
+);
+router.patch(
+  "/services/data/datashare/sims/:simId",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminDataShareSim
+);
+router.get(
+  "/services/data/datashare/batches",
+  protect,
+  authorizeRoles("admin"),
+  getAdminDataShareBatches
+);
+router.post(
+  "/services/data/datashare/batches",
+  protect,
+  authorizeRoles("admin"),
+  createAdminDataShareBatch
+);
+router.patch(
+  "/services/data/datashare/batches/:batchId",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminDataShareBatch
+);
+router.get(
+  "/services/data/datashare/usages",
+  protect,
+  authorizeRoles("admin"),
+  getAdminDataShareUsages
 );
 router.get(
   "/services/electricity/settings",

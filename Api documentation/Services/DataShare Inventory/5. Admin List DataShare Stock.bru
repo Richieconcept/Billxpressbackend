@@ -1,0 +1,38 @@
+meta {
+  name: 5. Admin List DataShare Stock
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/services/data/datashare/batches
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin List DataShare Stock
+
+  Returns stock batches loaded on MTN datashare SIMs.
+
+  Optional filters:
+
+  ```txt
+  status=active|exhausted|expired|disabled
+  groupName=Group A
+  simPhoneNumber=2348160424228
+  ```
+
+  ## Frontend Notes
+
+  Show active stock first, then exhausted/expired stock. Use `remaining` and
+  `profit` columns for quick scanning.
+}

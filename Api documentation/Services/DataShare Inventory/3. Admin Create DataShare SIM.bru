@@ -1,0 +1,64 @@
+meta {
+  name: 3. Admin Create DataShare SIM
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/admin/services/data/datashare/sims
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "phoneNumber": "2348160424228",
+    "label": "SIM A1",
+    "groupName": "Group A",
+    "activeFromDay": 1,
+    "activeToDay": 10,
+    "dailyLimitMb": 5120,
+    "monthlyShareLimit": 10,
+    "status": "active",
+    "note": "First 10-day rotation SIM"
+  }
+}
+
+docs {
+  # Admin Create DataShare SIM
+
+  Creates or updates one MTN datashare SIM. Use the same number format returned
+  by 2Fast in transaction history, usually `234...`.
+
+  ## Body Fields
+
+  `phoneNumber`
+  Required. The sender/sponsor SIM number. Digits only are stored.
+
+  `label`
+  Optional friendly name for admin UI.
+
+  `groupName`
+  Optional group name, for example `Group A`, `Group B`, or `Group C`.
+
+  `activeFromDay`, `activeToDay`
+  Optional monthly rotation days. These are for admin visibility and filtering.
+
+  `dailyLimitMb`
+  Optional. Default is `5120`, equal to 5GB.
+
+  `monthlyShareLimit`
+  Optional. Default is `10`.
+
+  `status`
+  `active`, `paused`, or `retired`.
+}

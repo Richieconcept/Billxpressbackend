@@ -1,0 +1,47 @@
+meta {
+  name: 4. Admin Update DataShare SIM
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/services/data/datashare/sims/{{dataShareSimId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "label": "SIM A1",
+    "groupName": "Group A",
+    "activeFromDay": 1,
+    "activeToDay": 10,
+    "dailyLimitMb": 5120,
+    "monthlyShareLimit": 10,
+    "status": "active",
+    "note": ""
+  }
+}
+
+vars:pre-request {
+  dataShareSimId: paste_sim_id_here
+}
+
+docs {
+  # Admin Update DataShare SIM
+
+  Updates SIM metadata, group assignment, limits, or status.
+
+  Use `status: "paused"` to temporarily keep the SIM in inventory while
+  showing admins it should not be used. Use `retired` when the SIM is no longer
+  in rotation.
+}

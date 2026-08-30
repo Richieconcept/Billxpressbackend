@@ -1,0 +1,89 @@
+meta {
+  name: DataShare Inventory
+  type: folder
+  seq: 9
+}
+
+docs {
+  # MTN DataShare Inventory
+
+  These admin endpoints manage BillXpress's own MTN datashare stock accounting.
+  They are separate from ordinary data plan pricing.
+
+  2Fast provides the MTN `DATA SHARE` plan catalogue and confirms successful
+  delivery. BillXpress records which SIM was used, how much data was sold, what
+  the stock cost, and the profit for each sale.
+
+  ## Operating Model
+
+  1. Admin creates every MTN datashare SIM.
+  2. Admin adds stock batches to each SIM when data is loaded.
+  3. Admin enables 2Fast MTN `DATA SHARE` plans and sets `ourPrice`.
+  4. Customer buys data.
+  5. Backend calls 2Fast and then reads 2Fast transaction history.
+  6. If 2Fast returns `source=datashare_history`, `route=Sim`, and a `sender`,
+     backend deducts the sold MB from that sender SIM's active stock batch.
+  7. Backend updates the wallet transaction metadata with true `costPrice` and
+     `profit`.
+
+  If the sender SIM is not found, or no stock batch has enough remaining data,
+  the transaction is not refunded because delivery already happened. Instead the
+  usage is saved as `unmatched` so admin can add or correct stock.
+
+  ## Recommended Admin UI
+
+  Build this as a work-focused inventory screen, not a marketing page.
+
+  Suggested top cards:
+
+  - total stock loaded;
+  - remaining stock;
+  - sold stock;
+  - revenue;
+  - cost spent;
+  - profit;
+  - unmatched usage count.
+
+  Suggested tabs:
+
+  - Summary
+  - SIMs
+  - Stock Batches
+  - Usage / Audit
+
+  SIM table columns:
+
+  - SIM phone number;
+  - label;
+  - group name;
+  - active day range;
+  - today shared;
+  - monthly share count;
+  - remaining stock;
+  - status.
+
+  Stock batch table columns:
+
+  - SIM;
+  - group;
+  - total data;
+  - remaining data;
+  - total cost;
+  - cost per MB;
+  - revenue;
+  - profit;
+  - expiry;
+  - status.
+
+  Usage table columns:
+
+  - date;
+  - transaction reference;
+  - SIM sender;
+  - volume;
+  - selling price;
+  - cost price;
+  - profit;
+  - provider-reported remaining;
+  - status.
+}

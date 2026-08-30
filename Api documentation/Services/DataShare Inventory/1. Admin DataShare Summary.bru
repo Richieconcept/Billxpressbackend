@@ -1,0 +1,69 @@
+meta {
+  name: 1. Admin DataShare Summary
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/services/data/datashare/summary
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin DataShare Summary
+
+  Returns high-level MTN datashare stock and profit totals.
+
+  Use this endpoint for dashboard cards at the top of the datashare inventory
+  screen.
+
+  ## Endpoint
+
+  ```txt
+  GET /api/v1/admin/services/data/datashare/summary
+  ```
+
+  ## Success Response
+
+  ```json
+  {
+    "summary": {
+      "network": "MTN",
+      "activeSimCount": 3,
+      "totalMb": 15360,
+      "total": "15GB",
+      "remainingMb": 10240,
+      "remaining": "10GB",
+      "soldMb": 5120,
+      "sold": "5GB",
+      "totalCost": 3000,
+      "revenue": 4200,
+      "costSpent": 1000,
+      "profit": 3200,
+      "unmatchedCount": 0,
+      "usageByStatus": {
+        "matched": {
+          "count": 5,
+          "soldMb": 5120,
+          "sold": "5GB"
+        }
+      }
+    }
+  }
+  ```
+
+  ## Frontend Notes
+
+  Highlight `unmatchedCount` when it is greater than zero. An unmatched usage
+  means data was delivered but the backend could not match the sender SIM to an
+  active stock batch.
+}

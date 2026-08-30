@@ -1,0 +1,52 @@
+meta {
+  name: 8. Admin List DataShare Usage
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/services/data/datashare/usages
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin List DataShare Usage
+
+  Returns recent MTN datashare usage records created from successful 2Fast
+  transactions.
+
+  Optional filters:
+
+  ```txt
+  status=matched|unmatched|lookup_failed
+  simPhoneNumber=2348160424228
+  reference=DATA_...
+  ```
+
+  ## Usage Status
+
+  `matched`
+  The usage was tied to a SIM and stock batch. Cost/profit were calculated.
+
+  `unmatched`
+  2Fast delivered the data, but the sender SIM or stock batch could not be
+  matched. Admin should create/correct the SIM or stock batch.
+
+  `lookup_failed`
+  The purchase succeeded, but the backend could not fetch 2Fast history at that
+  moment.
+
+  ## Frontend Notes
+
+  Put unmatched and lookup-failed records at the top or show a badge/count so
+  admin can correct inventory quickly.
+}

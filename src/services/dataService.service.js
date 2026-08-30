@@ -18,6 +18,10 @@ import {
   notifyAdminsOfServiceFailureBestEffort,
 } from "./notification.service.js";
 import { getDataProvider, listDataProviders } from "./dataProviders/index.js";
+import {
+  isTwoFastMtnDataSharePlan,
+  recordDataShareUsageFromTransaction,
+} from "./dataShareInventory.service.js";
 import { getPublicProviderFailure } from "./providerFailure.service.js";
 import { withServicePurchaseLock } from "./servicePurchaseLock.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
@@ -839,6 +843,76 @@ const confirmUnclearDataPurchase = async ({ provider, reference }) => {
   }
 };
 
+const applyDataShareInventoryBestEffort = async ({
+  provider,
+  transaction,
+  pricedPlan,
+  providerResult,
+}) => {
+  if (
+    !isTwoFastMtnDataSharePlan({
+      providerName: provider.name,
+      plan: pricedPlan,
+    })
+  ) {
+    return null;
+  }
+
+  try {
+    const providerHistory =
+      typeof provider.checkTransactionStatus === "function"
+        ? await provider.checkTransactionStatus(
+            providerResult.providerReference || transaction.reference
+          )
+        : providerResult.raw;
+    const inventory = await recordDataShareUsageFromTransaction({
+      transaction,
+      pricedPlan,
+      providerHistory,
+    });
+
+    transaction.metadata = {
+      ...transaction.metadata,
+      costPrice: inventory.costPrice,
+      profit: inventory.profit,
+      plan: {
+        ...transaction.metadata.plan,
+        costPrice: inventory.costPrice,
+        profit: inventory.profit,
+      },
+      providerHistory,
+      dataShareInventory: {
+        status: inventory.status,
+        usageId: inventory.usage?._id,
+        batchId: inventory.batch?._id,
+        simId: inventory.sim?._id,
+        senderSim: inventory.usage?.simPhoneNumber,
+        soldMb: inventory.usage?.soldMb,
+        volume: inventory.usage?.volume,
+        costPrice: inventory.costPrice,
+        sellingPrice: pricedPlan.sellingPrice,
+        profit: inventory.profit,
+        providerReportedRemainingMb: inventory.providerReportedRemainingMb,
+        reason: inventory.reason,
+      },
+    };
+
+    pricedPlan.costPrice = inventory.costPrice;
+    pricedPlan.profit = inventory.profit;
+    return inventory;
+  } catch (error) {
+    transaction.metadata = {
+      ...transaction.metadata,
+      dataShareInventory: {
+        status: "lookup_failed",
+        reason: error.message,
+      },
+    };
+
+    return null;
+  }
+};
+
 const purchaseDataForUserUnlocked = async ({
   userId,
   planId,
@@ -997,6 +1071,14 @@ const purchaseDataForUserUnlocked = async ({
       providerRequest: providerResult.requestPayload,
       providerResponse: providerResult.raw,
     };
+
+    await applyDataShareInventoryBestEffort({
+      provider,
+      transaction: debitResult.transaction,
+      pricedPlan,
+      providerResult,
+    });
+
     await debitResult.transaction.save();
 
     await createNotificationBestEffort({
@@ -1045,6 +1127,17 @@ const purchaseDataForUserUnlocked = async ({
           providerError: error.providerResponse || error.message,
           providerConfirmation: confirmation,
         };
+
+        await applyDataShareInventoryBestEffort({
+          provider,
+          transaction: debitResult.transaction,
+          pricedPlan,
+          providerResult: {
+            providerReference,
+            raw: confirmation.response,
+          },
+        });
+
         await debitResult.transaction.save();
 
         await createNotificationBestEffort({
