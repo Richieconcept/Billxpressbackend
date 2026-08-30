@@ -36,6 +36,7 @@ import {
   getAdminDataShareSims,
   getAdminDataShareSummary,
   getAdminDataShareUsages,
+  reloadAdminDataShareSim,
   updateAdminDataShareBatch,
   updateAdminDataShareSim,
 } from "../controllers/dataShareInventory.controller.js";
@@ -223,6 +224,12 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminDataShareSim
+);
+router.post(
+  "/services/data/datashare/sims/:simId/reload",
+  protect,
+  authorizeRoles("admin"),
+  reloadAdminDataShareSim
 );
 router.get(
   "/services/data/datashare/batches",

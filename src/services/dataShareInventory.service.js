@@ -17,6 +17,12 @@ const normalizeStatus = (value) =>
 
 const roundMoney = (value) => Number((Number(value) || 0).toFixed(2));
 
+const addDays = (date, days) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
 export const parseDataVolumeToMb = (value) => {
   const text = String(value || "")
     .replace(/,/g, "")
@@ -101,6 +107,14 @@ export const serializeDataShareSim = async (sim) => {
   const stockSummary = stock[0] || {};
   const todaySummary = todayUsage[0] || {};
   const monthSummary = monthUsage[0] || {};
+  const todaySharedMb = todaySummary.soldMb || 0;
+  const monthShareCount = monthSummary.count || 0;
+  const dailyRemainingMb = Math.max(0, Number(sim.dailyLimitMb || 0) - todaySharedMb);
+  const monthlyRemainingShareSlots = Math.max(
+    0,
+    Number(sim.monthlyShareLimit || 0) - monthShareCount
+  );
+  const internalRemainingMb = stockSummary.remainingMb || 0;
 
   return {
     id: sim._id,
@@ -111,15 +125,27 @@ export const serializeDataShareSim = async (sim) => {
     activeToDay: sim.activeToDay,
     dailyLimitMb: sim.dailyLimitMb,
     dailyLimit: formatMb(sim.dailyLimitMb),
-    todaySharedMb: todaySummary.soldMb || 0,
-    todayShared: formatMb(todaySummary.soldMb || 0),
+    todaySharedMb,
+    todayShared: formatMb(todaySharedMb),
     todayShareCount: todaySummary.count || 0,
+    dailyRemainingMb,
+    dailyRemaining: formatMb(dailyRemainingMb),
+    dailyLimitReached: Number(sim.dailyLimitMb || 0) > 0 && dailyRemainingMb <= 0,
     monthlyShareLimit: sim.monthlyShareLimit,
-    monthShareCount: monthSummary.count || 0,
+    monthShareCount,
+    monthlyRemainingShareSlots,
+    monthlyLimitReached:
+      Number(sim.monthlyShareLimit || 0) > 0 && monthlyRemainingShareSlots <= 0,
     monthSharedMb: monthSummary.soldMb || 0,
     monthShared: formatMb(monthSummary.soldMb || 0),
-    remainingMb: stockSummary.remainingMb || 0,
-    remaining: formatMb(stockSummary.remainingMb || 0),
+    remainingMb: internalRemainingMb,
+    remaining: formatMb(internalRemainingMb),
+    simBalanceMb: sim.lastProviderReportedRemainingMb,
+    simBalance:
+      sim.lastProviderReportedRemainingMb === null
+        ? null
+        : formatMb(sim.lastProviderReportedRemainingMb),
+    lastProviderReportedAt: sim.lastProviderReportedAt,
     totalMb: stockSummary.totalMb || 0,
     total: formatMb(stockSummary.totalMb || 0),
     soldMb: stockSummary.soldMb || 0,
@@ -127,6 +153,13 @@ export const serializeDataShareSim = async (sim) => {
     revenue: roundMoney(stockSummary.revenue),
     costSpent: roundMoney(stockSummary.costSpent),
     profit: roundMoney(stockSummary.profit),
+    defaultReloadMb: sim.defaultReloadMb,
+    defaultReloadData: sim.defaultReloadMb ? formatMb(sim.defaultReloadMb) : null,
+    defaultReloadCost: roundMoney(sim.defaultReloadCost),
+    defaultReloadValidity: sim.defaultReloadValidity,
+    defaultReloadExpiresAfterDays: sim.defaultReloadExpiresAfterDays,
+    canQuickReload:
+      Number(sim.defaultReloadMb || 0) > 0 && Number(sim.defaultReloadCost || 0) >= 0,
     status: sim.status,
     note: sim.note,
     createdAt: sim.createdAt,
@@ -209,6 +242,14 @@ export const createDataShareSim = async ({ payload, adminUserId }) => {
         activeToDay: Number(payload?.activeToDay || 10),
         dailyLimitMb: Number(payload?.dailyLimitMb || 5120),
         monthlyShareLimit: Number(payload?.monthlyShareLimit || 10),
+        defaultReloadMb: payload?.defaultReloadMb
+          ? Number(payload.defaultReloadMb)
+          : parseDataVolumeToMb(payload?.defaultReloadData),
+        defaultReloadCost: Number(payload?.defaultReloadCost || 0),
+        defaultReloadValidity: payload?.defaultReloadValidity || "",
+        defaultReloadExpiresAfterDays: Number(
+          payload?.defaultReloadExpiresAfterDays || 0
+        ),
         status: payload?.status || "active",
         note: payload?.note || "",
         updatedBy: adminUserId,
@@ -228,6 +269,11 @@ export const updateDataShareSim = async ({ simId, payload, adminUserId }) => {
     "activeToDay",
     "dailyLimitMb",
     "monthlyShareLimit",
+    "lastProviderReportedRemainingMb",
+    "defaultReloadMb",
+    "defaultReloadCost",
+    "defaultReloadValidity",
+    "defaultReloadExpiresAfterDays",
     "status",
     "note",
   ];
@@ -235,11 +281,29 @@ export const updateDataShareSim = async ({ simId, payload, adminUserId }) => {
 
   allowedFields.forEach((field) => {
     if (payload?.[field] !== undefined) {
-      update[field] = ["activeFromDay", "activeToDay", "dailyLimitMb", "monthlyShareLimit"].includes(field)
+      update[field] = [
+        "activeFromDay",
+        "activeToDay",
+        "dailyLimitMb",
+        "monthlyShareLimit",
+        "lastProviderReportedRemainingMb",
+        "defaultReloadMb",
+        "defaultReloadCost",
+        "defaultReloadExpiresAfterDays",
+      ].includes(field)
         ? Number(payload[field])
         : payload[field];
     }
   });
+
+  if (payload?.defaultReloadData !== undefined) {
+    update.defaultReloadMb = parseDataVolumeToMb(payload.defaultReloadData);
+  }
+
+  if (payload?.simBalance !== undefined) {
+    update.lastProviderReportedRemainingMb = parseDataVolumeToMb(payload.simBalance);
+    update.lastProviderReportedAt = new Date();
+  }
 
   const sim = await DataShareSim.findByIdAndUpdate(
     simId,
@@ -303,6 +367,42 @@ export const createDataShareBatch = async ({ payload, adminUserId }) => {
     note: payload?.note || "",
     createdBy: adminUserId,
     updatedBy: adminUserId,
+  });
+
+  return batch;
+};
+
+export const reloadDataShareSimFromDefaults = async ({ simId, adminUserId }) => {
+  const sim = await DataShareSim.findById(simId);
+
+  if (!sim) {
+    const error = new Error("Datashare SIM was not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (!sim.defaultReloadMb || sim.defaultReloadMb <= 0) {
+    const error = new Error("Set default reload data before using quick reload");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const now = new Date();
+  const batch = await createDataShareBatch({
+    payload: {
+      simPhoneNumber: sim.phoneNumber,
+      groupName: sim.groupName,
+      totalMb: sim.defaultReloadMb,
+      totalCost: sim.defaultReloadCost,
+      validity: sim.defaultReloadValidity,
+      activeFrom: now,
+      expiresAt:
+        sim.defaultReloadExpiresAfterDays > 0
+          ? addDays(now, sim.defaultReloadExpiresAfterDays)
+          : null,
+      note: "Quick reload from SIM defaults",
+    },
+    adminUserId,
   });
 
   return batch;
@@ -568,6 +668,12 @@ export const recordDataShareUsageFromTransaction = async ({
     },
     { new: true }
   );
+
+  if (providerReportedRemainingMb !== null) {
+    sim.lastProviderReportedRemainingMb = providerReportedRemainingMb;
+    sim.lastProviderReportedAt = new Date();
+    await sim.save();
+  }
 
   if (updatedBatch.remainingMb <= 0 && updatedBatch.status === "active") {
     updatedBatch.status = "exhausted";

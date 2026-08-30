@@ -54,12 +54,20 @@ docs {
         "todaySharedMb": 1024,
         "todayShared": "1GB",
         "todayShareCount": 1,
+        "dailyRemainingMb": 4096,
+        "dailyRemaining": "4GB",
+        "dailyLimitReached": false,
         "monthlyShareLimit": 10,
         "monthShareCount": 4,
+        "monthlyRemainingShareSlots": 6,
+        "monthlyLimitReached": false,
         "monthSharedMb": 4096,
         "monthShared": "4GB",
         "remainingMb": 10240,
         "remaining": "10GB",
+        "simBalanceMb": 4506,
+        "simBalance": "4.4GB",
+        "lastProviderReportedAt": "2026-08-30T13:34:26.000Z",
         "totalMb": 15360,
         "total": "15GB",
         "soldMb": 5120,
@@ -67,6 +75,12 @@ docs {
         "revenue": 2000,
         "costSpent": 1000,
         "profit": 1000,
+        "defaultReloadMb": 11264,
+        "defaultReloadData": "11GB",
+        "defaultReloadCost": 3500,
+        "defaultReloadValidity": "30Days",
+        "defaultReloadExpiresAfterDays": 30,
+        "canQuickReload": true,
         "status": "active",
         "note": "",
         "createdAt": "2026-08-30T12:00:00.000Z",
@@ -76,4 +90,17 @@ docs {
     "count": 1
   }
   ```
+
+  ## Frontend Notes
+
+  Show two balances clearly:
+
+  - `remaining`: BillXpress internal stock remaining.
+  - `simBalance`: latest balance 2Fast/MTN reported after a vend.
+
+  Show limits as progress values:
+
+  - daily data used: `todaySharedMb / dailyLimitMb`;
+  - monthly slots used: `monthShareCount / monthlyShareLimit`;
+  - remaining monthly slots: `monthlyRemainingShareSlots`.
 }

@@ -42,6 +42,35 @@ const dataShareSimSchema = new mongoose.Schema(
       default: 10,
       min: 0,
     },
+    lastProviderReportedRemainingMb: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+    lastProviderReportedAt: {
+      type: Date,
+      default: null,
+    },
+    defaultReloadMb: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    defaultReloadCost: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    defaultReloadValidity: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    defaultReloadExpiresAfterDays: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     status: {
       type: String,
       enum: ["active", "paused", "retired"],

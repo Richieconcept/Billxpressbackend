@@ -1,0 +1,73 @@
+meta {
+  name: 9. Admin Quick Reload DataShare SIM
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/v1/admin/services/data/datashare/sims/{{dataShareSimId}}/reload
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+vars:pre-request {
+  dataShareSimId: paste_sim_id_here
+}
+
+docs {
+  # Admin Quick Reload DataShare SIM
+
+  Adds a new stock batch using the SIM's saved reload defaults.
+
+  Use this when admin usually reloads the same amount and cost on a SIM. For
+  example, if a SIM is normally loaded with `11GB` for `3500`, save those
+  defaults on the SIM once, then call this endpoint whenever the SIM is loaded
+  again.
+
+  Required SIM defaults:
+
+  ```json
+  {
+    "defaultReloadData": "11GB",
+    "defaultReloadCost": 3500
+  }
+  ```
+
+  Optional:
+
+  ```json
+  {
+    "defaultReloadValidity": "30Days",
+    "defaultReloadExpiresAfterDays": 30
+  }
+  ```
+
+  Success response:
+
+  ```json
+  {
+    "message": "Datashare SIM reloaded successfully",
+    "batch": {
+      "id": "batch_id",
+      "simPhoneNumber": "2348160424228",
+      "groupName": "Group A",
+      "totalMb": 11264,
+      "total": "11GB",
+      "remainingMb": 11264,
+      "remaining": "11GB",
+      "totalCost": 3500,
+      "costPerMb": 0.3107244318181818,
+      "validity": "30Days",
+      "status": "active"
+    }
+  }
+  ```
+}

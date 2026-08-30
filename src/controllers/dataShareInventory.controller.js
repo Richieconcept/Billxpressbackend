@@ -5,6 +5,7 @@ import {
   listDataShareBatches,
   listDataShareSims,
   listDataShareUsages,
+  reloadDataShareSimFromDefaults,
   serializeDataShareBatch,
   serializeDataShareSim,
   serializeDataShareUsage,
@@ -72,6 +73,22 @@ export const updateAdminDataShareSim = async (req, res) => {
     });
   } catch (error) {
     sendDataShareInventoryError(res, "Could not update datashare SIM", error);
+  }
+};
+
+export const reloadAdminDataShareSim = async (req, res) => {
+  try {
+    const batch = await reloadDataShareSimFromDefaults({
+      simId: req.params.simId,
+      adminUserId: req.user._id,
+    });
+
+    res.status(201).json({
+      message: "Datashare SIM reloaded successfully",
+      batch: serializeDataShareBatch(batch),
+    });
+  } catch (error) {
+    sendDataShareInventoryError(res, "Could not reload datashare SIM", error);
   }
 };
 

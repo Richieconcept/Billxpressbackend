@@ -59,7 +59,10 @@ docs {
   - active day range;
   - today shared;
   - monthly share count;
+  - monthly remaining slots;
   - remaining stock;
+  - last 2Fast/MTN reported SIM balance;
+  - quick reload default;
   - status.
 
   Stock batch table columns:
@@ -86,4 +89,17 @@ docs {
   - profit;
   - provider-reported remaining;
   - status.
+
+  Useful SIM fields:
+
+  - `dailyRemaining` shows how much more the SIM can share today before the
+    5GB-style daily cap.
+  - `monthlyRemainingShareSlots` shows how many share transactions remain from
+    the monthly count limit.
+  - `simBalance` is the latest sponsor balance parsed from 2Fast after a
+    successful sale, for example `4.4GB`.
+  - `remaining` is BillXpress internal stock balance calculated from batches
+    and usage.
+  - `defaultReloadData` and `defaultReloadCost` support one-click reload when
+    admin usually loads the same bundle/cost on the SIM.
 }

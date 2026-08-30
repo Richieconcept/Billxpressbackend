@@ -27,6 +27,11 @@ body:json {
     "activeToDay": 10,
     "dailyLimitMb": 5120,
     "monthlyShareLimit": 10,
+    "simBalance": "4.4GB",
+    "defaultReloadData": "11GB",
+    "defaultReloadCost": 3500,
+    "defaultReloadValidity": "30Days",
+    "defaultReloadExpiresAfterDays": 30,
     "status": "active",
     "note": ""
   }
@@ -44,4 +49,8 @@ docs {
   Use `status: "paused"` to temporarily keep the SIM in inventory while
   showing admins it should not be used. Use `retired` when the SIM is no longer
   in rotation.
+
+  Admin may manually update `simBalance` when checking the SIM outside 2Fast.
+  Successful 2Fast datashare purchases also update this field automatically
+  when the provider response contains `Sponsor's New Balance`.
 }
