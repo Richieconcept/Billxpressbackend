@@ -400,13 +400,25 @@ const isStoredTwoFastManualPlan = (plan) => {
     return false;
   }
 
-  const planId = String(plan.providerPlanId || plan.providerPlanCode || "");
-  const isKnownManualPlan = TWOFAST_MANUAL_PLAN_IDS.includes(planId);
   const hasManualRoute =
     isEnabledText(plan.raw?.sim) ||
     isEnabledText(plan.raw?.wallet) ||
     isEnabledText(plan.raw?.device);
   const isActive = isEnabledText(plan.raw?.status);
+  const planIds = [
+    plan.providerPlanId,
+    plan.providerPlanCode,
+    plan.raw?.plan_id,
+    plan.raw?.planId,
+    plan.raw?.id,
+  ].map((value) => String(value || ""));
+  const isKnownManualPlan = planIds.some((planId) =>
+    TWOFAST_MANUAL_PLAN_IDS.includes(planId)
+  );
+
+  if (hasManualRoute && isActive) {
+    return true;
+  }
 
   return (
     /\bAWOOF\b/i.test(text) ||
