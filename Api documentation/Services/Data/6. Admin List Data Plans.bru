@@ -144,6 +144,7 @@ docs {
   - provider and network;
   - provider plan name/type/validity;
   - `networkPrice`, `providerPrice`, and `costPrice`;
+  - `costSource`, showing which cost is used for markup/profit;
   - editable `ourPrice` for normal app users;
   - editable `vendorPrice` for API/vendor users;
   - `isEnabled`;
@@ -180,4 +181,17 @@ docs {
   - `costPrice`: effective cost used for fallback markup/profit. When
     `allowHostedSim` is true and `networkPrice` exists, this equals
     `networkPrice`; otherwise it falls back to `providerPrice`.
+  - `costSource`: `network`, `provider_wallet`, `network_fallback`, or
+    `inventory_or_zero`.
+
+  For plans sold from provider wallet/API, admin should set:
+
+  ```json
+  {
+    "allowHostedSim": false
+  }
+  ```
+
+  This makes `costPrice` use `providerPrice`, so profit becomes
+  `sellingPrice - providerPrice` instead of `sellingPrice - networkPrice`.
 }

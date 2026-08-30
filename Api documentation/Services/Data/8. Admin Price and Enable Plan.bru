@@ -48,6 +48,31 @@ docs {
   
   `ourPrice` is the fixed selling price for normal app users. `vendorPrice` is
   the fixed selling price for active vendors/API users.
+
+  ## Hosted SIM vs Provider Wallet Cost
+
+  Use `allowHostedSim` to control which cost is used for markup/profit:
+
+  ```json
+  {
+    "allowHostedSim": true
+  }
+  ```
+
+  Uses `networkPrice` when it exists. This is for plans BillXpress fulfills from
+  its own SIM/network stock.
+
+  ```json
+  {
+    "allowHostedSim": false
+  }
+  ```
+
+  Uses `providerPrice` when it exists. This is for plans sold from provider
+  wallet/API balance.
+
+  For wallet/API plans, set `allowHostedSim` to `false`; otherwise profit can be
+  calculated against the network price instead of the real provider charge.
   
   ## Fixed Price
   

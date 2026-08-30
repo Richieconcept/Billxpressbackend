@@ -287,6 +287,7 @@ export const serializeDataPlanForUser = ({
     validity: plan.validity,
     validityDays: plan.validityDays,
     costPrice: plan.costPrice,
+    costSource: getPlanCostSource(plan),
     networkPrice: plan.networkPrice,
     providerPrice: plan.providerPrice,
     ourPrice:
@@ -356,6 +357,25 @@ const getPlanCostPrice = (plan) => {
   return providerPrice || networkPrice;
 };
 
+const getPlanCostSource = (plan) => {
+  const networkPrice = Number(plan.networkPrice || 0);
+  const providerPrice = Number(plan.providerPrice || 0);
+
+  if (plan.allowHostedSim !== false && networkPrice > 0) {
+    return "network";
+  }
+
+  if (providerPrice > 0) {
+    return "provider_wallet";
+  }
+
+  if (networkPrice > 0) {
+    return "network_fallback";
+  }
+
+  return "inventory_or_zero";
+};
+
 const isEnabledText = (value) => {
   const text = String(value ?? "")
     .trim()
@@ -411,6 +431,7 @@ const catalogDocumentToProviderPlan = (document) => ({
   networkPrice: document.networkPrice,
   providerPrice: document.providerPrice,
   costPrice: getPlanCostPrice(document),
+  costSource: getPlanCostSource(document),
   ourPrice: document.ourPrice,
   vendorPrice: document.vendorPrice,
   available: document.isEnabled && isCatalogPlanSellable(document),
@@ -510,6 +531,7 @@ export const serializeAdminDataPlan = (plan) => ({
   networkPrice: plan.networkPrice,
   providerPrice: plan.providerPrice,
   costPrice: getPlanCostPrice(plan),
+  costSource: getPlanCostSource(plan),
   ourPrice: plan.ourPrice,
   vendorPrice: plan.vendorPrice,
   isEnabled: plan.isEnabled,
@@ -1051,6 +1073,7 @@ const purchaseDataForUserUnlocked = async ({
       phone,
       plan: pricedPlan,
       costPrice: pricedPlan.costPrice,
+      costSource: pricedPlan.costSource,
       sellingPrice: pricedPlan.sellingPrice,
       profit: pricedPlan.profit,
       markupPercent: pricedPlan.markupPercent,
