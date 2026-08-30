@@ -925,12 +925,21 @@ const applyDataShareInventoryBestEffort = async ({
   } catch (error) {
     transaction.metadata = {
       ...transaction.metadata,
+      costPrice: 0,
+      profit: 0,
+      plan: {
+        ...transaction.metadata.plan,
+        costPrice: 0,
+        profit: 0,
+      },
       dataShareInventory: {
         status: "lookup_failed",
         reason: error.message,
       },
     };
 
+    pricedPlan.costPrice = 0;
+    pricedPlan.profit = 0;
     return null;
   }
 };
