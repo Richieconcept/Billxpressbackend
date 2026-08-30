@@ -121,11 +121,22 @@ const isPlanAvailable = (plan) => {
   return isEnabledText(plan.status) && (routeFlagsAbsent || hasUsableRoute);
 };
 
+const isDataSharePlan = (plan) =>
+  String(plan.type || "")
+    .trim()
+    .toUpperCase() === "DATA SHARE";
+
 const getPlanTypes = () =>
   String(process.env.TWOFAST_DATA_PLAN_TYPES || "")
     .split(",")
     .map((type) => type.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .reduce((types, type) => {
+      if (!types.some((existing) => existing.toLowerCase() === type.toLowerCase())) {
+        types.push(type);
+      }
+      return types;
+    }, []);
 
 const getPlanCacheTtlMs = () => {
   const seconds = Number(process.env.TWOFAST_PLAN_CACHE_TTL_SECONDS || 300);
@@ -144,28 +155,31 @@ const fetchPlansForNetwork = async (networkCode, type) => {
   const network = NETWORKS[String(networkCode)] || String(response?.network || "");
 
   return records.map((plan) => {
+    const rawPlanId = String(plan.plan_id ?? plan.planId ?? plan.id ?? "");
     const providerPrice = toNumber(plan.our_price ?? plan.ourPrice ?? plan.price);
     const networkPrice = toNumber(
       plan.telecom_price ?? plan.telecomPrice ?? plan.network_price
     );
     const costPrice = networkPrice || providerPrice;
     const validity = plan.validity || null;
+    const dataSharePlan = isDataSharePlan(plan);
+    const planType = String(plan.type || type || "OTHER").toUpperCase();
 
     return {
       provider: PROVIDER,
-      providerPlanId: String(plan.plan_id ?? plan.planId ?? plan.id ?? ""),
-      providerPlanCode: String(plan.plan_id ?? plan.planId ?? plan.id ?? ""),
+      providerPlanId: [networkCode, planType, rawPlanId].join(":"),
+      providerPlanCode: rawPlanId,
       network: String(network).toUpperCase(),
       networkCode: String(networkCode),
       name: String(plan.description || plan.volume || plan.name || ""),
-      type: String(plan.type || type || "OTHER").toUpperCase(),
+      type: planType,
       providerDataType: String(plan.type || type || ""),
       validity,
       validityDays: parseValidityDays(validity),
       networkPrice: costPrice,
       providerPrice,
       costPrice,
-      available: costPrice > 0 && isPlanAvailable(plan),
+      available: (costPrice > 0 || dataSharePlan) && isPlanAvailable(plan),
       raw: {
         ...plan,
         telecom_price: networkPrice || plan.telecom_price,
@@ -181,6 +195,12 @@ export const fetchPlans = async ({ forceRefresh = false } = {}) => {
   }
 
   const planTypes = getPlanTypes();
+  if (
+    planTypes.length > 0 &&
+    !planTypes.some((type) => type.toUpperCase() === "DATA SHARE")
+  ) {
+    planTypes.push("DATA SHARE");
+  }
   const typeFilters = planTypes.length > 0 ? planTypes : [null];
   const planGroups = await Promise.all(
     Object.keys(NETWORKS).flatMap((networkCode) =>
@@ -189,7 +209,12 @@ export const fetchPlans = async ({ forceRefresh = false } = {}) => {
   );
   const plans = planGroups
     .flat()
-    .filter((plan) => plan.providerPlanId && plan.network && plan.costPrice > 0);
+    .filter(
+      (plan) =>
+        plan.providerPlanId &&
+        plan.network &&
+        (plan.costPrice > 0 || plan.type === "DATA SHARE")
+    );
 
   planCache = {
     expiresAt: Date.now() + getPlanCacheTtlMs(),
@@ -205,7 +230,7 @@ export const purchaseData = async ({ plan, phone, reference }) => {
   );
   const payload = {
     networkId: /^\d+$/.test(networkId) ? Number(networkId) : networkId,
-    planId: String(plan.providerPlanId),
+    planId: String(plan.providerPlanCode || plan.raw?.plan_id || plan.providerPlanId),
     phoneNumber: phone,
     reference,
   };

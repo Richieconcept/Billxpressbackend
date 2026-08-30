@@ -260,7 +260,8 @@ export const serializeDataPlanForUser = ({
 }) => {
   const pricingConfig = getPricingForUser(settings, user, plan.costPrice);
   const vendor = isVendorUser(user);
-  const customPrice = vendor ? plan.vendorPrice : plan.ourPrice;
+  const customPrice =
+    vendor && Number(plan.vendorPrice) > 0 ? plan.vendorPrice : plan.ourPrice;
   const hasCustomPrice =
     Number.isFinite(Number(customPrice)) && Number(customPrice) > 0;
   const pricing = hasCustomPrice
@@ -620,10 +621,25 @@ export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
   }
 
   const enabling = update.isEnabled === true;
+  const prospectivePlan = {
+    ...existing.toObject(),
+    ...update,
+  };
 
   if (enabling && !isCatalogPlanSellable(existing)) {
     const error = new Error("This plan is currently unavailable from the provider");
     error.statusCode = 409;
+    throw error;
+  }
+
+  if (
+    enabling &&
+    getPlanCostPrice(prospectivePlan) <= 0 &&
+    (!Number.isFinite(Number(prospectivePlan.ourPrice)) ||
+      Number(prospectivePlan.ourPrice) <= 0)
+  ) {
+    const error = new Error("Set our price before enabling this zero-cost data plan");
+    error.statusCode = 400;
     throw error;
   }
 
