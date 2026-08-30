@@ -505,6 +505,13 @@ const getTransactionDetails = (transaction) => {
       costPrice: metadata.costPrice,
       profit: metadata.profit,
       customerReference: metadata.customerReference,
+      dataShareInventory: metadata.dataShareInventory,
+      publicError: metadata.publicError,
+      providerErrorMessage:
+        metadata.providerError?.message ||
+        metadata.providerError?.error ||
+        metadata.providerError?.data?.message ||
+        null,
     };
   }
 

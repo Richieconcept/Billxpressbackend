@@ -264,6 +264,7 @@ export const serializeDataPlanForUser = ({
 }) => {
   const pricingConfig = getPricingForUser(settings, user, plan.costPrice);
   const vendor = isVendorUser(user);
+  const costSource = getPlanCostSource(plan);
   const customPrice =
     vendor && Number(plan.vendorPrice) > 0 ? plan.vendorPrice : plan.ourPrice;
   const hasCustomPrice =
@@ -287,7 +288,7 @@ export const serializeDataPlanForUser = ({
     validity: plan.validity,
     validityDays: plan.validityDays,
     costPrice: plan.costPrice,
-    costSource: getPlanCostSource(plan),
+    costSource,
     networkPrice: plan.networkPrice,
     providerPrice: plan.providerPrice,
     ourPrice:
@@ -301,7 +302,7 @@ export const serializeDataPlanForUser = ({
         ? Number(plan.vendorPrice)
         : undefined,
     sellingPrice: pricing.sellingPrice,
-    profit: pricing.profit,
+    profit: costSource === "inventory_or_zero" ? 0 : pricing.profit,
     markupPercent: pricingConfig.markupPercent,
     pricingModel: hasCustomPrice ? "custom" : pricingConfig.pricingModel,
     pricingTier: pricingConfig.pricingTier,
