@@ -174,11 +174,100 @@ const getNumber = (...values) => {
   return Number(value) || 0;
 };
 
+const extractProviderHistory = (providerHistory) =>
+  providerHistory?.data || providerHistory || {};
+
+const normalizeProviderText = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
+
+const toMoneyNumber = (value) => {
+  const number = Number(String(value ?? "").replace(/[,\s]/g, ""));
+
+  return Number.isFinite(number) && number > 0 ? number : 0;
+};
+
+const findPositiveMoneyValue = (source, keys = []) => {
+  if (!source || typeof source !== "object") {
+    return 0;
+  }
+
+  for (const key of keys) {
+    const value = toMoneyNumber(source[key]);
+
+    if (value > 0) {
+      return value;
+    }
+  }
+
+  return 0;
+};
+
+const getWalletRouteHistory = (metadata) =>
+  extractProviderHistory(
+    metadata.providerHistory ||
+      metadata.providerResponse ||
+      metadata.dataShareInventory?.providerResponse
+  );
+
+const getWalletRouteCostPrice = (metadata) => {
+  if (metadata.service !== "data") {
+    return 0;
+  }
+
+  const history = getWalletRouteHistory(metadata);
+  const route = normalizeProviderText(history.route);
+
+  if (route !== "wallet") {
+    return 0;
+  }
+
+  const directCost = findPositiveMoneyValue(history, [
+    "buyingPrice",
+    "buying_price",
+    "buying price",
+    "costPrice",
+    "cost_price",
+    "providerPrice",
+    "provider_price",
+  ]);
+
+  if (directCost > 0) {
+    return directCost;
+  }
+
+  const text = [
+    history.response,
+    history.message,
+    metadata.providerHistory?.response,
+    metadata.providerHistory?.message,
+    metadata.providerResponse?.response,
+    metadata.providerResponse?.message,
+    metadata.dataShareInventory?.providerResponse?.response,
+    metadata.dataShareInventory?.providerResponse?.message,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const match = text.match(/\bbuying\s+price\s+([\d,.]+)/i);
+
+  if (match) {
+    return toMoneyNumber(match[1]);
+  }
+
+  return toMoneyNumber(metadata.plan?.providerPrice);
+};
+
 const normalizeDashboardTransaction = (transaction) => {
   const metadata = transaction.metadata || {};
   const sellingPrice = getNumber(metadata.sellingPrice, transaction.amount / 100);
-  const costPrice = getNumber(metadata.costPrice, metadata.amount, sellingPrice);
-  const profit = getNumber(metadata.profit, sellingPrice - costPrice);
+  const walletRouteCostPrice = getWalletRouteCostPrice(metadata);
+  const costPrice =
+    walletRouteCostPrice ||
+    getNumber(metadata.costPrice, metadata.amount, sellingPrice);
+  const profit = walletRouteCostPrice
+    ? sellingPrice - costPrice
+    : getNumber(metadata.profit, sellingPrice - costPrice);
 
   return {
     createdAt: transaction.createdAt,

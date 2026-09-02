@@ -865,6 +865,119 @@ const confirmUnclearDataPurchase = async ({ provider, reference }) => {
   }
 };
 
+const extractProviderHistory = (providerHistory) =>
+  providerHistory?.data || providerHistory || {};
+
+const normalizeProviderText = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
+
+const toMoneyNumber = (value) => {
+  const number = Number(String(value ?? "").replace(/[,\s]/g, ""));
+
+  return Number.isFinite(number) && number > 0 ? number : 0;
+};
+
+const findPositiveMoneyValue = (source, keys = []) => {
+  if (!source || typeof source !== "object") {
+    return 0;
+  }
+
+  for (const key of keys) {
+    const value = toMoneyNumber(source[key]);
+
+    if (value > 0) {
+      return value;
+    }
+  }
+
+  return 0;
+};
+
+const extractTwoFastWalletCost = ({ providerHistory, pricedPlan }) => {
+  const history = extractProviderHistory(providerHistory);
+  const directCost = findPositiveMoneyValue(history, [
+    "buyingPrice",
+    "buying_price",
+    "buying price",
+    "costPrice",
+    "cost_price",
+    "providerPrice",
+    "provider_price",
+  ]);
+
+  if (directCost > 0) {
+    return directCost;
+  }
+
+  const text = [
+    history.response,
+    history.message,
+    providerHistory?.response,
+    providerHistory?.message,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const match = text.match(/\bbuying\s+price\s+([\d,.]+)/i);
+
+  if (match) {
+    return toMoneyNumber(match[1]);
+  }
+
+  return toMoneyNumber(pricedPlan?.providerPrice);
+};
+
+const applyTwoFastWalletRoutePricing = ({
+  transaction,
+  pricedPlan,
+  providerHistory,
+}) => {
+  const history = extractProviderHistory(providerHistory);
+  const route = normalizeProviderText(history.route);
+
+  if (route !== "wallet") {
+    return null;
+  }
+
+  const costPrice = extractTwoFastWalletCost({ providerHistory, pricedPlan });
+
+  if (costPrice <= 0) {
+    return null;
+  }
+
+  const sellingPrice = Number(pricedPlan?.sellingPrice || 0);
+  const profit = Math.max(0, Number((sellingPrice - costPrice).toFixed(2)));
+
+  transaction.metadata = {
+    ...transaction.metadata,
+    costPrice,
+    costSource: "provider_wallet",
+    sellingPrice,
+    profit,
+    plan: {
+      ...transaction.metadata.plan,
+      costPrice,
+      costSource: "provider_wallet",
+      profit,
+    },
+    providerHistory,
+    dataShareInventory: {
+      status: "provider_wallet",
+      route,
+      costPrice,
+      sellingPrice,
+      profit,
+    },
+  };
+
+  pricedPlan.costPrice = costPrice;
+  pricedPlan.costSource = "provider_wallet";
+  pricedPlan.profit = profit;
+
+  return { costPrice, profit, route };
+};
+
 const applyDataShareInventoryBestEffort = async ({
   provider,
   transaction,
@@ -887,6 +1000,16 @@ const applyDataShareInventoryBestEffort = async ({
             providerResult.providerReference || transaction.reference
           )
         : providerResult.raw;
+    const walletRoutePricing = applyTwoFastWalletRoutePricing({
+      transaction,
+      pricedPlan,
+      providerHistory,
+    });
+
+    if (walletRoutePricing) {
+      return walletRoutePricing;
+    }
+
     const inventory = await recordDataShareUsageFromTransaction({
       transaction,
       pricedPlan,
