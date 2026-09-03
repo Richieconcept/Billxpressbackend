@@ -51,11 +51,11 @@ docs {
 
   ## Hosted SIM vs Provider Wallet Cost
 
-  Use `allowHostedSim` to control which cost is used for markup/profit:
+  Use `fulfillmentRoute` to control which cost is used for markup/profit:
 
   ```json
   {
-    "allowHostedSim": true
+    "fulfillmentRoute": "network"
   }
   ```
 
@@ -64,15 +64,17 @@ docs {
 
   ```json
   {
-    "allowHostedSim": false
+    "fulfillmentRoute": "provider"
   }
   ```
 
   Uses `providerPrice` when it exists. This is for plans sold from provider
   wallet/API balance.
 
-  For wallet/API plans, set `allowHostedSim` to `false`; otherwise profit can be
-  calculated against the network price instead of the real provider charge.
+  For provider/API plans, set `fulfillmentRoute` to `provider`; otherwise profit
+  can be calculated against the network price instead of the real provider
+  charge. The older `allowHostedSim` field is still supported directly:
+  `true` means network, and `false` means provider.
   
   ## Fixed Price
   

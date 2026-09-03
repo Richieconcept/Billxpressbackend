@@ -145,6 +145,8 @@ docs {
   - provider plan name/type/validity;
   - `networkPrice`, `providerPrice`, and `costPrice`;
   - `costSource`, showing which cost is used for markup/profit;
+  - `fulfillmentRoute`, showing `network` or `provider` for the admin route
+    selector;
   - editable `ourPrice` for normal app users;
   - editable `vendorPrice` for API/vendor users;
   - `isEnabled`;
@@ -183,12 +185,14 @@ docs {
     `networkPrice`; otherwise it falls back to `providerPrice`.
   - `costSource`: `network`, `provider_wallet`, `network_fallback`, or
     `inventory_or_zero`.
+  - `fulfillmentRoute`: `network` means use `networkPrice`; `provider` means
+    use `providerPrice`.
 
   For plans sold from provider wallet/API, admin should set:
 
   ```json
   {
-    "allowHostedSim": false
+    "fulfillmentRoute": "provider"
   }
   ```
 

@@ -1,0 +1,40 @@
+meta {
+  name: 10. Admin Delete DataShare Stock
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/admin/services/data/datashare/batches/{{dataShareBatchId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+vars:pre-request {
+  dataShareBatchId: paste_batch_id_here
+}
+
+docs {
+  # Admin Delete DataShare Stock
+
+  Deletes a mistaken datashare stock load before customers have used it.
+
+  This is for cases like loading SIM 1 by mistake when the stock should have
+  been loaded on SIM 2.
+
+  The backend allows deletion only when:
+
+  - `soldMb` is `0`;
+  - no usage records are linked to the batch.
+
+  If sales have touched the batch, deletion is blocked. Update the batch status
+  to `disabled` instead.
+}

@@ -32,6 +32,7 @@ import {
 import {
   createAdminDataShareBatch,
   createAdminDataShareSim,
+  deleteAdminDataShareBatch,
   getAdminDataShareBatches,
   getAdminDataShareSims,
   getAdminDataShareSummary,
@@ -248,6 +249,12 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminDataShareBatch
+);
+router.delete(
+  "/services/data/datashare/batches/:batchId",
+  protect,
+  authorizeRoles("admin"),
+  deleteAdminDataShareBatch
 );
 router.get(
   "/services/data/datashare/usages",

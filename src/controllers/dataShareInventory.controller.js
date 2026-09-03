@@ -1,6 +1,7 @@
 import {
   createDataShareBatch,
   createDataShareSim,
+  deleteDataShareBatch,
   getDataShareInventorySummary,
   listDataShareBatches,
   listDataShareSims,
@@ -135,6 +136,21 @@ export const updateAdminDataShareBatch = async (req, res) => {
     });
   } catch (error) {
     sendDataShareInventoryError(res, "Could not update datashare stock", error);
+  }
+};
+
+export const deleteAdminDataShareBatch = async (req, res) => {
+  try {
+    const batch = await deleteDataShareBatch({
+      batchId: req.params.batchId,
+    });
+
+    res.json({
+      message: "Datashare stock deleted successfully",
+      batch: serializeDataShareBatch(batch),
+    });
+  } catch (error) {
+    sendDataShareInventoryError(res, "Could not delete datashare stock", error);
   }
 };
 

@@ -435,6 +435,38 @@ export const updateDataShareBatch = async ({ batchId, payload, adminUserId }) =>
   return batch;
 };
 
+export const deleteDataShareBatch = async ({ batchId }) => {
+  const batch = await DataShareBatch.findById(batchId);
+
+  if (!batch) {
+    const error = new Error("Datashare stock batch was not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (Number(batch.soldMb || 0) > 0) {
+    const error = new Error(
+      "This datashare stock has recorded sales and cannot be deleted. Disable it instead."
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const usageCount = await DataShareUsage.countDocuments({ batch: batch._id });
+
+  if (usageCount > 0) {
+    const error = new Error(
+      "This datashare stock is linked to usage records and cannot be deleted. Disable it instead."
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
+  await batch.deleteOne();
+
+  return batch;
+};
+
 export const listDataShareBatches = async (filters = {}) => {
   const query = {};
 

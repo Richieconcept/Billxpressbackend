@@ -30,6 +30,13 @@ docs {
   the transaction is not refunded because delivery already happened. Instead the
   usage is saved as `unmatched` so admin can add or correct stock.
 
+  Multiple SIMs are supported. Create SIM 1 and SIM 2 separately, then add stock
+  to the intended SIM by sending that SIM's `simPhoneNumber`.
+
+  If stock was loaded to the wrong SIM and no sale has used it yet, delete that
+  stock batch and add it again using the correct SIM phone number. If sales have
+  already used it, disable the batch instead of deleting it.
+
   ## Recommended Admin UI
 
   Build this as a work-focused inventory screen, not a marketing page.

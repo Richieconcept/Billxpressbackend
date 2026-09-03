@@ -347,6 +347,22 @@ const buildPlanQuery = ({ provider, network, dataType, isEnabled } = {}) => {
   return query;
 };
 
+const normalizeFulfillmentRoute = (value) => {
+  const route = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  if (["provider", "provider_wallet", "wallet", "api"].includes(route)) {
+    return "provider";
+  }
+
+  if (["network", "hosted_sim", "sim"].includes(route)) {
+    return "network";
+  }
+
+  return null;
+};
+
 const getPlanCostPrice = (plan) => {
   const networkPrice = Number(plan.networkPrice || 0);
   const providerPrice = Number(plan.providerPrice || 0);
@@ -545,6 +561,8 @@ export const serializeAdminDataPlan = (plan) => ({
   providerPrice: plan.providerPrice,
   costPrice: getPlanCostPrice(plan),
   costSource: getPlanCostSource(plan),
+  fulfillmentRoute:
+    getPlanCostSource(plan) === "provider_wallet" ? "provider" : "network",
   ourPrice: plan.ourPrice,
   vendorPrice: plan.vendorPrice,
   isEnabled: plan.isEnabled,
@@ -589,6 +607,7 @@ export const listAdminDataPlans = async (filters = {}) => {
 };
 
 export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
+  let requestedFulfillmentRoute = null;
   const allowedFields = [
     "ourPrice",
     "vendorPrice",
@@ -596,6 +615,7 @@ export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
     "dataType",
     "allowHostedSim",
     "allowWalletFallback",
+    "fulfillmentRoute",
   ];
   const update = {};
 
@@ -633,6 +653,21 @@ export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
     update.dataType = normalizePlanFilter(update.dataType);
   }
 
+  if (update.fulfillmentRoute !== undefined) {
+    const fulfillmentRoute = normalizeFulfillmentRoute(update.fulfillmentRoute);
+
+    if (!fulfillmentRoute) {
+      const error = new Error("fulfillmentRoute must be provider or network");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    requestedFulfillmentRoute = fulfillmentRoute;
+    update.allowHostedSim = fulfillmentRoute === "network";
+    update.allowWalletFallback = fulfillmentRoute === "provider";
+    delete update.fulfillmentRoute;
+  }
+
   ["isEnabled", "allowHostedSim", "allowWalletFallback"].forEach((field) => {
     if (update[field] !== undefined && typeof update[field] === "string") {
       update[field] = update[field].toLowerCase() === "true";
@@ -656,6 +691,28 @@ export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
   if (enabling && !isCatalogPlanSellable(existing)) {
     const error = new Error("This plan is currently unavailable from the provider");
     error.statusCode = 409;
+    throw error;
+  }
+
+  if (
+    requestedFulfillmentRoute === "provider" &&
+    Number(prospectivePlan.providerPrice || 0) <= 0
+  ) {
+    const error = new Error(
+      "This plan cannot use provider pricing because provider price is not available"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (
+    requestedFulfillmentRoute === "network" &&
+    Number(prospectivePlan.networkPrice || 0) <= 0
+  ) {
+    const error = new Error(
+      "This plan cannot use network pricing because network price is not available"
+    );
+    error.statusCode = 400;
     throw error;
   }
 
