@@ -1,0 +1,55 @@
+meta {
+  name: 11. Admin Adjust DataShare Stock
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/api/v1/admin/services/data/datashare/batches/{{dataShareBatchId}}/adjust
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "direction": "reduce",
+    "adjustmentData": "1GB",
+    "reason": "Wrongly recorded stock load"
+  }
+}
+
+vars:pre-request {
+  dataShareBatchId: 2349131806850
+  authToken: your-admin-token
+}
+
+docs {
+  # Admin Adjust DataShare Stock
+  
+  Corrects a datashare stock batch when stock was wrongly recorded.
+  
+  Use `"direction": "reduce"` to remove unused stock from the batch.
+  Use `"direction": "add"` or omit `direction` with a positive `adjustmentMb`
+  to add stock to the batch.
+  
+  Accepted quantity fields:
+  
+  - `adjustmentData`: examples: `500MB`, `1GB`, `2.5GB`;
+  - `adjustmentMb`: numeric MB value, can be positive or negative.
+  
+  Optional:
+  
+  - `costAdjustment`: amount to add to or subtract from total cost.
+  
+  The backend blocks reductions that would make `remainingMb` negative or reduce
+  total stock below the amount already sold.
+}

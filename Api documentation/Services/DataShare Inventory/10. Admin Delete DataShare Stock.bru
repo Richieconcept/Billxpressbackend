@@ -19,22 +19,23 @@ auth:bearer {
 }
 
 vars:pre-request {
-  dataShareBatchId: paste_batch_id_here
+  dataShareBatchId: 2349131806850
+  authToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTFlOGZlM2NiODVhYzVmYjkxN2E0YjIiLCJyb2xlIjoiYWRtaW4iLCJhdXRoVGllciI6InRpZXJfMiIsImlhdCI6MTc4ODQ0MzQyOCwiZXhwIjoxNzg5MDQ4MjI4fQ.hLb8g-Cn9YwXbYPzGIqRqRjggs5G0u-fOUS6jJSn1zw
 }
 
 docs {
   # Admin Delete DataShare Stock
-
+  
   Deletes a mistaken datashare stock load before customers have used it.
-
+  
   This is for cases like loading SIM 1 by mistake when the stock should have
   been loaded on SIM 2.
-
+  
   The backend allows deletion only when:
-
+  
   - `soldMb` is `0`;
   - no usage records are linked to the batch.
-
+  
   If sales have touched the batch, deletion is blocked. Update the batch status
   to `disabled` instead.
 }

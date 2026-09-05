@@ -30,6 +30,7 @@ import {
   updateAdminDataSettings,
 } from "../controllers/dataService.controller.js";
 import {
+  adjustAdminDataShareBatchStock,
   createAdminDataShareBatch,
   createAdminDataShareSim,
   deleteAdminDataShareBatch,
@@ -249,6 +250,12 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminDataShareBatch
+);
+router.post(
+  "/services/data/datashare/batches/:batchId/adjust",
+  protect,
+  authorizeRoles("admin"),
+  adjustAdminDataShareBatchStock
 );
 router.delete(
   "/services/data/datashare/batches/:batchId",

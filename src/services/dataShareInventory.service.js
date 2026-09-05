@@ -435,6 +435,93 @@ export const updateDataShareBatch = async ({ batchId, payload, adminUserId }) =>
   return batch;
 };
 
+export const adjustDataShareBatchStock = async ({ batchId, payload, adminUserId }) => {
+  const adjustmentMb =
+    payload?.adjustmentMb !== undefined
+      ? Number(payload.adjustmentMb)
+      : parseDataVolumeToMb(payload?.adjustmentData || payload?.volume);
+  const direction = String(payload?.direction || payload?.type || "").toLowerCase();
+  const signedAdjustmentMb =
+    direction === "reduce" || direction === "decrease" || direction === "remove"
+      ? -Math.abs(adjustmentMb)
+      : adjustmentMb;
+
+  if (!Number.isFinite(signedAdjustmentMb) || signedAdjustmentMb === 0) {
+    const error = new Error("A non-zero stock adjustment is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const reason = String(payload?.reason || payload?.note || "").trim();
+
+  if (!reason) {
+    const error = new Error("A reason is required when adjusting datashare stock");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const batch = await DataShareBatch.findById(batchId);
+
+  if (!batch) {
+    const error = new Error("Datashare stock batch was not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const newTotalMb = Number(batch.totalMb || 0) + signedAdjustmentMb;
+  const newRemainingMb = Number(batch.remainingMb || 0) + signedAdjustmentMb;
+
+  if (newTotalMb < Math.max(1, Number(batch.soldMb || 0)) || newRemainingMb < 0) {
+    const error = new Error(
+      "Cannot reduce stock below the quantity already sold or available"
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const totalCost = Number(batch.totalCost || 0);
+  const costSpent = Number(batch.costSpent || 0);
+  const defaultCostAdjustment = roundMoney(signedAdjustmentMb * Number(batch.costPerMb || 0));
+  let costAdjustment =
+    payload?.costAdjustment !== undefined
+      ? Number(payload.costAdjustment)
+      : defaultCostAdjustment;
+  let newTotalCost = roundMoney(totalCost + costAdjustment);
+
+  if (
+    payload?.costAdjustment === undefined &&
+    signedAdjustmentMb < 0 &&
+    newTotalCost + 0.01 < costSpent
+  ) {
+    costAdjustment = roundMoney(costSpent - totalCost);
+    newTotalCost = roundMoney(totalCost + costAdjustment);
+  }
+
+  if (!Number.isFinite(costAdjustment) || newTotalCost + 0.01 < costSpent) {
+    const error = new Error(
+      "Cost adjustment would make total cost lower than recorded cost spent"
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
+  batch.totalMb = newTotalMb;
+  batch.remainingMb = newRemainingMb;
+  batch.totalCost = newTotalCost;
+  batch.costPerMb = newTotalMb > 0 ? newTotalCost / newTotalMb : 0;
+  if (["active", "exhausted"].includes(batch.status)) {
+    batch.status = newRemainingMb > 0 ? "active" : "exhausted";
+  }
+  batch.note = [batch.note, `Stock adjusted by ${formatMb(signedAdjustmentMb)}: ${reason}`]
+    .filter(Boolean)
+    .join("\n");
+  batch.updatedBy = adminUserId;
+
+  await batch.save();
+
+  return batch;
+};
+
 export const deleteDataShareBatch = async ({ batchId }) => {
   const batch = await DataShareBatch.findById(batchId);
 
