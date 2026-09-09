@@ -21,7 +21,7 @@ import { getPublicProviderFailure } from "./providerFailure.service.js";
 import { withServicePurchaseLock } from "./servicePurchaseLock.service.js";
 import { ensureUniqueCustomerReference } from "./vendorReference.service.js";
 
-const ELECTRICITY_SERVICE_TEMPORARILY_DISABLED = true;
+const ELECTRICITY_SERVICE_TEMPORARILY_DISABLED = false;
 const ELECTRICITY_SERVICE_DISABLED_MESSAGE =
   "Electricity service is currently unavailable";
 
