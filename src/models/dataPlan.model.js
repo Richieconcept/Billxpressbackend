@@ -73,6 +73,11 @@ const dataPlanSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    isHot: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     allowHostedSim: {
       type: Boolean,
       default: true,

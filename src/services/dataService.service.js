@@ -307,6 +307,7 @@ export const serializeDataPlanForUser = ({
     pricingModel: hasCustomPrice ? "custom" : pricingConfig.pricingModel,
     pricingTier: pricingConfig.pricingTier,
     available: plan.available,
+    isHot: plan.isHot === true,
   };
 
   if (includeProvider) {
@@ -336,13 +337,20 @@ const getNetworkProviderMap = (settings) =>
     return providers;
   }, {});
 
-const buildPlanQuery = ({ provider, network, dataType, isEnabled } = {}) => {
+const buildPlanQuery = ({
+  provider,
+  network,
+  dataType,
+  isEnabled,
+  isHot,
+} = {}) => {
   const query = {};
 
   if (provider) query.provider = String(provider).trim().toLowerCase();
   if (network) query.network = normalizePlanFilter(network);
   if (dataType) query.dataType = normalizePlanFilter(dataType);
   if (isEnabled !== undefined) query.isEnabled = isEnabled;
+  if (isHot !== undefined) query.isHot = isHot;
 
   return query;
 };
@@ -463,6 +471,7 @@ const catalogDocumentToProviderPlan = (document) => ({
   costSource: getPlanCostSource(document),
   ourPrice: document.ourPrice,
   vendorPrice: document.vendorPrice,
+  isHot: document.isHot === true,
   available: document.isEnabled && isCatalogPlanSellable(document),
   allowHostedSim: document.allowHostedSim,
   allowWalletFallback: document.allowWalletFallback,
@@ -509,6 +518,7 @@ export const syncDataPlans = async ({ providerName, adminUserId } = {}) => {
             dataType: normalizePlanFilter(plan.type || "OTHER"),
             ourPrice: null,
             isEnabled: false,
+            isHot: false,
             allowHostedSim: true,
             allowWalletFallback: false,
             updatedBy: adminUserId || null,
@@ -566,6 +576,7 @@ export const serializeAdminDataPlan = (plan) => ({
   ourPrice: plan.ourPrice,
   vendorPrice: plan.vendorPrice,
   isEnabled: plan.isEnabled,
+  isHot: plan.isHot === true,
   allowHostedSim: plan.allowHostedSim,
   allowWalletFallback: plan.allowWalletFallback,
   providerAvailable: plan.providerAvailable,
@@ -612,6 +623,7 @@ export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
     "ourPrice",
     "vendorPrice",
     "isEnabled",
+    "isHot",
     "dataType",
     "allowHostedSim",
     "allowWalletFallback",
@@ -668,11 +680,13 @@ export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
     delete update.fulfillmentRoute;
   }
 
-  ["isEnabled", "allowHostedSim", "allowWalletFallback"].forEach((field) => {
-    if (update[field] !== undefined && typeof update[field] === "string") {
-      update[field] = update[field].toLowerCase() === "true";
+  ["isEnabled", "isHot", "allowHostedSim", "allowWalletFallback"].forEach(
+    (field) => {
+      if (update[field] !== undefined && typeof update[field] === "string") {
+        update[field] = update[field].toLowerCase() === "true";
+      }
     }
-  });
+  );
 
   const existing = await DataPlan.findById(planId);
 
@@ -764,6 +778,7 @@ export const getDataPlansForUser = async (user, filters = {}) => {
     ...(filters.dataType
       ? { dataType: normalizePlanFilter(filters.dataType) }
       : {}),
+    ...(filters.isHot !== undefined ? { isHot: filters.isHot } : {}),
     isEnabled: true,
   }).sort({ network: 1, dataType: 1, ourPrice: 1 });
 

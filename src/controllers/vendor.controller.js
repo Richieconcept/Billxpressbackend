@@ -209,7 +209,17 @@ export const getVendorTransaction = async (req, res) => {
 
 export const getVendorDataPlans = async (req, res) => {
   try {
-    const result = await getDataPlansForUser(req.user);
+    const isHot =
+      req.query.isHot !== undefined
+        ? String(req.query.isHot).toLowerCase() === "true"
+        : String(req.query.category || "").toLowerCase() === "hot"
+          ? true
+          : undefined;
+    const result = await getDataPlansForUser(req.user, {
+      network: req.query.network,
+      dataType: req.query.dataType || req.query.type,
+      isHot,
+    });
 
     success(res, "Data plans fetched successfully", {
       plans: result.plans,

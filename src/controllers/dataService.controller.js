@@ -22,11 +22,21 @@ const sendDataServiceError = (res, publicMessage, error) => {
   });
 };
 
+const parseOptionalBoolean = (value) => {
+  if (value === undefined) return undefined;
+  return String(value).toLowerCase() === "true";
+};
+
+const parseHotFilter = (query = {}) =>
+  parseOptionalBoolean(query.isHot) ??
+  (String(query.category || "").toLowerCase() === "hot" ? true : undefined);
+
 export const getDataPlans = async (req, res) => {
   try {
     const result = await getDataPlansForUser(req.user, {
       network: req.query.network,
       dataType: req.query.dataType || req.query.type,
+      isHot: parseHotFilter(req.query),
     });
 
     res.json({
@@ -50,11 +60,6 @@ export const getDataPlans = async (req, res) => {
   }
 };
 
-const parseOptionalBoolean = (value) => {
-  if (value === undefined) return undefined;
-  return String(value).toLowerCase() === "true";
-};
-
 export const getAdminDataPlans = async (req, res) => {
   try {
     const plans = await listAdminDataPlans({
@@ -62,6 +67,7 @@ export const getAdminDataPlans = async (req, res) => {
       network: req.query.network,
       dataType: req.query.dataType || req.query.type,
       isEnabled: parseOptionalBoolean(req.query.isEnabled),
+      isHot: parseHotFilter(req.query),
       providerAvailable: parseOptionalBoolean(req.query.providerAvailable),
       customerVisible:
         parseOptionalBoolean(req.query.customerVisible) ??
