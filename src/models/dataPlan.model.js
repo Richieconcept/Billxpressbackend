@@ -48,6 +48,31 @@ const dataPlanSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    displayNetwork: {
+      type: String,
+      default: null,
+    },
+    displayName: {
+      type: String,
+      default: null,
+    },
+    displayDataType: {
+      type: String,
+      default: null,
+    },
+    displayValidity: {
+      type: String,
+      default: null,
+    },
+    displayValidityDays: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+    note: {
+      type: String,
+      default: null,
+    },
     networkPrice: {
       type: Number,
       default: 0,

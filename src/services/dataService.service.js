@@ -282,11 +282,15 @@ export const serializeDataPlanForUser = ({
 
   const serialized = {
     id: plan.catalogId || plan.providerPlanId,
-    network: plan.network,
-    name: plan.name,
-    type: plan.type,
-    validity: plan.validity,
-    validityDays: plan.validityDays,
+    network: resolveDisplayText(plan.displayNetwork, plan.network),
+    name: resolveDisplayText(plan.displayName, plan.name),
+    type: resolveDisplayText(plan.displayDataType, plan.type),
+    validity: resolveDisplayText(plan.displayValidity, plan.validity),
+    validityDays: resolveDisplayNumber(
+      plan.displayValidityDays,
+      plan.validityDays
+    ),
+    note: normalizeOptionalText(plan.note),
     costPrice: plan.costPrice,
     costSource,
     networkPrice: plan.networkPrice,
@@ -324,6 +328,19 @@ const normalizePlanFilter = (value) =>
   String(value || "")
     .trim()
     .toUpperCase();
+
+const normalizeOptionalText = (value) => {
+  if (value === null || value === undefined) return null;
+
+  const text = String(value).trim();
+  return text || null;
+};
+
+const resolveDisplayText = (override, fallback) =>
+  normalizeOptionalText(override) || fallback;
+
+const resolveDisplayNumber = (override, fallback) =>
+  override === null || override === undefined ? fallback : override;
 
 const getProviderNamesForNetwork = (settings, network) =>
   normalizeProviderList(
@@ -465,6 +482,12 @@ const catalogDocumentToProviderPlan = (document) => ({
   providerDataType: document.providerDataType,
   validity: document.validity,
   validityDays: document.validityDays,
+  displayNetwork: document.displayNetwork,
+  displayName: document.displayName,
+  displayDataType: document.displayDataType,
+  displayValidity: document.displayValidity,
+  displayValidityDays: document.displayValidityDays,
+  note: document.note,
   networkPrice: document.networkPrice,
   providerPrice: document.providerPrice,
   costPrice: getPlanCostPrice(document),
@@ -516,6 +539,12 @@ export const syncDataPlans = async ({ providerName, adminUserId } = {}) => {
           },
           $setOnInsert: {
             dataType: normalizePlanFilter(plan.type || "OTHER"),
+            displayNetwork: null,
+            displayName: null,
+            displayDataType: null,
+            displayValidity: null,
+            displayValidityDays: null,
+            note: null,
             ourPrice: null,
             isEnabled: false,
             isHot: false,
@@ -567,6 +596,20 @@ export const serializeAdminDataPlan = (plan) => ({
   providerDataType: plan.providerDataType,
   validity: plan.validity,
   validityDays: plan.validityDays,
+  displayNetwork: plan.displayNetwork,
+  displayName: plan.displayName,
+  displayDataType: plan.displayDataType,
+  displayValidity: plan.displayValidity,
+  displayValidityDays: plan.displayValidityDays,
+  note: plan.note,
+  customerNetwork: resolveDisplayText(plan.displayNetwork, plan.network),
+  customerName: resolveDisplayText(plan.displayName, plan.name),
+  customerDataType: resolveDisplayText(plan.displayDataType, plan.dataType),
+  customerValidity: resolveDisplayText(plan.displayValidity, plan.validity),
+  customerValidityDays: resolveDisplayNumber(
+    plan.displayValidityDays,
+    plan.validityDays
+  ),
   networkPrice: plan.networkPrice,
   providerPrice: plan.providerPrice,
   costPrice: getPlanCostPrice(plan),
@@ -625,6 +668,12 @@ export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
     "isEnabled",
     "isHot",
     "dataType",
+    "displayNetwork",
+    "displayName",
+    "displayDataType",
+    "displayValidity",
+    "displayValidityDays",
+    "note",
     "allowHostedSim",
     "allowWalletFallback",
     "fulfillmentRoute",
@@ -663,6 +712,37 @@ export const updateAdminDataPlan = async ({ planId, payload, adminUserId }) => {
 
   if (update.dataType !== undefined) {
     update.dataType = normalizePlanFilter(update.dataType);
+  }
+
+  [
+    "displayNetwork",
+    "displayName",
+    "displayDataType",
+    "displayValidity",
+    "note",
+  ].forEach(
+    (field) => {
+      if (update[field] !== undefined) {
+        update[field] = normalizeOptionalText(update[field]);
+      }
+    }
+  );
+
+  if (update.displayValidityDays !== undefined) {
+    update.displayValidityDays =
+      update.displayValidityDays === null || update.displayValidityDays === ""
+        ? null
+        : Number(update.displayValidityDays);
+
+    if (
+      update.displayValidityDays !== null &&
+      (!Number.isFinite(update.displayValidityDays) ||
+        update.displayValidityDays < 0)
+    ) {
+      const error = new Error("Display validity days must be zero or greater");
+      error.statusCode = 400;
+      throw error;
+    }
   }
 
   if (update.fulfillmentRoute !== undefined) {
