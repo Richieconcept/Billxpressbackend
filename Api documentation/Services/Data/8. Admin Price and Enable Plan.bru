@@ -24,7 +24,13 @@ body:json {
     "ourPrice": 250,
     "vendorPrice": 240,
     "isEnabled": true,
+    "isHot": true,
     "dataType": "CORPORATE",
+    "displayName": "MTN 1GB Daily Special",
+    "displayDataType": "Daily",
+    "displayValidity": "1 Day",
+    "displayValidityDays": 1,
+    "note": "Do not buy this plan if you are owing data.",
     "allowHostedSim": false,
     "allowWalletFallback": true
   }
@@ -42,12 +48,67 @@ docs {
   returned by the admin list request.
   
   `networkPrice` and `providerPrice` come from SMEAPI, SME Plug, Autopilot,
-  UjayData, or Ogdams and cannot be changed here. `ourPrice`, `dataType`,
-  availability, and delivery controls belong to BillXpress and are preserved
-  during synchronization.
+  UjayData, Ogdams, 2Fast, or VTpass and cannot be changed here. `ourPrice`,
+  `vendorPrice`, `dataType`, `isEnabled`, `isHot`, display overrides, `note`,
+  and delivery controls belong to BillXpress and are preserved during
+  synchronization.
   
   `ourPrice` is the fixed selling price for normal app users. `vendorPrice` is
   the fixed selling price for active vendors/API users.
+
+  ## Hot Plans
+
+  Set `isHot` when admin wants a plan to appear in the app's Hot tab:
+
+  ```json
+  {
+    "isHot": true
+  }
+  ```
+
+  Remove it from Hot with:
+
+  ```json
+  {
+    "isHot": false
+  }
+  ```
+
+  The plan still needs `isEnabled=true` before customers can see or buy it.
+
+  ## Customer Display Overrides And Note
+
+  Use display override fields when the provider's plan text is unclear or not
+  how BillXpress wants to show it in the app:
+
+  ```json
+  {
+    "displayNetwork": "MTN",
+    "displayName": "MTN 1GB Daily Special",
+    "displayDataType": "Daily",
+    "displayValidity": "1 Day",
+    "displayValidityDays": 1,
+    "note": "Do not buy this plan if you are owing data."
+  }
+  ```
+
+  These fields change only what customers receive on:
+
+  ```txt
+  GET /api/v1/services/data/plans
+  ```
+
+  They do not change the provider plan ID, provider code, provider name, cost,
+  route, or any value used to complete the actual purchase.
+
+  Clear a display override or note with `null` or an empty string:
+
+  ```json
+  {
+    "displayName": null,
+    "note": ""
+  }
+  ```
 
   ## Hosted SIM vs Provider Wallet Cost
 

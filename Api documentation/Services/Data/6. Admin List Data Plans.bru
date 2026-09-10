@@ -43,6 +43,8 @@ docs {
   network=MTN|AIRTEL|GLO|9MOBILE
   type=AWOOF|GIFTING|SME|CORPORATE GIFTING|DATA SHARE|SOCIAL|OTHER
   isEnabled=true|false
+  isHot=true|false
+  category=hot
   providerAvailable=true|false
   customerVisible=true|false
   provider=smeapi|smeplug|autopilot|ujaydata|ogdams|2fast|vtpass
@@ -63,6 +65,10 @@ docs {
   Filters by BillXpress enablement. `isEnabled=true` means admin enabled the
   plan in BillXpress, but it does not always mean the customer can see it. The
   provider also has to be active for that network in data settings.
+
+  `isHot`
+  Filters by the admin-managed Hot flag. `isHot=true` means the plan is selected
+  for the app's Hot tab. `category=hot` is supported as an alias.
 
   `providerAvailable`
   Filters by upstream provider availability from the last sync. A plan must be
@@ -127,6 +133,12 @@ docs {
   /api/v1/admin/services/data/plans?network=MTN&customerVisible=true&sortBy=provider
   ```
 
+  For plans selected for the app's Hot tab:
+
+  ```txt
+  /api/v1/admin/services/data/plans?isHot=true&customerVisible=true
+  ```
+
   For MTN 2Fast datashare inventory plans:
 
   ```txt
@@ -150,6 +162,12 @@ docs {
   - editable `ourPrice` for normal app users;
   - editable `vendorPrice` for API/vendor users;
   - `isEnabled`;
+  - `isHot`, for plans selected for the app's Hot tab;
+  - editable display override fields: `displayNetwork`, `displayName`,
+    `displayDataType`, `displayValidity`, and `displayValidityDays`;
+  - editable `note`, for a short customer-facing plan warning or helper text;
+  - customer preview fields: `customerNetwork`, `customerName`,
+    `customerDataType`, `customerValidity`, and `customerValidityDays`;
   - `providerAvailable`;
   - `available`, meaning the upstream provider can currently sell the plan;
   - `customerAvailable`, meaning BillXpress enabled the plan and customers can
@@ -174,6 +192,19 @@ docs {
   `ourPrice` and `vendorPrice` are optional fixed selling prices. When either is
   set, that exact amount is used for that audience instead of percentage/tier
   markup. Clear a price with `null` to return that audience to fallback markup.
+
+  Display override fields are customer-facing only. They change what the app
+  receives as `network`, `name`, `type`, `validity`, and `validityDays`, but
+  they do not change the hidden provider plan used for purchase. Clear any
+  display override with `null` or an empty string to return to provider values.
+
+  `note` is optional plan-level text for the customer app, for example:
+
+  ```json
+  {
+    "note": "Do not buy this plan if you are owing data."
+  }
+  ```
   
   Price fields:
   

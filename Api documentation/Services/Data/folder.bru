@@ -62,6 +62,15 @@ docs {
   7. Never debit, credit, calculate markup, or refund on the frontend.
   8. Never display provider names on the customer data-plan list.
 
+  The customer plan response can include admin-managed merchandising fields:
+
+  - `isHot`: true when admin selected the plan for the app's Hot tab.
+  - `note`: optional short warning or helper text for that plan.
+
+  Admin can also override what the customer sees for `network`, `name`, `type`,
+  `validity`, and `validityDays`. These display overrides do not change the
+  hidden provider plan used for purchase.
+
   ## Admin Endpoints
 
   ```txt
@@ -97,12 +106,15 @@ docs {
   - new plans start disabled;
   - admin can set a fixed `ourPrice` for normal users, `vendorPrice` for API
     vendors, and enable a plan;
+  - admin can set `isHot` to feature a plan in the app's Hot tab;
+  - admin can set display overrides and a short `note` for a plan;
   - when `ourPrice` exists, it is the exact normal-user selling price;
   - when `vendorPrice` exists, it is the exact vendor/API selling price;
   - when a fixed price is empty, percentage/tier pricing remains the fallback
     for that audience;
   - synchronization updates provider prices and availability without deleting
-    BillXpress prices, type, or enabled status;
+    BillXpress prices, type, enabled status, Hot status, notes, or display
+    overrides;
   - customers only receive plans that are enabled, provider-available, and
     belong to a provider currently selected for that network;
   - customers do not receive provider names in the plan list.

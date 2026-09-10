@@ -43,6 +43,8 @@ docs {
   ```txt
   network=MTN|AIRTEL|GLO|9MOBILE
   type=SME|SME2|GIFTING|CORPORATE|CORPORATE2|AWOOF
+  isHot=true|false
+  category=hot
   ```
   
   Examples:
@@ -51,6 +53,8 @@ docs {
   GET /api/v1/services/data/plans?network=MTN
   GET /api/v1/services/data/plans?network=MTN&type=SME
   GET /api/v1/services/data/plans?network=AIRTEL&type=AWOOF
+  GET /api/v1/services/data/plans?isHot=true
+  GET /api/v1/services/data/plans?category=hot
   ```
   
   When `network` is omitted, the endpoint returns enabled plans for all
@@ -60,6 +64,9 @@ docs {
   both `smeapi` and `2fast`, this endpoint merges all enabled MTN plans from
   both providers into one normal plan list. The app should render them together
   the same way it renders any other data plans.
+
+  `isHot=true` returns only plans admin selected for the app's Hot tab.
+  `category=hot` is supported as a frontend-friendly alias for the same filter.
   
   ## Authentication
   
@@ -111,16 +118,33 @@ docs {
   the hidden provider behind it.
   
   `network`
-  Use this to group plans under MTN, GLO, AIRTEL, or 9MOBILE.
+  Use this to group plans under MTN, GLO, AIRTEL, or 9MOBILE. If admin set a
+  display override, this value is the customer-facing network label.
   
   `name`
-  Display as the bundle size, for example `500MB` or `10GB`.
+  Display as the bundle size, for example `500MB` or `10GB`. If admin set a
+  display override, this value is the customer-facing plan name.
   
   `type`
-  Display as plan type, for example `SME`, `Gifting`, or `Corporate`.
+  Display as plan type, for example `SME`, `Gifting`, or `Corporate`. If admin
+  set a display override, this value is the customer-facing plan type.
   
   `validity`
-  Display as the plan duration, for example `30 days`.
+  Display as the plan duration, for example `30 days`. If admin set a display
+  override, this value is the customer-facing validity text.
+
+  `validityDays`
+  Numeric validity in days. If admin set a display override, this value is the
+  customer-facing validity day count.
+
+  `isHot`
+  Use this to place the plan in the app's Hot tab. The app can either fetch all
+  plans and group by `isHot`, or fetch only Hot plans with `isHot=true`.
+
+  `note`
+  Optional short note or warning from admin for this exact plan, for example
+  `Do not buy this plan if you are owing data.` Display only when it is not
+  `null`.
   
   `sellingPrice`
   This is the amount the user will pay from their BillXpress wallet.
@@ -214,6 +238,7 @@ docs {
         "type": "SME",
         "validity": "7days",
         "validityDays": 7,
+        "note": "Do not buy this plan if you are owing data.",
         "costPrice": 255,
         "ourPrice": 300,
         "vendorPrice": null,
@@ -222,7 +247,8 @@ docs {
         "markupPercent": 15,
         "pricingModel": "custom",
         "pricingTier": null,
-        "available": true
+        "available": true,
+        "isHot": true
       }
     ],
     "count": 1
