@@ -23,8 +23,8 @@ const generateUniqueApiKey = async () => {
 };
 
 const sendAdminError = (res, publicMessage, error) => {
-  res.status(500).json({
-    message: publicMessage,
+  res.status(error.statusCode || 500).json({
+    message: error.statusCode ? error.message : publicMessage,
     error: process.env.NODE_ENV === "production" ? undefined : error.message,
   });
 };
@@ -87,6 +87,62 @@ const addDays = (date, days) => {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
   return next;
+};
+
+const NOTIFICATION_EXPIRY_OPTIONS = {
+  "24h": { amount: 24, unit: "hours" },
+  "1d": { amount: 1, unit: "days" },
+  "2d": { amount: 2, unit: "days" },
+  "1w": { amount: 7, unit: "days" },
+  "7d": { amount: 7, unit: "days" },
+  "1m": { amount: 1, unit: "months" },
+  "30d": { amount: 30, unit: "days" },
+};
+
+const addNotificationExpiry = (date, option) => {
+  const expiresAt = new Date(date);
+
+  if (option.unit === "hours") {
+    expiresAt.setHours(expiresAt.getHours() + option.amount);
+  } else if (option.unit === "months") {
+    expiresAt.setMonth(expiresAt.getMonth() + option.amount);
+  } else {
+    expiresAt.setDate(expiresAt.getDate() + option.amount);
+  }
+
+  return expiresAt;
+};
+
+const parseNotificationExpiresAt = ({ expiresAt, expiresIn, duration }) => {
+  if (expiresAt) {
+    const parsedDate = new Date(expiresAt);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      const error = new Error("expiresAt must be a valid date");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    return parsedDate;
+  }
+
+  const rawDuration = String(expiresIn || duration || "").trim().toLowerCase();
+
+  if (!rawDuration || rawDuration === "never" || rawDuration === "none") {
+    return null;
+  }
+
+  const option = NOTIFICATION_EXPIRY_OPTIONS[rawDuration];
+
+  if (!option) {
+    const error = new Error(
+      "expiresIn must be one of 24h, 2d, 1w, 1m, or never"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return addNotificationExpiry(new Date(), option);
 };
 
 const addMonths = (date, months) => {
@@ -1024,6 +1080,8 @@ export const createAdminNotification = async (req, res) => {
       priority = "normal",
       data = {},
       expiresAt,
+      expiresIn,
+      duration,
     } = req.body;
 
     if (!title || !message) {
@@ -1059,6 +1117,12 @@ export const createAdminNotification = async (req, res) => {
       });
     }
 
+    const notificationExpiresAt = parseNotificationExpiresAt({
+      expiresAt,
+      expiresIn,
+      duration,
+    });
+
     const results = await createNotificationsForUsers({
       userIds,
       title,
@@ -1068,7 +1132,7 @@ export const createAdminNotification = async (req, res) => {
       priority,
       data,
       createdBy: req.user._id,
-      expiresAt: expiresAt ? new Date(expiresAt) : null,
+      expiresAt: notificationExpiresAt,
     });
     const successful = results.filter((result) => !result.error);
     const failed = results.filter((result) => result.error);
@@ -1079,6 +1143,7 @@ export const createAdminNotification = async (req, res) => {
       requestedCount: userIds.length,
       createdCount: successful.length,
       failedCount: failed.length,
+      expiresAt: notificationExpiresAt,
       notifications: successful.slice(0, 20).map((notification) =>
         serializeNotification(notification)
       ),

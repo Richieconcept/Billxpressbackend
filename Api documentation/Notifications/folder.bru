@@ -15,6 +15,11 @@ docs {
   GET /api/v1/admin/notifications
   ```
 
+  Admin-created notifications can expire automatically. The admin UI can send
+  `expiresIn` as `24h`, `2d`, `1w`, `1m`, or `never`. The backend converts it
+  to `expiresAt`, and expired notifications are hidden from normal user lists
+  and popup notifications.
+
   ## How Push Notifications Work
 
   The React Native app must first get a push token from its push provider, then register it with the backend:

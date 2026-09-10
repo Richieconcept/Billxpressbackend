@@ -28,6 +28,7 @@ body:json {
     "type": "admin_announcement",
     "channel": "both",
     "priority": "normal",
+    "expiresIn": "24h",
     "data": {
       "screen": "wallet"
     }
@@ -72,6 +73,57 @@ docs {
 
   `priority`
   Use `low`, `normal`, or `high`.
+
+  `expiresIn`
+  Optional. Friendly duration for how long the notification should remain
+  visible in the app. Supported values:
+
+  ```txt
+  24h
+  2d
+  1w
+  1m
+  never
+  ```
+
+  `duration`
+  Optional alias for `expiresIn`.
+
+  `expiresAt`
+  Optional custom expiry date/time. Use ISO format if frontend needs an exact
+  expiry time. If `expiresAt` is sent, it takes priority over `expiresIn`.
+
+  Examples:
+
+  ```json
+  {
+    "expiresIn": "24h"
+  }
+  ```
+
+  ```json
+  {
+    "expiresIn": "2d"
+  }
+  ```
+
+  ```json
+  {
+    "expiresIn": "1w"
+  }
+  ```
+
+  ```json
+  {
+    "expiresIn": "1m"
+  }
+  ```
+
+  Use `never`, `none`, or omit expiry fields to create a notification that does
+  not expire automatically.
+
+  Expired notifications are hidden from normal user notification lists and popup
+  notifications.
 
   ## Push Notification Note
 
