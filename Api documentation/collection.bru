@@ -209,4 +209,24 @@ docs {
   ```
 
   The admin dashboard can use those endpoints to enable or disable social growth, switch between `exosupplier` and `vheeboost`, update exchange rate, and control normal-user/vendor pricing tiers.
+
+  ## Slider Rule
+
+  The mobile app should fetch home banners from:
+
+  ```txt
+  GET /api/v1/sliders
+  ```
+
+  Admin manages sliders from:
+
+  ```txt
+  GET    /api/v1/admin/sliders
+  POST   /api/v1/admin/sliders
+  PATCH  /api/v1/admin/sliders/:sliderId
+  DELETE /api/v1/admin/sliders/:sliderId
+  ```
+
+  Backend stores the image URL and optional `linkUrl`. Frontend controls the
+  carousel size, crop, and navigation behavior.
 }

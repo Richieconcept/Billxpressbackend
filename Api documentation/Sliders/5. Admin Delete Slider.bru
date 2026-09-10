@@ -1,0 +1,36 @@
+meta {
+  name: 5. Admin Delete Slider
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/admin/sliders/{{sliderId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+vars:pre-request {
+  sliderId: paste-slider-id-here
+}
+
+docs {
+  # Admin Delete Slider
+
+  Deletes a slider from the database. If the image was uploaded through
+  Cloudinary by this backend, backend also tries to delete the Cloudinary image.
+
+  ## Endpoint
+
+  `DELETE /api/v1/admin/sliders/:sliderId`
+
+  Requires admin JWT.
+}

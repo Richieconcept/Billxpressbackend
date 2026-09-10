@@ -8,6 +8,7 @@ import dataServiceRoutes from "./routes/dataService.routes.js";
 import electricityServiceRoutes from "./routes/electricityService.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import referralRoutes from "./routes/referral.routes.js";
+import sliderRoutes from "./routes/slider.routes.js";
 import socialGrowthRoutes from "./routes/socialGrowth.routes.js";
 import testRoutes from "./routes/test.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -49,7 +50,7 @@ app.use((req, res, next) => {
 
 // middleware
 app.use("/api/v1/webhooks", express.raw({ type: "application/json" }), webhookRoutes);
-app.use(express.json());
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || "5mb" }));
 
 // routes starts here ==============================
 app.use("/api/v1/auth", authRoutes);
@@ -65,6 +66,7 @@ app.use("/api/v1/services", electricityServiceRoutes);
 app.use("/api/v1/services", socialGrowthRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/referrals", referralRoutes);
+app.use("/api/v1/sliders", sliderRoutes);
 app.use("/api/v1/test", testRoutes);
 
 const getHealthResponse = () => ({

@@ -1,0 +1,51 @@
+meta {
+  name: 2. Admin List Sliders
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/sliders
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+docs {
+  # Admin List Sliders
+
+  Returns all sliders, active and inactive, for the admin dashboard.
+
+  ## Endpoint
+
+  `GET /api/v1/admin/sliders`
+
+  Requires admin JWT.
+
+  ## Expected Response
+
+  ```json
+  {
+    "sliders": [
+      {
+        "id": "slider_id",
+        "title": "Promo banner",
+        "imageUrl": "https://res.cloudinary.com/.../banner.webp",
+        "linkUrl": "/services/data",
+        "isActive": true,
+        "sortOrder": 1,
+        "createdAt": "2026-09-10T12:00:00.000Z",
+        "updatedAt": "2026-09-10T12:00:00.000Z"
+      }
+    ],
+    "count": 1
+  }
+  ```
+}

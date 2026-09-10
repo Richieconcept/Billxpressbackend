@@ -51,6 +51,12 @@ import {
   updateAdminSocialGrowthSettings,
 } from "../controllers/socialGrowth.controller.js";
 import {
+  createAdminSlider,
+  deleteAdminSlider,
+  getAdminSliders,
+  updateAdminSlider,
+} from "../controllers/slider.controller.js";
+import {
   getAdminCards,
   getAdminCardRates,
   getAdminCardSettings,
@@ -292,6 +298,20 @@ router.patch(
   protect,
   authorizeRoles("admin"),
   updateAdminSocialGrowthSettings
+);
+router.get("/sliders", protect, authorizeRoles("admin"), getAdminSliders);
+router.post("/sliders", protect, authorizeRoles("admin"), createAdminSlider);
+router.patch(
+  "/sliders/:sliderId",
+  protect,
+  authorizeRoles("admin"),
+  updateAdminSlider
+);
+router.delete(
+  "/sliders/:sliderId",
+  protect,
+  authorizeRoles("admin"),
+  deleteAdminSlider
 );
 router.get(
   "/cards",

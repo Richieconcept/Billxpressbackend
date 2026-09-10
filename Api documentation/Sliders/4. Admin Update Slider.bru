@@ -1,0 +1,63 @@
+meta {
+  name: 4. Admin Update Slider
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/sliders/{{sliderId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+vars:pre-request {
+  sliderId: paste-slider-id-here
+}
+
+body:json {
+  {
+    "title": "Updated data promo",
+    "imageBase64": "data:image/webp;base64,PASTE_BASE64_IMAGE_HERE",
+    "linkUrl": "/services/data",
+    "isActive": true,
+    "sortOrder": 1
+  }
+}
+
+docs {
+  # Admin Update Slider
+
+  Updates a slider. Send only fields that changed.
+
+  ## Endpoint
+
+  `PATCH /api/v1/admin/sliders/:sliderId`
+
+  Requires admin JWT.
+
+  ## Notes
+
+  If `imageBase64` is sent, backend uploads the new image to Cloudinary and
+  replaces the saved `imageUrl`.
+
+  If `imageUrl` is sent, backend stores that URL directly.
+
+  Set `isActive=false` to hide a slider without deleting it.
+
+  Clear `linkUrl` with an empty string:
+
+  ```json
+  {
+    "linkUrl": ""
+  }
+  ```
+}

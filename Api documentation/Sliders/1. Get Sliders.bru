@@ -1,0 +1,49 @@
+meta {
+  name: 1. Get Sliders
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/sliders
+  body: none
+  auth: none
+}
+
+docs {
+  # Get App Sliders
+
+  Returns active sliders for the mobile app, sorted by `sortOrder`.
+
+  ## Endpoint
+
+  `GET /api/v1/sliders`
+
+  Authentication is not required.
+
+  ## Frontend Usage
+
+  Use `imageUrl` as the banner image.
+
+  Use `linkUrl` as the click target. If `linkUrl` is an empty string, tapping
+  the banner should do nothing.
+
+  Frontend decides the rendered width, height, carousel behavior, crop, and
+  responsive layout.
+
+  ## Expected Response
+
+  ```json
+  {
+    "sliders": [
+      {
+        "id": "slider_id",
+        "title": "Promo banner",
+        "imageUrl": "https://res.cloudinary.com/.../banner.webp",
+        "linkUrl": "/services/data"
+      }
+    ],
+    "count": 1
+  }
+  ```
+}

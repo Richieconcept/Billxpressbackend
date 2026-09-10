@@ -1,0 +1,80 @@
+meta {
+  name: 3. Admin Create Slider
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/admin/sliders
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "title": "Data promo",
+    "imageBase64": "data:image/webp;base64,PASTE_BASE64_IMAGE_HERE",
+    "linkUrl": "/services/data",
+    "isActive": true,
+    "sortOrder": 1
+  }
+}
+
+docs {
+  # Admin Create Slider
+
+  Creates a home-screen slider/banner.
+
+  ## Endpoint
+
+  `POST /api/v1/admin/sliders`
+
+  Requires admin JWT.
+
+  ## Body Fields
+
+  `title`
+  Optional admin/customer label.
+
+  `imageBase64`
+  Recommended. Data URI or raw base64 image. Backend uploads it to Cloudinary.
+
+  `imageUrl`
+  Optional alternative. Use this if the image is already hosted. Send either
+  `imageBase64` or `imageUrl`.
+
+  `linkUrl`
+  Optional clickable target. It can be an HTTPS URL, app deep link, or app path
+  like `/services/data`. If empty, the frontend should not navigate on tap.
+
+  `isActive`
+  Optional. Defaults to `true`.
+
+  `sortOrder`
+  Optional. Lower numbers appear first.
+
+  ## Expected Response
+
+  ```json
+  {
+    "message": "Slider created successfully",
+    "slider": {
+      "id": "slider_id",
+      "title": "Data promo",
+      "imageUrl": "https://res.cloudinary.com/.../banner.webp",
+      "linkUrl": "/services/data",
+      "isActive": true,
+      "sortOrder": 1
+    }
+  }
+  ```
+}

@@ -1,0 +1,24 @@
+meta {
+  name: Sliders
+  seq: 14
+}
+
+docs {
+  # App Sliders
+
+  Sliders are small promotional banners for the mobile app home screen.
+
+  Frontend controls the displayed size and carousel layout. Backend stores the
+  image URL, active state, order, and optional clickable `linkUrl`.
+
+  Recommended image guidance for admin uploads:
+
+  - use a consistent banner ratio, for example 1080 x 420 px;
+  - keep images under 2MB;
+  - use JPG, PNG, or WebP;
+  - avoid putting critical text near the edges because frontend may crop or fit
+    differently across devices.
+
+  `linkUrl` is optional. It can be an HTTPS URL, app deep link, or app path. If
+  it is empty, tapping the banner should do nothing.
+}
