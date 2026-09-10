@@ -338,7 +338,7 @@ const purchaseElectricityForUserUnlocked = async ({
     };
     await debitResult.transaction.save();
 
-    await createNotificationBestEffort({
+    void createNotificationBestEffort({
       userId: user._id,
       title: "Electricity purchase successful",
       message: `${normalizedDisco} electricity purchase of NGN ${quote.amount} for ${normalizedMeterNumber} was successful.`,
@@ -362,7 +362,7 @@ const purchaseElectricityForUserUnlocked = async ({
 
     return {
       status: "successful",
-      message: providerResult.message,
+      message: providerResult.message || "Electricity purchase successful",
       quote,
       meter: verifiedMeter,
       token: providerResult.token,
@@ -454,8 +454,9 @@ export const purchaseElectricityForUser = (payload) =>
   });
 
 export const serializeElectricityPurchaseResult = (result) => ({
+  success: result.status === "successful",
   status: result.status,
-  message: result.message,
+  message: result.message || "Electricity purchase successful",
   meter: result.meter,
   token: result.token,
   units: result.units,

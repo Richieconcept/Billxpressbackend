@@ -279,10 +279,11 @@ export const purchaseElectricity = async ({
     providerReference:
       transaction.transactionId || response.requestId || payload.request_id,
     token: pickFirst(
-      response?.purchased_code,
       response?.token,
+      response?.Token,
       response?.content?.token,
-      transaction.purchased_code
+      transaction.purchased_code,
+      response?.purchased_code
     ),
     units: pickFirst(response?.units, response?.content?.units, transaction.units),
     message: response.response_description || "Electricity purchase successful",
