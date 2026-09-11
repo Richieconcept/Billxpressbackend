@@ -126,6 +126,11 @@ const isDataSharePlan = (plan) =>
     .trim()
     .toUpperCase() === "DATA SHARE";
 
+const isWalletOnlyPlan = (plan) =>
+  isEnabledText(plan.wallet) &&
+  !isEnabledText(plan.sim) &&
+  !isEnabledText(plan.device);
+
 const getPlanTypes = () =>
   String(process.env.TWOFAST_DATA_PLAN_TYPES || "")
     .split(",")
@@ -157,9 +162,11 @@ const fetchPlansForNetwork = async (networkCode, type) => {
   return records.map((plan) => {
     const rawPlanId = String(plan.plan_id ?? plan.planId ?? plan.id ?? "");
     const providerPrice = toNumber(plan.our_price ?? plan.ourPrice ?? plan.price);
-    const networkPrice = toNumber(
+    const rawNetworkPrice = toNumber(
       plan.telecom_price ?? plan.telecomPrice ?? plan.network_price
     );
+    const walletOnlyPlan = isWalletOnlyPlan(plan);
+    const networkPrice = walletOnlyPlan ? 0 : rawNetworkPrice;
     const costPrice = networkPrice || providerPrice;
     const validity = plan.validity || null;
     const dataSharePlan = isDataSharePlan(plan);
@@ -176,14 +183,15 @@ const fetchPlansForNetwork = async (networkCode, type) => {
       providerDataType: String(plan.type || type || ""),
       validity,
       validityDays: parseValidityDays(validity),
-      networkPrice: costPrice,
+      networkPrice,
       providerPrice,
       costPrice,
       available: (costPrice > 0 || dataSharePlan) && isPlanAvailable(plan),
       raw: {
         ...plan,
-        telecom_price: networkPrice || plan.telecom_price,
+        telecom_price: rawNetworkPrice || plan.telecom_price,
         networkCode: String(networkCode),
+        walletOnly: walletOnlyPlan,
       },
     };
   });

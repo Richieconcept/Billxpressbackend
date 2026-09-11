@@ -55,74 +55,7 @@ const TWOFAST_MANUAL_PLAN_IDS = [
   "526",
   "527",
 ];
-const TWOFAST_SUPPLEMENTAL_PLANS = [
-  {
-    provider: "2fast",
-    providerPlanId: "526",
-    providerPlanCode: "526",
-    network: "MTN",
-    networkCode: "1",
-    name: "MTN AWOOF 1GB Daily",
-    type: "AWOOF",
-    providerDataType: "AWOOF",
-    validity: "Daily",
-    validityDays: 1,
-    networkPrice: 0,
-    providerPrice: 250,
-    costPrice: 250,
-    available: true,
-    defaultEnabled: true,
-    defaultOurPrice: 250,
-    allowHostedSimOnInsert: false,
-    allowWalletFallbackOnInsert: true,
-    raw: {
-      id: "526",
-      plan_id: "526",
-      networkCode: "1",
-      status: "Active",
-      wallet: "Active",
-      sim: "Inactive",
-      device: "Inactive",
-      type: "AWOOF",
-      description: "MTN AWOOF 1GB Daily",
-      validity: "Daily",
-      our_price: 250,
-    },
-  },
-  {
-    provider: "2fast",
-    providerPlanId: "527",
-    providerPlanCode: "527",
-    network: "MTN",
-    networkCode: "1",
-    name: "MTN AWOOF 2.5GB Daily",
-    type: "AWOOF",
-    providerDataType: "AWOOF",
-    validity: "Daily",
-    validityDays: 1,
-    networkPrice: 0,
-    providerPrice: 550,
-    costPrice: 550,
-    available: true,
-    defaultEnabled: true,
-    defaultOurPrice: 550,
-    allowHostedSimOnInsert: false,
-    allowWalletFallbackOnInsert: true,
-    raw: {
-      id: "527",
-      plan_id: "527",
-      networkCode: "1",
-      status: "Active",
-      wallet: "Active",
-      sim: "Inactive",
-      device: "Inactive",
-      type: "AWOOF",
-      description: "MTN AWOOF 2.5GB Daily",
-      validity: "Daily",
-      our_price: 550,
-    },
-  },
-];
+const TWOFAST_MTN_MOMO_AWOOF_PLAN_IDS = ["526", "527"];
 
 const normalizePricingTiers = (tiers = []) =>
   (Array.isArray(tiers) ? tiers : [])
@@ -553,26 +486,11 @@ const buildTwoFastStalePlanQuery = (syncedAt) => ({
   providerPlanCode: { $nin: TWOFAST_MANUAL_PLAN_IDS },
 });
 
-const withTwoFastSupplementalPlans = (providerName, plans) => {
-  if (providerName !== "2fast") {
-    return plans;
-  }
-
-  const existingPlanCodes = new Set(
-    plans.flatMap((plan) =>
-      [plan.providerPlanId, plan.providerPlanCode, plan.raw?.plan_id, plan.raw?.id]
-        .filter(Boolean)
-        .map(String)
-    )
-  );
-  const missingSupplementalPlans = TWOFAST_SUPPLEMENTAL_PLANS.filter(
-    (plan) =>
-      !existingPlanCodes.has(String(plan.providerPlanId)) &&
-      !existingPlanCodes.has(String(plan.providerPlanCode))
-  );
-
-  return [...plans, ...missingSupplementalPlans];
-};
+const isTwoFastMtnMomoAwoofPlan = (plan) =>
+  plan.provider === "2fast" &&
+  plan.network === "MTN" &&
+  TWOFAST_MTN_MOMO_AWOOF_PLAN_IDS.includes(String(plan.providerPlanCode || "")) &&
+  /\bMOMO\s+AWOOF\b/i.test(String(plan.providerDataType || plan.type || ""));
 
 const catalogDocumentToProviderPlan = (document) => ({
   catalogId: String(document._id),
@@ -608,8 +526,7 @@ const catalogDocumentToProviderPlan = (document) => ({
 export const syncDataPlans = async ({ providerName, adminUserId } = {}) => {
   const settings = await getOrCreateDataServiceSetting();
   const provider = getDataProvider(providerName || settings.activeProvider);
-  const providerPlans = await provider.fetchPlans({ forceRefresh: true });
-  const plans = withTwoFastSupplementalPlans(provider.name, providerPlans);
+  const plans = await provider.fetchPlans({ forceRefresh: true });
   const syncedAt = new Date();
 
   if (plans.length === 0) {
@@ -650,21 +567,11 @@ export const syncDataPlans = async ({ providerName, adminUserId } = {}) => {
             displayValidity: null,
             displayValidityDays: null,
             note: null,
-            ourPrice:
-              Number.isFinite(Number(plan.defaultOurPrice)) &&
-              Number(plan.defaultOurPrice) > 0
-                ? Number(plan.defaultOurPrice)
-                : null,
-            isEnabled: plan.defaultEnabled === true,
+            ourPrice: null,
+            isEnabled: false,
             isHot: false,
-            allowHostedSim:
-              typeof plan.allowHostedSimOnInsert === "boolean"
-                ? plan.allowHostedSimOnInsert
-                : true,
-            allowWalletFallback:
-              typeof plan.allowWalletFallbackOnInsert === "boolean"
-                ? plan.allowWalletFallbackOnInsert
-                : false,
+            allowHostedSim: true,
+            allowWalletFallback: false,
             updatedBy: adminUserId || null,
           },
         },
@@ -682,6 +589,46 @@ export const syncDataPlans = async ({ providerName, adminUserId } = {}) => {
         },
     { $set: { providerAvailable: false } }
   );
+
+  if (provider.name === "2fast") {
+    const momoAwoofPlans = plans.filter(isTwoFastMtnMomoAwoofPlan);
+
+    if (momoAwoofPlans.length > 0) {
+      await DataPlan.bulkWrite(
+        momoAwoofPlans.map((plan) => ({
+          updateOne: {
+            filter: {
+              provider: "2fast",
+              providerPlanId: String(plan.providerPlanId),
+            },
+            update: {
+              $set: {
+                dataType: "MOMO AWOOF",
+                ourPrice: Number(plan.providerPrice ?? plan.costPrice ?? 0),
+                isEnabled: true,
+                allowHostedSim: false,
+                allowWalletFallback: true,
+              },
+            },
+          },
+        }))
+      );
+    }
+
+    await DataPlan.updateMany(
+      {
+        provider: "2fast",
+        providerPlanId: { $in: TWOFAST_MTN_MOMO_AWOOF_PLAN_IDS },
+        providerPlanCode: { $in: TWOFAST_MTN_MOMO_AWOOF_PLAN_IDS },
+      },
+      {
+        $set: {
+          isEnabled: false,
+          providerAvailable: false,
+        },
+      }
+    );
+  }
 
   return {
     provider: provider.name,
