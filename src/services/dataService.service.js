@@ -46,7 +46,15 @@ const CATALOG_PROVIDERS = new Set([
   "ogdams",
   "vtpass",
 ]);
-const TWOFAST_MANUAL_PLAN_IDS = ["519", "5188", "520", "521", "522"];
+const TWOFAST_MANUAL_PLAN_IDS = [
+  "519",
+  "5188",
+  "520",
+  "521",
+  "522",
+  "526",
+  "527",
+];
 
 const normalizePricingTiers = (tiers = []) =>
   (Array.isArray(tiers) ? tiers : [])
@@ -470,6 +478,13 @@ const isStoredTwoFastManualPlan = (plan) => {
 const isCatalogPlanSellable = (plan) =>
   plan.providerAvailable || isStoredTwoFastManualPlan(plan);
 
+const buildTwoFastStalePlanQuery = (syncedAt) => ({
+  provider: "2fast",
+  lastSyncedAt: { $ne: syncedAt },
+  providerPlanId: { $nin: TWOFAST_MANUAL_PLAN_IDS },
+  providerPlanCode: { $nin: TWOFAST_MANUAL_PLAN_IDS },
+});
+
 const catalogDocumentToProviderPlan = (document) => ({
   catalogId: String(document._id),
   provider: document.provider,
@@ -559,13 +574,12 @@ export const syncDataPlans = async ({ providerName, adminUserId } = {}) => {
   );
 
   await DataPlan.updateMany(
-    {
-      provider: provider.name,
-      lastSyncedAt: { $ne: syncedAt },
-      ...(provider.name === "2fast"
-        ? { providerPlanId: { $nin: TWOFAST_MANUAL_PLAN_IDS } }
-        : {}),
-    },
+    provider.name === "2fast"
+      ? buildTwoFastStalePlanQuery(syncedAt)
+      : {
+          provider: provider.name,
+          lastSyncedAt: { $ne: syncedAt },
+        },
     { $set: { providerAvailable: false } }
   );
 
