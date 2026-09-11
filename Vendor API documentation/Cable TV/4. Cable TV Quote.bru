@@ -1,11 +1,11 @@
 meta {
-  name: 2. Social Growth Quote
+  name: 4. Cable TV Quote
   type: http
-  seq: 2
+  seq: 4
 }
 
 post {
-  url: {{baseUrl}}/api/v1/vendor/social-growth/quote
+  url: {{baseUrl}}/api/v1/vendor/cable-tv/quote
   body: json
   auth: none
 }
@@ -17,7 +17,7 @@ headers {
 
 body:json {
   {
-    "serviceId": "{{socialGrowthServiceId}}",
-    "quantity": 1000
+    "provider": "DSTV",
+    "packageCode": "dstv-padi"
   }
 }

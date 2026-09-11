@@ -78,7 +78,7 @@ const getHealthResponse = () => ({
 });
 
 // health routes
-app.get("/", (req, res) => {
+app.get("/health", (req, res) => {
   res.json(getHealthResponse());
 });
 

@@ -16,6 +16,12 @@ import {
   purchaseDataForUser,
 } from "../services/dataService.service.js";
 import {
+  getElectricityDiscosForUser,
+  purchaseElectricityForUser,
+  quoteElectricityForUser,
+  verifyElectricityMeterForUser,
+} from "../services/electricityService.service.js";
+import {
   getSocialGrowthServicesForUser,
   listSocialGrowthOrdersForUser,
   purchaseSocialGrowthForUser,
@@ -417,6 +423,90 @@ export const purchaseVendorCableTv = async (req, res) => {
 
 export const getVendorCableTvPurchase = async (req, res) => {
   req.query.service = "cable_tv";
+  return getVendorTransaction(req, res);
+};
+
+export const getVendorElectricityDiscos = async (req, res) => {
+  try {
+    const result = await getElectricityDiscosForUser(req.user);
+
+    success(res, "Electricity providers fetched successfully", {
+      provider: result.provider,
+      pricing: {
+        appliedMarkupPercent: result.appliedMarkupPercent,
+        roundingMode: result.settings.roundingMode,
+        minimumAmount: result.settings.minimumAmount,
+        maximumAmount: result.settings.maximumAmount,
+      },
+      discos: result.discos,
+    });
+  } catch (error) {
+    sendVendorError(res, "Could not fetch electricity providers", error);
+  }
+};
+
+export const verifyVendorElectricityMeter = async (req, res) => {
+  try {
+    const meter = await verifyElectricityMeterForUser({
+      user: req.user,
+      disco: req.body?.disco,
+      meterNumber: req.body?.meterNumber,
+      meterType: req.body?.meterType,
+    });
+    const { raw, requestPayload, ...publicMeter } = meter;
+
+    success(res, "Meter verified successfully", {
+      meter: publicMeter,
+    });
+  } catch (error) {
+    sendVendorError(res, "Could not verify meter", error);
+  }
+};
+
+export const quoteVendorElectricity = async (req, res) => {
+  try {
+    const quote = await quoteElectricityForUser({
+      user: req.user,
+      amount: req.body?.amount,
+    });
+
+    success(res, "Electricity quote calculated successfully", { quote });
+  } catch (error) {
+    sendVendorError(res, "Could not calculate electricity price", error);
+  }
+};
+
+export const purchaseVendorElectricity = async (req, res) => {
+  try {
+    const result = await purchaseElectricityForUser({
+      userId: req.user._id,
+      disco: req.body?.disco,
+      meterNumber: req.body?.meterNumber,
+      meterType: req.body?.meterType,
+      phone: req.body?.phone,
+      amount: req.body?.amount,
+      customerReference: req.body?.customerReference,
+      requireTransactionPin: false,
+    });
+
+    success(
+      res,
+      result.message || "Electricity purchase successful",
+      purchasePayload(result, "electricity", {
+        meter: result.meter,
+        token: result.token,
+        units: result.units,
+        quote: result.quote,
+      }),
+      201
+    );
+  } catch (error) {
+    sendVendorError(res, "Could not purchase electricity", error);
+  }
+};
+
+export const getVendorElectricityPurchase = async (req, res) => {
+  req.query.service = "electricity";
   return getVendorTransaction(req, res);
 };
 

@@ -54,21 +54,32 @@ docs {
   }
   ```
 
-  ## Planned Vendor Resources
+  ## Vendor Resources
 
   ```txt
   GET  /api/v1/vendor/me
   GET  /api/v1/vendor/wallet
   GET  /api/v1/vendor/transactions
+  GET  /api/v1/vendor/transactions/:reference
   GET  /api/v1/vendor/data/plans
   POST /api/v1/vendor/data/purchase
   GET  /api/v1/vendor/data/purchase/:reference
   GET  /api/v1/vendor/airtime/networks
   POST /api/v1/vendor/airtime/quote
   POST /api/v1/vendor/airtime/purchase
-  GET  /api/v1/vendor/social-growth/services
-  POST /api/v1/vendor/social-growth/quote
-  POST /api/v1/vendor/social-growth/orders
-  GET  /api/v1/vendor/social-growth/orders/:orderId
+  GET  /api/v1/vendor/airtime/purchase/:reference
+  GET  /api/v1/vendor/cable-tv/providers
+  GET  /api/v1/vendor/cable-tv/packages
+  POST /api/v1/vendor/cable-tv/verify-smartcard
+  POST /api/v1/vendor/cable-tv/quote
+  POST /api/v1/vendor/cable-tv/purchase
+  GET  /api/v1/vendor/cable-tv/purchase/:reference
+  GET  /api/v1/vendor/electricity/discos
+  POST /api/v1/vendor/electricity/verify-meter
+  POST /api/v1/vendor/electricity/quote
+  POST /api/v1/vendor/electricity/purchase
+  GET  /api/v1/vendor/electricity/purchase/:reference
   ```
+
+  Public vendor access is currently limited to airtime, data, cable TV, and electricity.
 }

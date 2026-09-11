@@ -1,0 +1,23 @@
+meta {
+  name: 3. Verify Smartcard
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/vendor/cable-tv/verify-smartcard
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "provider": "DSTV",
+    "smartcardNumber": "1234567890"
+  }
+}

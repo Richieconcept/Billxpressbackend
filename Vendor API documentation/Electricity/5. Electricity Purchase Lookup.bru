@@ -1,0 +1,19 @@
+meta {
+  name: 5. Electricity Purchase Lookup
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/electricity/purchase/{{reference}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}
+
+vars:pre-request {
+  reference: vendor-electricity-001
+}

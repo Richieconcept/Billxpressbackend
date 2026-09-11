@@ -1,0 +1,19 @@
+meta {
+  name: 6. Cable TV Purchase Lookup
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/vendor/cable-tv/purchase/{{reference}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{vendorApiKey}}
+}
+
+vars:pre-request {
+  reference: vendor-cable-001
+}

@@ -662,13 +662,13 @@
           <a class="nav-link" href="#wallet">Wallet</a>
           <a class="nav-link" href="#data">Data</a>
           <a class="nav-link" href="#airtime">Airtime</a>
-          <a class="nav-link" href="#social-growth">Social Growth</a>
+          <a class="nav-link" href="#cable-tv">Cable TV</a>
+          <a class="nav-link" href="#electricity">Electricity</a>
         </div>
 
         <div class="nav-group">
           <div class="nav-label">Operations</div>
           <a class="nav-link" href="#references">References</a>
-          <a class="nav-link" href="#webhooks">Webhooks</a>
           <a class="nav-link" href="#rate-limits">Rate Limits</a>
           <a class="nav-link" href="#errors">Error Codes</a>
           <a class="nav-link" href="#security">Security</a>
@@ -682,7 +682,7 @@
           <span class="eyebrow">Public integration documentation</span>
           <h1>BillXpress Vendor API Documentation</h1>
           <p class="hero-copy">
-            Integrate wallet-funded airtime, data, and social growth services into external apps using one vendor API key and predictable JSON responses.
+            Integrate wallet-funded airtime, data, cable TV, and electricity services into external apps using one vendor API key and predictable JSON responses.
           </p>
 
           <div class="hero-preview" aria-hidden="true">
@@ -697,7 +697,7 @@
             <div class="preview-actions">
               <span class="preview-action">Data</span>
               <span class="preview-action">Airtime</span>
-              <span class="preview-action">Orders</span>
+              <span class="preview-action">Bills</span>
             </div>
             <div class="preview-code">
               POST /vendor/data/purchase<br />
@@ -734,16 +734,16 @@
           </p>
 
           <div class="notice warning">
-            This page documents the vendor-facing API contract. These routes should be implemented under <code>/api/v1/vendor</code> and should not require customer JWT tokens or transaction PINs.
+            This page documents the public vendor-facing API contract. These routes live under <code>/api/v1/vendor</code> and do not require customer JWT tokens or transaction PINs.
           </div>
 
           <div class="badge-row" aria-label="Supported services">
             <span class="badge">Airtime</span>
             <span class="badge">Data</span>
-            <span class="badge">Social Growth</span>
+            <span class="badge">Cable TV</span>
+            <span class="badge">Electricity</span>
             <span class="badge">Wallet</span>
             <span class="badge">Transactions</span>
-            <span class="badge">Webhooks Ready</span>
           </div>
         </section>
 
@@ -937,7 +937,7 @@
                     <tr>
                       <td><code>service</code></td>
                       <td>string</td>
-                      <td>Optional. Filter by <code>airtime</code>, <code>data</code>, or <code>social_growth</code>.</td>
+                      <td>Optional. Filter by <code>airtime</code>, <code>data</code>, <code>cable_tv</code>, or <code>electricity</code>.</td>
                     </tr>
                     <tr>
                       <td><code>status</code></td>
@@ -963,7 +963,43 @@
               <span class="status-pill">Live plans</span>
             </div>
             <div class="endpoint-body">
-              <p>Returns available data plans with vendor pricing already applied.</p>
+              <p>Returns available data plans with vendor pricing already applied. Use the returned <code>id</code> or <code>planId</code> when purchasing.</p>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Query</th>
+                      <th>Type</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>network</code></td>
+                      <td>string</td>
+                      <td>Optional. Filter plans by network, for example <code>MTN</code>, <code>Airtel</code>, <code>Glo</code>, or <code>9mobile</code>.</td>
+                    </tr>
+                    <tr>
+                      <td><code>dataType</code></td>
+                      <td>string</td>
+                      <td>Optional. Filter by plan type when available.</td>
+                    </tr>
+                    <tr>
+                      <td><code>isHot</code></td>
+                      <td>boolean</td>
+                      <td>Optional. Send <code>true</code> to return plans marked as hot.</td>
+                    </tr>
+                    <tr>
+                      <td><code>category</code></td>
+                      <td>string</td>
+                      <td>Optional. Send <code>hot</code> as another way to fetch hot plans.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="notice">
+                Plan names, validity, type, and notes are customer-facing display fields. Purchase requests still use the returned plan identifier.
+              </div>
             </div>
           </article>
 
@@ -1103,21 +1139,47 @@
               </div>
             </div>
           </article>
-        </section>
-
-        <section id="social-growth">
-          <h2>Social Growth</h2>
 
           <article class="endpoint">
             <div class="endpoint-head">
               <div class="endpoint-title">
                 <span class="method">GET</span>
-                <span class="path">/api/v1/vendor/social-growth/services</span>
+                <span class="path">/api/v1/vendor/airtime/purchase/:reference</span>
               </div>
-              <span class="status-pill">Service catalog</span>
+              <span class="status-pill">Lookup</span>
             </div>
             <div class="endpoint-body">
-              <p>Returns social growth services with vendor pricing, minimum quantity, maximum quantity, refill support, and category.</p>
+              <p>Checks an airtime purchase by BillXpress transaction reference, provider reference, or vendor <code>customerReference</code>.</p>
+            </div>
+          </article>
+        </section>
+
+        <section id="cable-tv">
+          <h2>Cable TV</h2>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/cable-tv/providers</span>
+              </div>
+              <span class="status-pill">Provider list</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Returns supported cable TV providers and current vendor pricing rules.</p>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/cable-tv/packages?provider=DSTV</span>
+              </div>
+              <span class="status-pill">Package list</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Returns available packages for a cable provider. Send <code>provider</code> or <code>tvProvider</code> as the query parameter.</p>
             </div>
           </article>
 
@@ -1125,7 +1187,26 @@
             <div class="endpoint-head">
               <div class="endpoint-title">
                 <span class="method post">POST</span>
-                <span class="path">/api/v1/vendor/social-growth/quote</span>
+                <span class="path">/api/v1/vendor/cable-tv/verify-smartcard</span>
+              </div>
+              <span class="status-pill">Customer check</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="code-block">
+                <div class="code-label">Request <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>{
+  "provider": "DSTV",
+  "smartcardNumber": "1234567890"
+}</code></pre>
+              </div>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/vendor/cable-tv/quote</span>
               </div>
               <span class="status-pill">Price preview</span>
             </div>
@@ -1133,8 +1214,8 @@
               <div class="code-block">
                 <div class="code-label">Request <button class="copy-btn" type="button">Copy</button></div>
                 <pre><code>{
-  "serviceId": "7788",
-  "quantity": 1000
+  "provider": "DSTV",
+  "packageCode": "dstv-padi"
 }</code></pre>
               </div>
             </div>
@@ -1144,19 +1225,44 @@
             <div class="endpoint-head">
               <div class="endpoint-title">
                 <span class="method post">POST</span>
-                <span class="path">/api/v1/vendor/social-growth/orders</span>
+                <span class="path">/api/v1/vendor/cable-tv/purchase</span>
               </div>
-              <span class="status-pill">Creates order</span>
+              <span class="status-pill">Debits wallet</span>
             </div>
             <div class="endpoint-body">
-              <div class="code-block">
-                <div class="code-label">Request <button class="copy-btn" type="button">Copy</button></div>
-                <pre><code>{
-  "serviceId": "7788",
-  "link": "https://instagram.com/example",
-  "quantity": 1000,
-  "customerReference": "vendor-social-0001"
+              <div class="grid-2">
+                <div>
+                  <h3>Request Body</h3>
+                  <div class="code-block">
+                    <div class="code-label">JSON <button class="copy-btn" type="button">Copy</button></div>
+                    <pre><code>{
+  "provider": "DSTV",
+  "smartcardNumber": "1234567890",
+  "packageCode": "dstv-padi",
+  "phone": "08012345678",
+  "subscriptionType": "change",
+  "customerReference": "vendor-cable-0001"
 }</code></pre>
+                  </div>
+                </div>
+                <div>
+                  <h3>Success Response</h3>
+                  <div class="code-block">
+                    <div class="code-label">JSON <button class="copy-btn" type="button">Copy</button></div>
+                    <pre><code>{
+  "success": true,
+  "message": "Cable TV purchase successful",
+  "data": {
+    "reference": "CABLE_LX9K...",
+    "customerReference": "vendor-cable-0001",
+    "status": "successful",
+    "service": "cable_tv",
+    "amount": 2950,
+    "smartcardNumber": "1234567890"
+  }
+}</code></pre>
+                  </div>
+                </div>
               </div>
             </div>
           </article>
@@ -1165,12 +1271,127 @@
             <div class="endpoint-head">
               <div class="endpoint-title">
                 <span class="method">GET</span>
-                <span class="path">/api/v1/vendor/social-growth/orders/:orderId</span>
+                <span class="path">/api/v1/vendor/cable-tv/purchase/:reference</span>
               </div>
-              <span class="status-pill">Order status</span>
+              <span class="status-pill">Lookup</span>
             </div>
             <div class="endpoint-body">
-              <p>Returns the current social growth order status, provider order ID, start count, remaining quantity, and timestamps.</p>
+              <p>Checks a cable TV purchase by BillXpress transaction reference, provider reference, or vendor <code>customerReference</code>.</p>
+            </div>
+          </article>
+        </section>
+
+        <section id="electricity">
+          <h2>Electricity</h2>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/electricity/discos</span>
+              </div>
+              <span class="status-pill">Disco list</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Returns supported electricity distribution companies, meter types, and current vendor pricing rules.</p>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/vendor/electricity/verify-meter</span>
+              </div>
+              <span class="status-pill">Meter check</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="code-block">
+                <div class="code-label">Request <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>{
+  "disco": "IKEDC",
+  "meterNumber": "12345678901",
+  "meterType": "prepaid"
+}</code></pre>
+              </div>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/vendor/electricity/quote</span>
+              </div>
+              <span class="status-pill">Price preview</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="code-block">
+                <div class="code-label">Request <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>{
+  "amount": 5000
+}</code></pre>
+              </div>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/vendor/electricity/purchase</span>
+              </div>
+              <span class="status-pill">Debits wallet</span>
+            </div>
+            <div class="endpoint-body">
+              <div class="grid-2">
+                <div>
+                  <h3>Request Body</h3>
+                  <div class="code-block">
+                    <div class="code-label">JSON <button class="copy-btn" type="button">Copy</button></div>
+                    <pre><code>{
+  "disco": "IKEDC",
+  "meterNumber": "12345678901",
+  "meterType": "prepaid",
+  "phone": "08012345678",
+  "amount": 5000,
+  "customerReference": "vendor-electricity-0001"
+}</code></pre>
+                  </div>
+                </div>
+                <div>
+                  <h3>Success Response</h3>
+                  <div class="code-block">
+                    <div class="code-label">JSON <button class="copy-btn" type="button">Copy</button></div>
+                    <pre><code>{
+  "success": true,
+  "message": "Electricity purchase successful",
+  "data": {
+    "reference": "ELEC_LX9K...",
+    "customerReference": "vendor-electricity-0001",
+    "status": "successful",
+    "service": "electricity",
+    "amount": 5000,
+    "token": "1234-5678-9012",
+    "units": "62.4"
+  }
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/vendor/electricity/purchase/:reference</span>
+              </div>
+              <span class="status-pill">Lookup</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Checks an electricity purchase by BillXpress transaction reference, provider reference, or vendor <code>customerReference</code>.</p>
             </div>
           </article>
         </section>
@@ -1204,51 +1425,11 @@
                 <tr>
                   <td><code>providerReference</code></td>
                   <td>Provider</td>
-                  <td>External provider ID returned by data, airtime, or social growth provider.</td>
+                  <td>External provider ID returned when the upstream provider supplies one.</td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </section>
-
-        <section id="webhooks">
-          <h2>Webhooks</h2>
-          <p>
-            Webhooks notify a vendor backend when an order succeeds, fails, or is reversed. This is useful when the vendor's own checkout cannot wait for provider completion.
-          </p>
-
-          <article class="endpoint">
-            <div class="endpoint-head">
-              <div class="endpoint-title">
-                <span class="method post">POST</span>
-                <span class="path">/api/v1/vendor/webhooks</span>
-              </div>
-              <span class="status-pill">Planned</span>
-            </div>
-            <div class="endpoint-body">
-              <div class="code-block">
-                <div class="code-label">Register Webhook <button class="copy-btn" type="button">Copy</button></div>
-                <pre><code>{
-  "url": "https://vendor.example.com/billxpress/webhook",
-  "secret": "vendor-generated-secret"
-}</code></pre>
-              </div>
-
-              <h3>Event Example</h3>
-              <div class="code-block">
-                <div class="code-label">Webhook Payload <button class="copy-btn" type="button">Copy</button></div>
-                <pre><code>{
-  "event": "data.purchase.successful",
-  "reference": "DATA_LX9K...",
-  "customerReference": "vendor-data-0001",
-  "status": "successful",
-  "amount": 1500,
-  "currency": "NGN",
-  "createdAt": "2026-06-11T10:00:00.000Z"
-}</code></pre>
-              </div>
-            </div>
-          </article>
         </section>
 
         <section id="rate-limits">

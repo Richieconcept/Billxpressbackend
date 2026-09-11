@@ -7,21 +7,21 @@ import {
   getVendorCableTvPurchase,
   getVendorDataPlans,
   getVendorDataPurchase,
+  getVendorElectricityDiscos,
+  getVendorElectricityPurchase,
   getVendorProfile,
-  getVendorSocialGrowthOrder,
-  getVendorSocialGrowthServices,
   getVendorTransaction,
   getVendorWallet,
-  listVendorSocialGrowthOrders,
   listVendorTransactions,
   purchaseVendorAirtime,
   purchaseVendorCableTv,
   purchaseVendorData,
-  purchaseVendorSocialGrowth,
+  purchaseVendorElectricity,
   quoteVendorAirtime,
   quoteVendorCableTv,
-  quoteVendorSocialGrowth,
+  quoteVendorElectricity,
   verifyVendorCableTvSmartcard,
+  verifyVendorElectricityMeter,
 } from "../controllers/vendor.controller.js";
 import { protectVendorApi } from "../middlewares/auth.middleware.js";
 import {
@@ -100,15 +100,15 @@ router.post(
 );
 router.get("/cable-tv/purchase/:reference", getVendorCableTvPurchase);
 
-router.get("/social-growth/services", getVendorSocialGrowthServices);
-router.post("/social-growth/quote", vendorQuoteLimiter, quoteVendorSocialGrowth);
+router.get("/electricity/discos", getVendorElectricityDiscos);
+router.post("/electricity/verify-meter", verifyVendorElectricityMeter);
+router.post("/electricity/quote", vendorQuoteLimiter, quoteVendorElectricity);
 router.post(
-  "/social-growth/orders",
+  "/electricity/purchase",
   enforceServicePurchaseRestriction,
   vendorPurchaseLimiter,
-  purchaseVendorSocialGrowth
+  purchaseVendorElectricity
 );
-router.get("/social-growth/orders", listVendorSocialGrowthOrders);
-router.get("/social-growth/orders/:orderId", getVendorSocialGrowthOrder);
+router.get("/electricity/purchase/:reference", getVendorElectricityPurchase);
 
 export default router;
