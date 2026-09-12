@@ -604,8 +604,6 @@ export const syncDataPlans = async ({ providerName, adminUserId } = {}) => {
             update: {
               $set: {
                 dataType: "MOMO AWOOF",
-                ourPrice: Number(plan.providerPrice ?? plan.costPrice ?? 0),
-                isEnabled: true,
                 allowHostedSim: false,
                 allowWalletFallback: true,
               },
@@ -614,20 +612,6 @@ export const syncDataPlans = async ({ providerName, adminUserId } = {}) => {
         }))
       );
     }
-
-    await DataPlan.updateMany(
-      {
-        provider: "2fast",
-        providerPlanId: { $in: TWOFAST_MTN_MOMO_AWOOF_PLAN_IDS },
-        providerPlanCode: { $in: TWOFAST_MTN_MOMO_AWOOF_PLAN_IDS },
-      },
-      {
-        $set: {
-          isEnabled: false,
-          providerAvailable: false,
-        },
-      }
-    );
   }
 
   return {
