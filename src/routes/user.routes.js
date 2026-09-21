@@ -2,8 +2,10 @@ import express from "express";
 import {
   changeMyPassword,
   deactivateMyAccount,
+  getMyVendorCredentials,
   getMyKycStatus,
   getMyProfile,
+  regenerateMyVendorApiKey,
   requestTransactionPinResetCode,
   resetMyTransactionPin,
   updateMyProfile,
@@ -30,9 +32,21 @@ const transactionPinResetLimiter = rateLimit({
   message: "Too many transaction PIN reset attempts, please try again later",
 });
 
+const vendorApiKeyRegenerationLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 3,
+  message: "Too many API key regeneration attempts, please try again later",
+});
+
 router.use(protect);
 
 router.get("/me", getMyProfile);
+router.get("/me/vendor/credentials", getMyVendorCredentials);
+router.post(
+  "/me/vendor/api-key/regenerate",
+  vendorApiKeyRegenerationLimiter,
+  regenerateMyVendorApiKey
+);
 router.get("/me/kyc", getMyKycStatus);
 router.post(
   "/me/kyc/maplerad-tier1",

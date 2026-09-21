@@ -1,7 +1,6 @@
-export const sanitizeUser = (user) => {
+export const sanitizeUser = (user, options = {}) => {
   const source = typeof user.toObject === "function" ? user.toObject() : user;
-
-  return {
+  const sanitized = {
     id: source._id,
     firstName: source.firstName,
     lastName: source.lastName,
@@ -20,4 +19,10 @@ export const sanitizeUser = (user) => {
     kycLevel: source.kycLevel ?? 0,
     createdAt: source.createdAt,
   };
+
+  if (options.includeApiKey && source.role === "vendor") {
+    sanitized.apiKey = source.apiKey || null;
+  }
+
+  return sanitized;
 };

@@ -6,6 +6,7 @@ import {
   hashEmailVerificationOtp,
 } from "../utils/emailVerification.js";
 import { transactionPinResetTemplate } from "../utils/emailTemplates.js";
+import { generateApiKey } from "../utils/generateApiKey.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import {
@@ -16,6 +17,16 @@ import {
 import { serializeVirtualAccount } from "../services/virtualAccount.service.js";
 
 const USER_EDITABLE_FIELDS = ["firstName", "lastName", "username", "phone"];
+
+const generateUniqueApiKey = async () => {
+  let apiKey = generateApiKey();
+
+  while (await User.exists({ apiKey })) {
+    apiKey = generateApiKey();
+  }
+
+  return apiKey;
+};
 
 const sendUserError = (res, publicMessage, error) => {
   res.status(error.statusCode || 500).json({
@@ -65,10 +76,84 @@ const ensureUniqueUserField = async ({ field, value, excludeUserId }) => {
   }
 };
 
+const buildVendorCredentials = (user, req) => {
+  if (user.role !== "vendor") {
+    return null;
+  }
+
+  return {
+    apiKey: user.apiKey || null,
+    headerName: "Authorization",
+    authorizationHeader: user.apiKey || null,
+    baseUrl: `${req.protocol}://${req.get("host")}/api/v1/vendor`,
+    isActive: user.isVendorActive === true,
+    approvedAt: user.vendorApprovedAt,
+  };
+};
+
+const ensureActiveVendor = (user) => {
+  if (user.role !== "vendor") {
+    const error = new Error("Vendor access required");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  if (user.isVendorActive !== true) {
+    const error = new Error("Vendor account is not active");
+    error.statusCode = 403;
+    throw error;
+  }
+};
+
 export const getMyProfile = async (req, res) => {
+  const includeVendorCredentials = req.user.role === "vendor";
+
   res.json({
-    user: sanitizeUser(req.user),
+    user: sanitizeUser(req.user, {
+      includeApiKey: includeVendorCredentials,
+    }),
+    vendorCredentials: includeVendorCredentials
+      ? buildVendorCredentials(req.user, req)
+      : undefined,
   });
+};
+
+export const getMyVendorCredentials = async (req, res) => {
+  try {
+    ensureActiveVendor(req.user);
+
+    res.json({
+      message: "Vendor credentials fetched successfully",
+      user: sanitizeUser(req.user, { includeApiKey: true }),
+      vendorCredentials: buildVendorCredentials(req.user, req),
+    });
+  } catch (error) {
+    sendUserError(res, "Could not fetch vendor credentials", error);
+  }
+};
+
+export const regenerateMyVendorApiKey = async (req, res) => {
+  try {
+    if (!req.headers.authorization?.startsWith("Bearer ")) {
+      return res.status(401).json({
+        message: "Login token is required to regenerate vendor API key",
+      });
+    }
+
+    ensureActiveVendor(req.user);
+
+    const user = await User.findById(req.user._id);
+    user.apiKey = await generateUniqueApiKey();
+    await user.save();
+
+    res.json({
+      message: "Vendor API key regenerated successfully",
+      user: sanitizeUser(user, { includeApiKey: true }),
+      vendorCredentials: buildVendorCredentials(user, req),
+    });
+  } catch (error) {
+    sendUserError(res, "Could not regenerate vendor API key", error);
+  }
 };
 
 export const getMyKycStatus = async (req, res) => {
