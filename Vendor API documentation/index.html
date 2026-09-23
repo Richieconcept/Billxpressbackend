@@ -856,7 +856,7 @@
               <span class="status-pill">Login token required</span>
             </div>
             <div class="endpoint-body">
-              <p>Returns the logged-in vendor profile and API credential details for display in the vendor dashboard.</p>
+              <p>Returns the logged-in vendor profile and API credential details for display in the vendor dashboard. If an active vendor account has no API key yet, this endpoint generates one and returns it.</p>
               <div class="code-block">
                 <div class="code-label">Response <button class="copy-btn" type="button">Copy</button></div>
                 <pre><code>{
@@ -878,6 +878,18 @@
   }
 }</code></pre>
               </div>
+              <div class="code-block">
+                <div class="code-label">PHP cURL <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>$ch = curl_init("https://api.billxpress.co/api/v1/user/me/vendor/credentials");
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER =&gt; true,
+    CURLOPT_HTTPHEADER =&gt; [
+        "Authorization: Bearer " . $loginToken,
+        "Accept: application/json",
+    ],
+]);
+$response = curl_exec($ch);</code></pre>
+              </div>
             </div>
           </article>
 
@@ -893,6 +905,19 @@
               <p>Generates a new vendor API key for the logged-in vendor. The old API key stops working after this succeeds.</p>
               <div class="notice warning">
                 Update the vendor backend configuration and Bruno <code>vendorApiKey</code> variable immediately after regeneration.
+              </div>
+              <div class="code-block">
+                <div class="code-label">PHP cURL <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>$ch = curl_init("https://api.billxpress.co/api/v1/user/me/vendor/api-key/regenerate");
+curl_setopt_array($ch, [
+    CURLOPT_POST =&gt; true,
+    CURLOPT_RETURNTRANSFER =&gt; true,
+    CURLOPT_HTTPHEADER =&gt; [
+        "Authorization: Bearer " . $loginToken,
+        "Accept: application/json",
+    ],
+]);
+$response = curl_exec($ch);</code></pre>
               </div>
             </div>
           </article>

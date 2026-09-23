@@ -105,27 +105,48 @@ const ensureActiveVendor = (user) => {
   }
 };
 
-export const getMyProfile = async (req, res) => {
-  const includeVendorCredentials = req.user.role === "vendor";
+const ensureVendorApiKey = async (user) => {
+  if (
+    user.role !== "vendor" ||
+    user.isVendorActive !== true ||
+    user.apiKey
+  ) {
+    return user;
+  }
 
-  res.json({
-    user: sanitizeUser(req.user, {
-      includeApiKey: includeVendorCredentials,
-    }),
-    vendorCredentials: includeVendorCredentials
-      ? buildVendorCredentials(req.user, req)
-      : undefined,
-  });
+  user.apiKey = await generateUniqueApiKey();
+  await user.save();
+
+  return user;
+};
+
+export const getMyProfile = async (req, res) => {
+  try {
+    const user = await ensureVendorApiKey(req.user);
+    const includeVendorCredentials = user.role === "vendor";
+
+    res.json({
+      user: sanitizeUser(user, {
+        includeApiKey: includeVendorCredentials,
+      }),
+      vendorCredentials: includeVendorCredentials
+        ? buildVendorCredentials(user, req)
+        : undefined,
+    });
+  } catch (error) {
+    sendUserError(res, "Could not fetch profile", error);
+  }
 };
 
 export const getMyVendorCredentials = async (req, res) => {
   try {
     ensureActiveVendor(req.user);
+    const user = await ensureVendorApiKey(req.user);
 
     res.json({
       message: "Vendor credentials fetched successfully",
-      user: sanitizeUser(req.user, { includeApiKey: true }),
-      vendorCredentials: buildVendorCredentials(req.user, req),
+      user: sanitizeUser(user, { includeApiKey: true }),
+      vendorCredentials: buildVendorCredentials(user, req),
     });
   } catch (error) {
     sendUserError(res, "Could not fetch vendor credentials", error);

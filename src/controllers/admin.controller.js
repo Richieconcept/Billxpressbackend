@@ -1033,6 +1033,19 @@ export const makeVendor = async (req, res) => {
     }
 
     if (user.role === "vendor") {
+      if (!user.apiKey) {
+        user.apiKey = await generateUniqueApiKey();
+        user.isVendorActive = true;
+        user.vendorApprovedAt = user.vendorApprovedAt || new Date();
+        await user.save();
+
+        return res.json({
+          message: "Vendor API key generated successfully",
+          user: sanitizeUser(user),
+          apiKey: user.apiKey,
+        });
+      }
+
       return res.status(400).json({
         message: "User is already a vendor",
       });
