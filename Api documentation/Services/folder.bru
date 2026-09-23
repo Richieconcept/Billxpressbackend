@@ -1,15 +1,15 @@
 meta {
   name: Services
-  seq: 6
+  seq: 10
 }
 
 docs {
   # Services APIs
-
+  
   This folder contains bill/service purchase endpoints for the mobile app.
-
+  
   The requests are separated into subfolders:
-
+  
   ```txt
   Services / Data
   Services / Airtime
@@ -17,23 +17,23 @@ docs {
   Services / Cable TV
   Services / Social Growth
   ```
-
+  
   ## Frontend Rule
-
+  
   The frontend should only call BillXpress endpoints.
-
+  
   Do not call UjayData, SMEAPI, Exosupplier, VheeBoost, or any other provider directly from the app.
-
+  
   ## Shared Wallet Rule
-
+  
   Service purchases follow this safe backend flow:
-
+  
   1. Backend calculates the current BillXpress selling price.
   2. Backend verifies transaction PIN.
   3. Backend debits wallet.
   4. Backend calls the active provider.
   5. Backend refunds wallet automatically if provider fails.
   6. Backend sends notification/email.
-
+  
   Data, airtime, electricity, cable TV, and social growth have separate admin settings so admin can set markup and enable/disable each service independently.
 }

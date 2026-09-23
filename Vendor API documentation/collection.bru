@@ -31,13 +31,28 @@ docs {
 
   ## Authentication
 
-  Vendor requests use API-key auth:
+  Public vendor API requests use API-key auth:
 
   ```txt
   Authorization: {{vendorApiKey}}
   ```
 
   Do not prefix vendor API keys with `Bearer`.
+
+  Dashboard/frontend credential management uses the normal login JWT:
+
+  ```txt
+  Authorization: Bearer {{loginToken}}
+  ```
+
+  Use these logged-in endpoints to show or rotate a vendor key:
+
+  ```txt
+  GET  /api/v1/user/me/vendor/credentials
+  POST /api/v1/user/me/vendor/api-key/regenerate
+  ```
+
+  After regeneration, replace `{{vendorApiKey}}` with the newly returned `vendorCredentials.apiKey`.
 
   ## Rate Limit
 
@@ -57,6 +72,8 @@ docs {
   ## Vendor Resources
 
   ```txt
+  GET  /api/v1/user/me/vendor/credentials
+  POST /api/v1/user/me/vendor/api-key/regenerate
   GET  /api/v1/vendor/me
   GET  /api/v1/vendor/wallet
   GET  /api/v1/vendor/transactions

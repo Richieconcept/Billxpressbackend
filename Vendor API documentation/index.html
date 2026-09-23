@@ -653,6 +653,7 @@
           <a class="nav-link" href="#overview">Overview</a>
           <a class="nav-link" href="#quickstart">Quickstart</a>
           <a class="nav-link" href="#authentication">Authentication</a>
+          <a class="nav-link" href="#credentials">Credentials</a>
           <a class="nav-link" href="#standard-response">Response Format</a>
         </div>
 
@@ -758,7 +759,7 @@
             <div class="step">
               <div class="step-number">2</div>
               <div class="step-title">Receive API key</div>
-              <div class="step-text">After approval, the admin dashboard returns a unique vendor API key.</div>
+              <div class="step-text">After approval, fetch the vendor API key from the logged-in vendor credentials endpoint.</div>
             </div>
             <div class="step">
               <div class="step-number">3</div>
@@ -826,6 +827,75 @@
               </tbody>
             </table>
           </div>
+        </section>
+
+        <section id="credentials">
+          <h2>Credentials</h2>
+          <p>
+            Vendor credential management is separate from the public vendor API. The dashboard/frontend should use the normal logged-in user token to fetch or rotate the vendor API key.
+          </p>
+
+          <div class="grid-2">
+            <div class="code-block">
+              <div class="code-label">Credential endpoints use login JWT <button class="copy-btn" type="button">Copy</button></div>
+              <pre><code>Authorization: Bearer USER_LOGIN_TOKEN</code></pre>
+            </div>
+
+            <div class="code-block">
+              <div class="code-label">Public vendor endpoints use API key <button class="copy-btn" type="button">Copy</button></div>
+              <pre><code>Authorization: VENDOR_API_KEY</code></pre>
+            </div>
+          </div>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method">GET</span>
+                <span class="path">/api/v1/user/me/vendor/credentials</span>
+              </div>
+              <span class="status-pill">Login token required</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Returns the logged-in vendor profile and API credential details for display in the vendor dashboard.</p>
+              <div class="code-block">
+                <div class="code-label">Response <button class="copy-btn" type="button">Copy</button></div>
+                <pre><code>{
+  "message": "Vendor credentials fetched successfully",
+  "user": {
+    "id": "665f...",
+    "email": "vendor@example.com",
+    "role": "vendor",
+    "isVendorActive": true,
+    "apiKey": "VENDOR_API_KEY"
+  },
+  "vendorCredentials": {
+    "apiKey": "VENDOR_API_KEY",
+    "headerName": "Authorization",
+    "authorizationHeader": "VENDOR_API_KEY",
+    "baseUrl": "https://api.billxpress.co/api/v1/vendor",
+    "isActive": true,
+    "approvedAt": "2026-06-11T10:00:00.000Z"
+  }
+}</code></pre>
+              </div>
+            </div>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head">
+              <div class="endpoint-title">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/user/me/vendor/api-key/regenerate</span>
+              </div>
+              <span class="status-pill">Rotates key</span>
+            </div>
+            <div class="endpoint-body">
+              <p>Generates a new vendor API key for the logged-in vendor. The old API key stops working after this succeeds.</p>
+              <div class="notice warning">
+                Update the vendor backend configuration and Bruno <code>vendorApiKey</code> variable immediately after regeneration.
+              </div>
+            </div>
+          </article>
         </section>
 
         <section id="standard-response">

@@ -72,6 +72,7 @@ app.use("/api/v1/test", testRoutes);
 const getHealthResponse = () => ({
   status: "ok",
   message: "BillXpress API is running",
+  
   service: "billxpress-backend",
   environment: process.env.NODE_ENV || "development",
   timestamp: new Date().toISOString(),

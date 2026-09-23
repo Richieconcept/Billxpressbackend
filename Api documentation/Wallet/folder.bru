@@ -1,33 +1,33 @@
 meta {
   name: Wallet
-  seq: 2
+  seq: 5
 }
 
 docs {
   # Wallet Endpoints For Frontend
-
+  
   These are the wallet balance and wallet history endpoints the app should use for a logged-in user.
-
+  
   ## What The User Sees
-
+  
   The user has two balances:
-
+  
   - `mainBalance`: money the user can spend on airtime, data, bills, cards, transfers, betting, and other services.
   - `referralBalance`: referral rewards. This is not spendable directly.
-
+  
   To spend referral rewards, the user redeems them into `mainBalance`.
-
+  
   ## What Stays Here
-
+  
   ```txt
   GET  /api/v1/wallet
   GET  /api/v1/wallet/transactions
   POST /api/v1/wallet/referral/redeem
   ```
-
+  
   ## Banking Docs Moved
-
+  
   Account funding, virtual accounts, bank transfers, transfer bank lists, and banking webhooks now live in the `Banking` folder.
-
+  
   The frontend should still call the same backend endpoint URLs. Only the documentation folder changed.
 }

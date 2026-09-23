@@ -1,70 +1,70 @@
 meta {
   name: Notifications
-  seq: 3
+  seq: 7
 }
 
 docs {
   # Notification APIs
-
+  
   These endpoints let the app show in-app notifications, popup notifications after login, unread badges, and mobile push notifications.
-
+  
   This folder also includes admin notification endpoints because they belong to the notification system:
-
+  
   ```txt
   POST /api/v1/admin/notifications
   GET /api/v1/admin/notifications
   ```
-
+  
   Admin-created notifications can expire automatically. The admin UI can send
   `expiresIn` as `24h`, `2d`, `1w`, `1m`, or `never`. The backend converts it
   to `expiresAt`, and expired notifications are hidden from normal user lists
   and popup notifications.
-
+  
   ## How Push Notifications Work
-
+  
   The React Native app must first get a push token from its push provider, then register it with the backend:
-
+  
   ```txt
   POST /api/v1/notifications/devices
   ```
-
+  
   After that, the backend can send push notifications when:
-
+  
   - user logs in
   - admin creates an announcement
   - wallet funding succeeds
   - referral reward is credited
   - future service purchase succeeds or fails
-
+  
   For v1, backend supports Expo push tokens with:
-
+  
   ```json
   {
     "provider": "expo"
   }
   ```
-
+  
   If the app uses bare React Native Firebase later, we can add FCM server delivery while keeping the same device-token endpoint.
-
+  
   ## Email Notifications
-
+  
   Email notifications use Brevo.
-
+  
   Login security notification is enabled by default:
-
+  
   ```txt
   AUTH_LOGIN_NOTIFICATION_ENABLED=true
   AUTH_LOGIN_NOTIFICATION_CHANNEL=both
   ```
-
+  
   `both` means in-app + push + email attempt. If Brevo is not configured on the deployed server, in-app notification still works but email delivery will fail silently and be stored on the notification delivery status.
-
+  
   ## Email Design
-
+  
   Backend email notifications now use one shared BillXpress template for all emails.
-
+  
   The design is a centered email card with:
-
+  
   - orange top border
   - very light orange header
   - BillXpress logo on the left
@@ -73,17 +73,17 @@ docs {
   - support email/phone
   - app store buttons when links are configured
   - social media buttons
-
+  
   To show the exact logo in the email header, upload the logo somewhere public and set:
-
+  
   ```txt
   BILLXPRESS_LOGO_URL=https://yourdomain.com/billxpress-logo.png
   ```
-
+  
   If `BILLXPRESS_LOGO_URL` is empty, the email still works but shows a text fallback logo.
-
+  
   By default, the links point to `billxpress` handles:
-
+  
   ```txt
   BILLXPRESS_SUPPORT_EMAIL=support@billxpress.com
   BILLXPRESS_SUPPORT_PHONE=
@@ -95,32 +95,32 @@ docs {
   BILLXPRESS_FACEBOOK_URL=https://facebook.com/billxpress
   BILLXPRESS_LINKEDIN_URL=https://linkedin.com/company/billxpress
   ```
-
+  
   If the sender name still shows with the old lowercase brand spelling in a live email, update this Railway/Brevo environment value:
-
+  
   ```txt
   BREVO_SENDER_NAME=BillXpress
   ```
-
+  
   ## Popup Notifications After Login
-
+  
   After login or app unlock, frontend can call:
-
+  
   ```txt
   GET /api/v1/notifications/popup
   ```
-
+  
   Show returned notifications as popup cards/modals. After displaying a popup, call:
-
+  
   ```txt
   PATCH /api/v1/notifications/:notificationId/seen
   ```
-
+  
   This prevents the same popup from showing repeatedly.
-
+  
   ## Read vs Seen
-
+  
   `seenAt` means the frontend has displayed the notification popup.
-
+  
   `readAt` means the user opened/read the notification in the notification center.
 }
