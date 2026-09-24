@@ -1,6 +1,11 @@
 const POCKETFI_DEFAULT_BASE_URL = "https://api.pocketfi.ng";
 
-export const POCKETFI_ALLOWED_VIRTUAL_ACCOUNT_BANKS = ["paga", "kuda"];
+export const POCKETFI_ALLOWED_VIRTUAL_ACCOUNT_BANKS = [
+  "saveheaven",
+  "paga",
+  "kuda",
+  "palmpay",
+];
 
 const getPocketFiConfig = () => {
   const apiKey = process.env.POCKETFI_API_KEY || process.env.POCKETFI_PUBLIC_KEY;
