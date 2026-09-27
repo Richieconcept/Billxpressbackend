@@ -41,8 +41,8 @@ const networkProviderSchema = new mongoose.Schema(
       enum: providerNames,
       default: undefined,
       validate: {
-        validator: (providers) => !providers || providers.length <= 2,
-        message: "MTN can have at most two data providers",
+        validator: (providers) => !providers || providers.length <= 3,
+        message: "MTN can have at most three data providers",
       },
     },
     AIRTEL: {
@@ -50,8 +50,8 @@ const networkProviderSchema = new mongoose.Schema(
       enum: providerNames,
       default: undefined,
       validate: {
-        validator: (providers) => !providers || providers.length <= 2,
-        message: "AIRTEL can have at most two data providers",
+        validator: (providers) => !providers || providers.length <= 3,
+        message: "AIRTEL can have at most three data providers",
       },
     },
     GLO: {
@@ -59,8 +59,8 @@ const networkProviderSchema = new mongoose.Schema(
       enum: providerNames,
       default: undefined,
       validate: {
-        validator: (providers) => !providers || providers.length <= 2,
-        message: "GLO can have at most two data providers",
+        validator: (providers) => !providers || providers.length <= 3,
+        message: "GLO can have at most three data providers",
       },
     },
     "9MOBILE": {
@@ -68,8 +68,8 @@ const networkProviderSchema = new mongoose.Schema(
       enum: providerNames,
       default: undefined,
       validate: {
-        validator: (providers) => !providers || providers.length <= 2,
-        message: "9MOBILE can have at most two data providers",
+        validator: (providers) => !providers || providers.length <= 3,
+        message: "9MOBILE can have at most three data providers",
       },
     },
   },

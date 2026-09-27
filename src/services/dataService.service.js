@@ -135,8 +135,8 @@ const assertSupportedProviderList = (providers, network) => {
     throw error;
   }
 
-  if (providers.length > 2) {
-    const error = new Error(`${network} can have at most two data providers`);
+  if (providers.length > 3) {
+    const error = new Error(`${network} can have at most three data providers`);
     error.statusCode = 400;
     throw error;
   }
