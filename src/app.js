@@ -56,6 +56,7 @@ app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || "5mb" }));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/vendor", vendorRoutes);
 app.use("/api/v1/wallet", walletRoutes);
 app.use("/api/v1/cards", cardRoutes);

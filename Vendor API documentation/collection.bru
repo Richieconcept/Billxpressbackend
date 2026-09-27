@@ -48,8 +48,8 @@ docs {
   Use these logged-in endpoints to show or rotate a vendor key:
 
   ```txt
-  GET  /api/v1/user/me/vendor/credentials
-  POST /api/v1/user/me/vendor/api-key/regenerate
+  GET  /api/v1/users/me/vendor/credentials
+  POST /api/v1/users/me/vendor/api-key/regenerate
   ```
 
   Fetching credentials generates a missing API key for an active vendor account. After regeneration, replace `{{vendorApiKey}}` with the newly returned `vendorCredentials.apiKey`.
@@ -72,8 +72,8 @@ docs {
   ## Vendor Resources
 
   ```txt
-  GET  /api/v1/user/me/vendor/credentials
-  POST /api/v1/user/me/vendor/api-key/regenerate
+  GET  /api/v1/users/me/vendor/credentials
+  POST /api/v1/users/me/vendor/api-key/regenerate
   GET  /api/v1/vendor/me
   GET  /api/v1/vendor/wallet
   GET  /api/v1/vendor/transactions

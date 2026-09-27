@@ -851,7 +851,7 @@
             <div class="endpoint-head">
               <div class="endpoint-title">
                 <span class="method">GET</span>
-                <span class="path">/api/v1/user/me/vendor/credentials</span>
+                <span class="path">/api/v1/users/me/vendor/credentials</span>
               </div>
               <span class="status-pill">Login token required</span>
             </div>
@@ -880,7 +880,7 @@
               </div>
               <div class="code-block">
                 <div class="code-label">PHP cURL <button class="copy-btn" type="button">Copy</button></div>
-                <pre><code>$ch = curl_init("https://api.billxpress.co/api/v1/user/me/vendor/credentials");
+                <pre><code>$ch = curl_init("https://api.billxpress.co/api/v1/users/me/vendor/credentials");
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER =&gt; true,
     CURLOPT_HTTPHEADER =&gt; [
@@ -897,7 +897,7 @@ $response = curl_exec($ch);</code></pre>
             <div class="endpoint-head">
               <div class="endpoint-title">
                 <span class="method post">POST</span>
-                <span class="path">/api/v1/user/me/vendor/api-key/regenerate</span>
+                <span class="path">/api/v1/users/me/vendor/api-key/regenerate</span>
               </div>
               <span class="status-pill">Rotates key</span>
             </div>
@@ -908,7 +908,7 @@ $response = curl_exec($ch);</code></pre>
               </div>
               <div class="code-block">
                 <div class="code-label">PHP cURL <button class="copy-btn" type="button">Copy</button></div>
-                <pre><code>$ch = curl_init("https://api.billxpress.co/api/v1/user/me/vendor/api-key/regenerate");
+                <pre><code>$ch = curl_init("https://api.billxpress.co/api/v1/users/me/vendor/api-key/regenerate");
 curl_setopt_array($ch, [
     CURLOPT_POST =&gt; true,
     CURLOPT_RETURNTRANSFER =&gt; true,

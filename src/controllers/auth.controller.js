@@ -10,6 +10,7 @@ import {
   emailVerificationTemplate,
   passwordResetTemplate,
 } from "../utils/emailTemplates.js";
+import { generateApiKey } from "../utils/generateApiKey.js";
 import { generateToken } from "../utils/generateToken.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
 import { sendEmail } from "../utils/sendEmail.js";
@@ -68,13 +69,43 @@ const maskEmail = (email = "") => {
   return `${visibleStart}${"*".repeat(hiddenLength)}${visibleEnd}@${domain}`;
 };
 
+const generateUniqueApiKey = async () => {
+  let apiKey = generateApiKey();
+
+  while (await User.exists({ apiKey })) {
+    apiKey = generateApiKey();
+  }
+
+  return apiKey;
+};
+
+const ensureVendorApiKey = async (user) => {
+  if (
+    user.role !== "vendor" ||
+    user.isVendorActive !== true ||
+    user.apiKey
+  ) {
+    return user;
+  }
+
+  user.apiKey = await generateUniqueApiKey();
+  await user.save();
+
+  return user;
+};
+
+const serializeAuthUser = (user) =>
+  sanitizeUser(user, {
+    includeApiKey: user.role === "vendor",
+  });
+
 const buildAuthResponse = ({ message, user, token, refreshToken, session }) => ({
   message,
   token,
   accessToken: token,
   refreshToken,
   session: serializeAuthSession(session),
-  user: sanitizeUser(user),
+  user: serializeAuthUser(user),
   mobileAuth: {
     pinUnlockSupported: true,
     biometricUnlockSupported: true,
@@ -278,6 +309,8 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    await ensureVendorApiKey(user);
+
     // 4. Generate JWT and mobile refresh session
     const token = generateToken(user);
     const sessionResult = await createAuthSession({
@@ -322,6 +355,7 @@ export const loginUser = async (req, res) => {
 export const refreshSession = async (req, res) => {
   try {
     const sessionResult = await rotateAuthSession(getRefreshTokenFromRequest(req));
+    await ensureVendorApiKey(sessionResult.user);
     const token = generateToken(sessionResult.user);
 
     res.json(
@@ -774,7 +808,9 @@ export const resendEmailOtp = async (req, res) => {
 };
 
 export const getMe = async (req, res) => {
+  const user = await ensureVendorApiKey(req.user);
+
   res.json({
-    user: sanitizeUser(req.user),
+    user: serializeAuthUser(user),
   });
 };
