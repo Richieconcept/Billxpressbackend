@@ -7,6 +7,7 @@ const DEFAULT_INITIAL_DELAY_MS = 60 * 1000;
 const CATALOG_PROVIDERS = new Set([
   "2fast",
   "autopilot",
+  "quicklysim",
   "smeapi",
   "smeplug",
   "ujaydata",

@@ -31,6 +31,7 @@ const DATA_PROVIDER_NAMES = [
   "smeapi",
   "ujaydata",
   "autopilot",
+  "quicklysim",
   "smeplug",
   "ogdams",
   "2fast",
@@ -40,6 +41,7 @@ const DATA_PROVIDER_NAME_SET = new Set(DATA_PROVIDER_NAMES);
 const CATALOG_PROVIDERS = new Set([
   "2fast",
   "autopilot",
+  "quicklysim",
   "smeapi",
   "smeplug",
   "ujaydata",
@@ -937,6 +939,7 @@ export const getDataPlansForUser = async (user, filters = {}) => {
       plan.network &&
       plan.name &&
       plan.available &&
+      (networkProviders[normalizePlanFilter(plan.network)] || []).includes(plan.provider) &&
       (!filters.dataType ||
         normalizePlanFilter(plan.type) === normalizePlanFilter(filters.dataType))
   );

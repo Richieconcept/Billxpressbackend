@@ -1,3 +1,4 @@
+import quicklysimProvider from "./quicklysim.provider.js";
 import autopilotProvider from "./autopilot.provider.js";
 import ogdamsProvider from "./ogdams.provider.js";
 import smeapiProvider from "./smeapi.provider.js";
@@ -9,6 +10,7 @@ import vtpassProvider from "./vtpass.provider.js";
 const providers = {
   "2fast": twofastProvider,
   autopilot: autopilotProvider,
+  quicklysim: quicklysimProvider,
   ogdams: ogdamsProvider,
   smeapi: smeapiProvider,
   smeplug: smeplugProvider,

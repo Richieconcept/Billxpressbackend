@@ -28,6 +28,7 @@ const providerNames = [
   "smeapi",
   "ujaydata",
   "autopilot",
+  "quicklysim",
   "smeplug",
   "ogdams",
   "2fast",
