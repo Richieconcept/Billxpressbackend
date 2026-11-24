@@ -424,7 +424,7 @@ const getProviderBalanceBestEffort = async (providerName) => {
 };
 
 const getSmeplugLastBalance = async () => {
-  const transaction = await Transaction.findOne({ provider: "smeplug", type: "service_payment", status: "successful", "metadata.providerResponse.data.balance_after": { $exists: true, $ne: null } }).sort({ createdAt: -1 }).select("metadata.providerResponse.data.balance_after createdAt").lean();
+  const transaction = await Transaction.findOne({ provider: "smeplug", type: "service_payment", status: "successful", "metadata.costSource": "provider_wallet", "metadata.providerResponse.data.balance_after": { $exists: true, $ne: null } }).sort({ createdAt: -1 }).select("metadata.providerResponse.data.balance_after createdAt").lean();
   if (!transaction) return { provider: "smeplug", available: false, error: "No recorded transaction balance is available" };
   try {
     return { provider: "smeplug", available: true, balance: parseBalance(transaction.metadata.providerResponse.data.balance_after), currency: "NGN", source: "transaction", checkedAt: transaction.createdAt };
