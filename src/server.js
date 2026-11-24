@@ -1,3 +1,4 @@
+import { startNotificationScheduler } from "./services/notificationScheduler.service.js";
 import dotenv from "dotenv";
 import app from "./app.js";
 import connectDB from "./config/db.js";
@@ -20,6 +21,7 @@ app.listen(PORT, () => {
 });
 
 startDataPlanSyncScheduler();
+startNotificationScheduler();
 
 const maintenanceIntervalMs = Number(
   process.env.CARD_MAINTENANCE_INTERVAL_MS || 60 * 60 * 1000

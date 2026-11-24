@@ -1,3 +1,4 @@
+import { getNotificationSchedule, putNotificationSchedule } from "../controllers/notificationSchedule.controller.js";
 import express from "express";
 import {
   bootstrapFirstAdmin,
@@ -87,6 +88,9 @@ import {
 } from "../controllers/bankTransferSetting.controller.js";
 
 const router = express.Router();
+
+router.get("/notification-schedule", protect, authorizeRoles("admin"), getNotificationSchedule);
+router.put("/notification-schedule", protect, authorizeRoles("admin"), putNotificationSchedule);
 
 router.patch("/bootstrap-admin/:userId", bootstrapFirstAdmin);
 router.get(
