@@ -29,6 +29,7 @@ const providerNames = [
   "ujaydata",
   "autopilot",
   "quicklysim",
+  "uniteddata2",
   "smeplug",
   "ogdams",
   "2fast",

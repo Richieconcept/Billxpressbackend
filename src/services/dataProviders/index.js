@@ -1,3 +1,4 @@
+import uniteddata2Provider from "./uniteddata2.provider.js";
 import quicklysimProvider from "./quicklysim.provider.js";
 import autopilotProvider from "./autopilot.provider.js";
 import ogdamsProvider from "./ogdams.provider.js";
@@ -11,6 +12,7 @@ const providers = {
   "2fast": twofastProvider,
   autopilot: autopilotProvider,
   quicklysim: quicklysimProvider,
+  uniteddata2: uniteddata2Provider,
   ogdams: ogdamsProvider,
   smeapi: smeapiProvider,
   smeplug: smeplugProvider,

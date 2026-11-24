@@ -8,6 +8,7 @@ const CATALOG_PROVIDERS = new Set([
   "2fast",
   "autopilot",
   "quicklysim",
+  "uniteddata2",
   "smeapi",
   "smeplug",
   "ujaydata",
