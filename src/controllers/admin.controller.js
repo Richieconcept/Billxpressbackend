@@ -1,3 +1,4 @@
+import { fetchQuicklysimBalance, fetchUniteddata2Balance, parseBalance, extractSponsorBalance } from "../services/providerBalance.service.js";
 import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import Wallet from "../models/wallet.model.js";
@@ -422,6 +423,27 @@ const getProviderBalanceBestEffort = async (providerName) => {
   }
 };
 
+const getSmeplugLastBalance = async () => {
+  const transaction = await Transaction.findOne({ provider: "smeplug", type: "service_payment", status: "successful", "metadata.providerResponse.data.balance_after": { $exists: true, $ne: null } }).sort({ createdAt: -1 }).select("metadata.providerResponse.data.balance_after createdAt").lean();
+  if (!transaction) return { provider: "smeplug", available: false, error: "No recorded transaction balance is available" };
+  try {
+    return { provider: "smeplug", available: true, balance: parseBalance(transaction.metadata.providerResponse.data.balance_after), currency: "NGN", source: "transaction", checkedAt: transaction.createdAt };
+  } catch { return { provider: "smeplug", available: false, error: "Last transaction did not contain a valid balance" }; }
+};
+
+const getSmartcashLastBalance = async () => {
+  const transaction = await Transaction.findOne({ provider: "smeplug", type: "service_payment", status: "successful", "metadata.providerResponse.data.msg": /sponsor\s*balance\s*:/i }).sort({ createdAt: -1 }).select("metadata.providerResponse.data.msg createdAt").lean();
+  const message = transaction?.metadata?.providerResponse?.data?.msg;
+  if (!message) return { provider: "smartcash", available: false, error: "No recorded sponsor balance is available" };
+  try { const balance = extractSponsorBalance(message); if (balance === null) throw new Error("Missing sponsor balance"); return { provider: "smartcash", available: true, balance, currency: "NGN", source: "transaction", checkedAt: transaction.createdAt }; }
+  catch { return { provider: "smartcash", available: false, error: "Last sponsor balance is invalid" }; }
+};
+
+const getLiveBalance = async (name, fetcher) => {
+  try { return { ...await fetcher(), available: true, checkedAt: new Date().toISOString() }; }
+  catch (error) { return { provider: name, available: false, error: error.message, checkedAt: new Date().toISOString() }; }
+};
+
 const summarizeTopCustomers = async ({ startDate, limit = 10 } = {}) => {
   const match = {
     type: "service_payment",
@@ -748,10 +770,12 @@ export const getAdminDashboardEarnings = async (req, res) => {
       transactions,
       oldestSeriesStart
     );
-    const providerBalances = {
-      smeapi: await getProviderBalanceBestEffort("smeapi"),
-      smeplug: await getProviderBalanceBestEffort("smeplug"),
-    };
+    const [smeapi, smeplug, smartcash, quicklysim, uniteddata2] = await Promise.all([
+      getProviderBalanceBestEffort("smeapi"), getSmeplugLastBalance(), getSmartcashLastBalance(),
+      getLiveBalance("quicklysim", fetchQuicklysimBalance),
+      getLiveBalance("uniteddata2", fetchUniteddata2Balance),
+    ]);
+    const providerBalances = { smeapi, smeplug, smartcash, quicklysim, uniteddata2 };
 
     res.json({
       currency: "NGN",
